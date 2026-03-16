@@ -25,7 +25,8 @@ public struct DemoDecorationFeature: OptionSet {
 
 public final class DemoDecorationProvider: DecorationProvider {
     private let documentLinesProvider: () -> [String]
-    private let featureQueue = DispatchQueue(label: "sweeteditor.demo.decoration.features", attributes: .concurrent)
+    private let featureQueue = DispatchQueue(
+        label: "sweeteditor.demo.decoration.features", attributes: .concurrent)
     private var enabledFeaturesValue: DemoDecorationFeature = .all
 
     public init(documentLinesProvider: @escaping () -> [String] = { [] }) {
@@ -33,21 +34,22 @@ public final class DemoDecorationProvider: DecorationProvider {
     }
 
     public var capabilities: DecorationType {
-        [.inlayHint, .phantomText, .diagnostic, .foldRegion, .indentGuide, .bracketGuide, .flowGuide, .separatorGuide]
+        [
+            .inlayHint, .phantomText, .diagnostic, .foldRegion, .indentGuide, .bracketGuide,
+            .flowGuide, .separatorGuide,
+        ]
     }
 
     public func isFeatureEnabled(_ feature: DemoDecorationFeature) -> Bool {
-        featureQueue.sync {
-            enabledFeaturesValue.contains(feature)
-        }
+        featureQueue.sync { enabledFeaturesValue.contains(feature) }
     }
 
     public func setFeatureEnabled(_ feature: DemoDecorationFeature, enabled: Bool) {
         featureQueue.sync(flags: .barrier) {
             if enabled {
-                self.enabledFeaturesValue.insert(feature)
+                enabledFeaturesValue.insert(feature)
             } else {
-                self.enabledFeaturesValue.remove(feature)
+                enabledFeaturesValue.remove(feature)
             }
         }
     }
@@ -55,18 +57,24 @@ public final class DemoDecorationProvider: DecorationProvider {
     public func provideDecorations(context: DecorationContext, receiver: DecorationReceiver) {
         let features = featureQueue.sync { enabledFeaturesValue }
         let lines = documentLinesProvider()
-        guard !lines.isEmpty else {
-            return
-        }
+        guard !lines.isEmpty else { return }
 
         let visibleRange = makeVisibleRange(context: context)
         let blocks = resolveBlocks(lines: lines)
 
-        let inlayHints = features.contains(.inlayHints) ? resolveInlayHints(lines: lines, visibleRange: visibleRange) : [:]
-        let phantomTexts = features.contains(.phantomTexts) ? resolvePhantomTexts(lines: lines, blocks: blocks, visibleRange: visibleRange) : [:]
-        let diagnostics = features.contains(.diagnostics) ? resolveDiagnostics(lines: lines, visibleRange: visibleRange) : [:]
+        let inlayHints =
+            features.contains(.inlayHints)
+            ? resolveInlayHints(lines: lines, visibleRange: visibleRange) : [:]
+        let phantomTexts =
+            features.contains(.phantomTexts)
+            ? resolvePhantomTexts(lines: lines, blocks: blocks, visibleRange: visibleRange) : [:]
+        let diagnostics =
+            features.contains(.diagnostics)
+            ? resolveDiagnostics(lines: lines, visibleRange: visibleRange) : [:]
         let foldRegions = features.contains(.foldRegions) ? resolveFoldRegions(blocks: blocks) : []
-        let guidePack = features.contains(.structureGuides) ? resolveGuides(blocks: blocks, lines: lines, visibleRange: visibleRange) : .empty
+        let guidePack =
+            features.contains(.structureGuides)
+            ? resolveGuides(blocks: blocks, lines: lines, visibleRange: visibleRange) : .empty
 
         _ = receiver.accept(
             DecorationResult(
@@ -97,23 +105,13 @@ public final class DemoDecorationProvider: DecorationProvider {
         let separatorGuides: [DecorationResult.SeparatorGuideItem]
 
         static let empty = GuidePack(
-            indentGuides: [],
-            bracketGuides: [],
-            flowGuides: [],
-            separatorGuides: []
-        )
-    }
-
-    private struct IndentGuideKey: Hashable {
-        let startLine: Int
-        let endLine: Int
-        let column: Int
+            indentGuides: [], bracketGuides: [], flowGuides: [], separatorGuides: [])
     }
 
     private func makeVisibleRange(context: DecorationContext) -> ClosedRange<Int> {
         let safeStart = max(0, context.visibleStartLine - 24)
-        let safeEnd = min(max(0, context.totalLineCount - 1), context.visibleEndLine + 24)
-        return safeStart...max(safeStart, safeEnd)
+        let safeEnd = max(safeStart, min(context.totalLineCount - 1, context.visibleEndLine + 24))
+        return safeStart...safeEnd
     }
 
     private func resolveBlocks(lines: [String]) -> [Block] {
@@ -125,32 +123,87 @@ public final class DemoDecorationProvider: DecorationProvider {
 
         var stack: [OpenBrace] = []
         var blocks: [Block] = []
+        blocks.reserveCapacity(lines.count / 2)
+
+        var inBlockComment = false
 
         for (lineIndex, line) in lines.enumerated() {
-            for (columnIndex, scalar) in line.unicodeScalars.enumerated() {
-                if scalar == "{" {
-                    stack.append(OpenBrace(line: lineIndex, column: columnIndex, depth: stack.count))
-                } else if scalar == "}", let opening = stack.popLast() {
-                    if lineIndex > opening.line {
-                        blocks.append(
-                            Block(
-                                startLine: opening.line,
-                                startColumn: opening.column,
-                                endLine: lineIndex,
-                                endColumn: columnIndex,
-                                depth: opening.depth
-                            )
-                        )
+            let utf16 = line.utf16
+            var i = utf16.startIndex
+            let end = utf16.endIndex
+            var column = 0
+
+            var inString = false
+            var inChar = false
+            var escapeNext = false
+
+            while i < end {
+                let codeUnit = utf16[i]
+                var step = 1
+
+                let nextI = utf16.index(after: i)
+                let nextCodeUnit = nextI < end ? utf16[nextI] : 0
+
+                if inBlockComment {
+                    if codeUnit == 0x002A && nextCodeUnit == 0x002F {  // "*/"
+                        inBlockComment = false
+                        step = 2
                     }
+                } else if inString {
+                    if escapeNext {
+                        escapeNext = false
+                    } else if codeUnit == 0x005C {  // "\"
+                        escapeNext = true
+                    } else if codeUnit == 0x0022 {  // "\""
+                        inString = false
+                    }
+                } else if inChar {
+                    if escapeNext {
+                        escapeNext = false
+                    } else if codeUnit == 0x005C {  // "\"
+                        escapeNext = true
+                    } else if codeUnit == 0x0027 {  // "'"
+                        inChar = false
+                    }
+                } else {
+                    if codeUnit == 0x002F && nextCodeUnit == 0x002F {  // "//"
+                        break
+                    } else if codeUnit == 0x002F && nextCodeUnit == 0x002A {  // "/*"
+                        inBlockComment = true
+                        step = 2
+                    } else if codeUnit == 0x0022 {  // "\""
+                        inString = true
+                    } else if codeUnit == 0x0027 {  // "'"
+                        inChar = true
+                    } else if codeUnit == 0x007B {  // "{"
+                        stack.append(OpenBrace(line: lineIndex, column: column, depth: stack.count))
+                    } else if codeUnit == 0x007D {  // "}"
+                        if let opening = stack.popLast(), lineIndex > opening.line {
+                            blocks.append(
+                                Block(
+                                    startLine: opening.line,
+                                    startColumn: opening.column,
+                                    endLine: lineIndex,
+                                    endColumn: column,
+                                    depth: opening.depth
+                                )
+                            )
+                        }
+                    }
+                }
+
+                if step == 2 {
+                    i = utf16.index(after: nextI)
+                    column += 2
+                } else {
+                    i = nextI
+                    column += 1
                 }
             }
         }
 
         return blocks.sorted {
-            if $0.startLine == $1.startLine {
-                return $0.depth < $1.depth
-            }
-            return $0.startLine < $1.startLine
+            $0.startLine == $1.startLine ? $0.depth < $1.depth : $0.startLine < $1.startLine
         }
     }
 
@@ -167,85 +220,40 @@ public final class DemoDecorationProvider: DecorationProvider {
             }
     }
 
-    private func resolveGuides(blocks: [Block], lines: [String], visibleRange: ClosedRange<Int>) -> GuidePack {
+    private func resolveGuides(blocks: [Block], lines: [String], visibleRange: ClosedRange<Int>)
+        -> GuidePack
+    {
         var indentGuides: [DecorationResult.IndentGuideItem] = []
-        var seenGuides = Set<IndentGuideKey>()
+        indentGuides.reserveCapacity(blocks.count)
 
-        for block in blocks where block.endLine >= visibleRange.lowerBound && block.startLine <= visibleRange.upperBound {
-            if (block.endLine - block.startLine) < 2 {
+        for block in blocks {
+            guard block.endLine >= visibleRange.lowerBound,
+                block.startLine <= visibleRange.upperBound,
+                (block.endLine - block.startLine) >= 2,
+                block.depth <= 5
+            else {
                 continue
             }
 
-            if block.depth > 5 {
-                continue
-            }
-
-            guard let guideColumn = resolveIndentColumn(for: block, lines: lines), guideColumn > 0 else {
-                continue
-            }
-
-            let startLine = block.startLine
-            let endLine = block.endLine
-            let key = IndentGuideKey(startLine: startLine, endLine: endLine, column: guideColumn)
-            if seenGuides.contains(key) {
-                continue
-            }
-            seenGuides.insert(key)
+            let guideColumn = leadingWhitespaceColumn(in: lines[block.startLine])
+            guard guideColumn > 0 else { continue }
 
             indentGuides.append(
                 DecorationResult.IndentGuideItem(
-                    start: TextPosition(line: startLine, column: guideColumn),
-                    end: TextPosition(line: endLine, column: guideColumn)
+                    start: TextPosition(line: block.startLine, column: guideColumn),
+                    end: TextPosition(line: block.endLine, column: guideColumn)
                 )
             )
         }
 
         return GuidePack(
-            indentGuides: indentGuides,
-            bracketGuides: [],
-            flowGuides: [],
-            separatorGuides: []
-        )
-    }
-
-    private func resolveIndentColumn(for block: Block, lines: [String]) -> Int? {
-        let bodyStartLine = block.startLine + 1
-        if bodyStartLine >= block.endLine {
-            return nil
-        }
-
-        var minIndent: Int?
-        for lineIndex in bodyStartLine..<block.endLine {
-            guard lineIndex < lines.count else { continue }
-            let line = lines[lineIndex]
-            let trimmed = line.trimmingCharacters(in: .whitespaces)
-            if trimmed.isEmpty || trimmed == "{" || trimmed == "}" {
-                continue
-            }
-
-            let indent = leadingWhitespaceColumn(in: line)
-            if indent <= 0 {
-                continue
-            }
-
-            if let current = minIndent {
-                minIndent = min(current, indent)
-            } else {
-                minIndent = indent
-            }
-        }
-
-        if let minIndent {
-            return max(1, minIndent - 1)
-        }
-
-        return nil
+            indentGuides: indentGuides, bracketGuides: [], flowGuides: [], separatorGuides: [])
     }
 
     private func leadingWhitespaceColumn(in line: String) -> Int {
         var column = 0
-        for character in line {
-            if character == " " || character == "\t" {
+        for codeUnit in line.utf16 {
+            if codeUnit == 0x0020 || codeUnit == 0x0009 {  // Space or Tab
                 column += 1
             } else {
                 break
@@ -254,7 +262,9 @@ public final class DemoDecorationProvider: DecorationProvider {
         return column
     }
 
-    private func resolveInlayHints(lines: [String], visibleRange: ClosedRange<Int>) -> [Int: [DecorationResult.InlayHintItem]] {
+    private func resolveInlayHints(lines: [String], visibleRange: ClosedRange<Int>) -> [Int:
+        [DecorationResult.InlayHintItem]]
+    {
         var result: [Int: [DecorationResult.InlayHintItem]] = [:]
 
         for lineIndex in visibleRange {
@@ -262,21 +272,23 @@ public final class DemoDecorationProvider: DecorationProvider {
             let line = lines[lineIndex]
 
             if let tokenColumn = column(of: "const", in: line) {
-                result[lineIndex, default: []].append(.init(column: tokenColumn, kind: .text("immut: ")))
+                result[lineIndex, default: []].append(
+                    .init(column: tokenColumn, kind: .text("immut: ")))
             }
 
             if let tokenColumn = column(of: "return", in: line) {
-                result[lineIndex, default: []].append(.init(column: tokenColumn, kind: .text("flow: ")))
+                result[lineIndex, default: []].append(
+                    .init(column: tokenColumn, kind: .text("flow: ")))
             }
 
-            if let tokenColumn = column(of: "Point", in: line), line.contains("Point ") {
+            if line.contains("Point "), let tokenColumn = column(of: "Point", in: line) {
                 let palette: [Int32] = [
-                    Int32(bitPattern: 0xFF4CAF50),
-                    Int32(bitPattern: 0xFF2196F3),
-                    Int32(bitPattern: 0xFFFF9800),
+                    Int32(bitPattern: 0xFF4C_AF50),
+                    Int32(bitPattern: 0xFF21_96F3),
+                    Int32(bitPattern: 0xFFFF_9800),
                 ]
-                let color = palette[lineIndex % palette.count]
-                result[lineIndex, default: []].append(.init(column: tokenColumn, kind: .color(color)))
+                result[lineIndex, default: []].append(
+                    .init(column: tokenColumn, kind: .color(palette[lineIndex % palette.count])))
             }
         }
 
@@ -284,14 +296,12 @@ public final class DemoDecorationProvider: DecorationProvider {
     }
 
     private func resolvePhantomTexts(
-        lines: [String],
-        blocks: [Block],
-        visibleRange: ClosedRange<Int>
+        lines: [String], blocks: [Block], visibleRange: ClosedRange<Int>
     ) -> [Int: [DecorationResult.PhantomTextItem]] {
         var result: [Int: [DecorationResult.PhantomTextItem]] = [:]
 
-        for block in blocks where visibleRange.contains(block.endLine) {
-            guard block.endLine < lines.count else { continue }
+        for block in blocks
+        where visibleRange.contains(block.endLine) && block.endLine < lines.count {
             let text = lines[block.startLine]
             let tag: String
 
@@ -315,7 +325,9 @@ public final class DemoDecorationProvider: DecorationProvider {
         return result
     }
 
-    private func resolveDiagnostics(lines: [String], visibleRange: ClosedRange<Int>) -> [Int: [DecorationResult.DiagnosticItem]] {
+    private func resolveDiagnostics(lines: [String], visibleRange: ClosedRange<Int>) -> [Int:
+        [DecorationResult.DiagnosticItem]]
+    {
         var result: [Int: [DecorationResult.DiagnosticItem]] = [:]
 
         for lineIndex in visibleRange {
@@ -324,20 +336,19 @@ public final class DemoDecorationProvider: DecorationProvider {
 
             if let column = column(of: "std::sqrt", in: line) {
                 result[lineIndex, default: []].append(
-                    .init(column: Int32(column), length: Int32("std::sqrt".count), severity: 1, color: 0)
-                )
+                    .init(column: Int32(column), length: 9, severity: 1, color: 0))
             }
 
-            if let column = column(of: "return", in: line), line.contains("return ") {
+            if line.contains("return "), let column = column(of: "return", in: line) {
                 result[lineIndex, default: []].append(
-                    .init(column: Int32(column), length: Int32("return".count), severity: 2, color: 0)
-                )
+                    .init(column: Int32(column), length: 6, severity: 2, color: 0))
             }
 
             if let column = column(of: "lineCount", in: line) {
                 result[lineIndex, default: []].append(
-                    .init(column: Int32(column), length: Int32("lineCount".count), severity: 3, color: Int32(bitPattern: 0xFFFF8C00))
-                )
+                    .init(
+                        column: Int32(column), length: 9, severity: 3,
+                        color: Int32(bitPattern: 0xFFFF_8C00)))
             }
         }
 
