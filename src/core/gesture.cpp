@@ -215,95 +215,37 @@ namespace NS_SWEETEDITOR {
           // triggering DRAG_SELECT and selecting multiple lines
           return {GestureType::LONG_PRESS, m_down_points_[0]};
         }
-      } else if (event.points.size() >= 2) {
+      } else if (event.points.size() == 2) {
+        // Two-finger: pure scale (no ambiguity with fast-scroll)
+        m_is_tap_ = false;
+        const PointF& curr_point0 = event.points[0];
+        const PointF& curr_point1 = event.points[1];
+        float curr_distance = curr_point0.distance(curr_point1);
+
+        if (m_last_distance_ > 0) {
+          float scale = curr_distance / m_last_distance_;
+          m_last_distance_ = curr_distance;
+          m_last_multi_points_ = event.points;
+          m_is_scaling_ = true;
+          return {GestureType::SCALE, {}, scale};
+        }
+        m_last_distance_ = curr_distance;
+        m_last_multi_points_ = event.points;
+      } else if (event.points.size() >= 3) {
+        // Three-finger (or more): fast scroll
         m_is_tap_ = false;
         const PointF& curr_point0 = event.points[0];
         const PointF& curr_point1 = event.points[1];
 
-        // Locked in scale mode, keep scaling until fingers are lifted
-        if (m_is_scaling_) {
-          float curr_distance = curr_point0.distance(curr_point1);
-          if (m_last_distance_ > 0) {
-            float scale = curr_distance / m_last_distance_;
-            m_last_distance_ = curr_distance;
-            m_last_multi_points_ = event.points;
-            return {GestureType::SCALE, {}, scale};
-          }
-          m_last_distance_ = curr_distance;
-          m_last_multi_points_ = event.points;
-          break;
-        }
-
-        // Locked in fast-scroll mode, keep scrolling until fingers are lifted
-        if (m_is_fast_scrolling_) {
-          if (m_last_multi_points_.size() >= 2) {
-            float delta_x0 = curr_point0.x - m_last_multi_points_[0].x;
-            float delta_y0 = curr_point0.y - m_last_multi_points_[0].y;
-            float delta_x1 = curr_point1.x - m_last_multi_points_[1].x;
-            float delta_y1 = curr_point1.y - m_last_multi_points_[1].y;
-            float avg_dx = (delta_x0 + delta_x1) * 0.5f;
-            float avg_dy = (delta_y0 + delta_y1) * 0.5f;
-            m_last_multi_points_ = event.points;
-            m_last_distance_ = curr_point0.distance(curr_point1);
-            if (std::abs(avg_dx) > 0.5f || std::abs(avg_dy) > 0.5f) {
-              if (std::abs(avg_dx) > std::abs(avg_dy)) {
-                return {GestureType::FAST_SCROLL, {}, 1, -avg_dx};
-              } else {
-                return {GestureType::FAST_SCROLL, {}, 1, 0, -avg_dy};
-              }
-            }
-          }
-          m_last_multi_points_ = event.points;
-          m_last_distance_ = curr_point0.distance(curr_point1);
-          break;
-        }
-
-        // Not locked yet, decide frame by frame
         if (m_last_multi_points_.size() >= 2) {
           float delta_x0 = curr_point0.x - m_last_multi_points_[0].x;
           float delta_y0 = curr_point0.y - m_last_multi_points_[0].y;
           float delta_x1 = curr_point1.x - m_last_multi_points_[1].x;
           float delta_y1 = curr_point1.y - m_last_multi_points_[1].y;
-
-          float curr_distance = curr_point0.distance(curr_point1);
-          float distance_change = std::abs(curr_distance - m_last_distance_);
-
-          // Centroid shift (average movement of two fingers)
           float avg_dx = (delta_x0 + delta_x1) * 0.5f;
           float avg_dy = (delta_y0 + delta_y1) * 0.5f;
-          float pan_magnitude = std::sqrt(avg_dx * avg_dx + avg_dy * avg_dy);
-
-          // Scale vs scroll decision:
-          // - If spacing change passes threshold and is not too small vs pan,
-          //   treat it as scale-dominant
-          // Use a lower minimum threshold to make two-finger scale
-          // trigger more stable on Android
-          float pinch_threshold = m_config_.touch_slop * 0.25f;
-          if (pinch_threshold < 1.5f) {
-            pinch_threshold = 1.5f;
-          }
-          bool pinch_dominant = (distance_change > pinch_threshold) &&
-                                (distance_change >= pan_magnitude * 0.35f);
-
-          if (pinch_dominant) {
-            m_is_scaling_ = true;
-            m_is_fast_scrolling_ = false;
-            m_pinch_confirm_count_ = 0;
-            float base_distance = m_last_distance_ > 0 ? m_last_distance_ : curr_distance;
-            float scale = curr_distance / base_distance;
-            m_last_distance_ = curr_distance;
-            m_last_multi_points_ = event.points;
-            return {GestureType::SCALE, {}, scale};
-          }
-
-          m_pinch_confirm_count_ = 0;
           m_last_multi_points_ = event.points;
-          m_last_distance_ = curr_distance;
-
-          // If pan is large enough and not scale-dominant, lock fast-scroll mode
-          if (pan_magnitude > m_config_.touch_slop && distance_change < pinch_threshold) {
-            m_is_fast_scrolling_ = true;
-          }
+          m_is_fast_scrolling_ = true;
 
           if (std::abs(avg_dx) > 0.5f || std::abs(avg_dy) > 0.5f) {
             if (std::abs(avg_dx) > std::abs(avg_dy)) {
@@ -314,9 +256,6 @@ namespace NS_SWEETEDITOR {
           }
         }
         m_last_multi_points_ = event.points;
-        if (m_last_distance_ <= 0) {
-          m_last_distance_ = curr_point0.distance(curr_point1);
-        }
       }
       break;
     }
