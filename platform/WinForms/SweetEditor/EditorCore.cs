@@ -519,6 +519,10 @@ namespace SweetEditor {
 		[JsonPropertyName("hit_target")]
 		public HitTarget HitTarget { get; set; }
 
+		/// <summary>Whether the platform should start/continue an edge-scroll timer.</summary>
+		[JsonPropertyName("needs_edge_scroll")]
+		public bool NeedsEdgeScroll { get; set; }
+
 		/// <summary>Creates the default gesture result.</summary>
 		public GestureResult() {
 			Type = GestureType.UNDEFINED;

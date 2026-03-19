@@ -201,6 +201,12 @@ namespace NS_SWEETEDITOR {
     /// @return Gesture handling result (includes editor state)
     GestureResult handleGestureEvent(const GestureEvent& event);
 
+    /// Called by platform timer (~16ms interval) while needs_edge_scroll is true.
+    /// Scrolls the viewport and updates the selection based on saved edge-scroll state.
+    /// @return Updated gesture result (platform should redraw; check needs_edge_scroll to decide
+    ///         whether to continue the timer)
+    GestureResult tickEdgeScroll();
+
     /// Handle keyboard event (optional default key mapping; platform can bypass and call atomic edit APIs directly)
     /// @param event Keyboard event data
     /// @return Keyboard event handling result
@@ -605,6 +611,17 @@ namespace NS_SWEETEDITOR {
     float m_cached_handle_height_ {0};
     bool m_cached_handles_valid_ {false};
 
+    /// Edge-scroll state: saved when finger is near viewport edge during drag.
+    /// The platform timer calls tickEdgeScroll() which uses this state to scroll + update selection.
+    struct EdgeScrollState {
+      bool active {false};         ///< Whether edge scrolling is needed
+      float speed {0};             ///< Scroll speed in pixels per tick (positive = down, negative = up)
+      PointF last_screen_point;    ///< Last finger position (used to re-run hitTest after scroll)
+      bool is_handle_drag {false}; ///< true = handle drag, false = select drag
+      bool is_mouse {false};       ///< Mouse drag (no y-offset)
+    };
+    EdgeScrollState m_edge_scroll_;
+
     /// IME composition state
     CompositionState m_composition_;
     /// Whether current composing text is already inserted into document (for safe remove)
@@ -645,6 +662,9 @@ namespace NS_SWEETEDITOR {
     void dragSelectTo(const PointF& screen_point, bool is_mouse = false);
     /// Ensure cursor is visible after edit scroll
     void ensureCursorVisible();
+    /// Compute edge-scroll state from finger position (does NOT scroll; just updates m_edge_scroll_).
+    /// Called from dragHandleTo / dragSelectTo to decide whether edge scrolling is needed.
+    void updateEdgeScrollState(const PointF& screen_point, bool is_handle_drag, bool is_mouse);
     /// Update cursor movement (handle selection extension logic)
     void moveCursorTo(const TextPosition& new_pos, bool extend_selection);
     /// Get normalized selection (start < end)

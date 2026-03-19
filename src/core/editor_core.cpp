@@ -186,6 +186,7 @@ namespace NS_SWEETEDITOR {
     if (m_dragging_handle_ != HandleDragTarget::NONE
         && event.type == EventType::TOUCH_POINTER_DOWN) {
       m_dragging_handle_ = HandleDragTarget::NONE;
+      m_edge_scroll_.active = false;
     }
 
     // While dragging a handle: intercept TOUCH_MOVE / MOUSE_MOVE and update selection
@@ -196,12 +197,14 @@ namespace NS_SWEETEDITOR {
           m_text_layout_->setViewState(m_view_state_);
           gesture_result.type = GestureType::DRAG_SELECT;
           fillGestureResult(gesture_result);
+          gesture_result.needs_edge_scroll = m_edge_scroll_.active;
           return gesture_result;
         }
       }
       if (event.type == EventType::TOUCH_UP || event.type == EventType::MOUSE_UP
           || event.type == EventType::TOUCH_CANCEL) {
         m_dragging_handle_ = HandleDragTarget::NONE;
+        m_edge_scroll_.active = false;
         // Reset gesture handler state so skipped TOUCH_MOVE events during handle drag
         // do not leave m_is_tap_ as true and affect later double-tap detection
         m_gesture_handler_->resetState();
@@ -211,6 +214,13 @@ namespace NS_SWEETEDITOR {
       }
     }
     GestureResult result = m_gesture_handler_->handleGestureEvent(event);
+
+    // Stop edge scroll on pointer release (non-handle-drag path)
+    if (event.type == EventType::TOUCH_UP || event.type == EventType::MOUSE_UP
+        || event.type == EventType::TOUCH_CANCEL) {
+      m_edge_scroll_.active = false;
+    }
+
     // If TOUCH_DOWN just hit a cursor handle, skip follow-up actions such as TAP
     if (m_dragging_handle_ != HandleDragTarget::NONE) {
       m_text_layout_->setViewState(m_view_state_);
@@ -286,6 +296,10 @@ namespace NS_SWEETEDITOR {
 
     normalizeScrollState();
     fillGestureResult(result);
+    // Propagate edge-scroll flag for DRAG_SELECT gestures
+    if (result.type == GestureType::DRAG_SELECT) {
+      result.needs_edge_scroll = m_edge_scroll_.active;
+    }
 
     LOGD("EditorCore::handleGestureEvent, m_view_state_ = %s", m_view_state_.dump().c_str());
     return result;
@@ -1299,6 +1313,10 @@ namespace NS_SWEETEDITOR {
     m_selection_.end = sel_end;
     m_has_selection_ = !(sel_start == sel_end);
     m_cursor_position_ = (m_dragging_handle_ == HandleDragTarget::END) ? sel_end : sel_start;
+
+    // Compute edge-scroll state (does NOT scroll here; just records speed/direction).
+    // Actual scrolling happens in tickEdgeScroll() called by platform timer.
+    updateEdgeScrollState(screen_point, /*is_handle_drag=*/true, /*is_mouse=*/false);
 
     LOGD("EditorCore::dragHandleTo, selection = %s", m_selection_.dump().c_str());
   }
@@ -2465,6 +2483,11 @@ namespace NS_SWEETEDITOR {
       m_has_selection_ = !(m_selection_.start == m_selection_.end);
     }
     m_cursor_position_ = pos;
+
+    // Compute edge-scroll state (does NOT scroll here; just records speed/direction).
+    // Actual scrolling happens in tickEdgeScroll() called by platform timer.
+    updateEdgeScrollState(screen_point, /*is_handle_drag=*/false, is_mouse);
+
     LOGD("EditorCore::dragSelectTo, selection = %s", m_selection_.dump().c_str());
   }
 
@@ -2486,6 +2509,72 @@ namespace NS_SWEETEDITOR {
     }
 
     normalizeScrollState();
+  }
+
+  void EditorCore::updateEdgeScrollState(const PointF& screen_point, bool is_handle_drag, bool is_mouse) {
+    if (!m_viewport_.valid()) {
+      m_edge_scroll_.active = false;
+      return;
+    }
+
+    // Edge zone: 15% of viewport height, clamped to [30, 120] px
+    const float kEdgeZoneRatio = 0.15f;
+    const float kMinEdgeZone = 30.0f;
+    const float kMaxEdgeZone = 120.0f;
+    float edge_zone = std::clamp(m_viewport_.height * kEdgeZoneRatio,
+                                 kMinEdgeZone, kMaxEdgeZone);
+
+    // Max speed per 16ms tick: 2 line-heights
+    const float line_height = m_text_layout_->getLineHeight();
+    const float max_speed = line_height * 2.0f;
+
+    float speed = 0.0f;
+    if (screen_point.y < edge_zone) {
+      float ratio = (edge_zone - screen_point.y) / edge_zone;
+      speed = -max_speed * ratio;
+    } else if (screen_point.y > m_viewport_.height - edge_zone) {
+      float ratio = (screen_point.y - (m_viewport_.height - edge_zone)) / edge_zone;
+      speed = max_speed * ratio;
+    }
+
+    if (speed != 0.0f) {
+      m_edge_scroll_.active = true;
+      m_edge_scroll_.speed = speed;
+      m_edge_scroll_.last_screen_point = screen_point;
+      m_edge_scroll_.is_handle_drag = is_handle_drag;
+      m_edge_scroll_.is_mouse = is_mouse;
+    } else {
+      m_edge_scroll_.active = false;
+      m_edge_scroll_.speed = 0.0f;
+    }
+  }
+
+  GestureResult EditorCore::tickEdgeScroll() {
+    GestureResult result;
+    result.type = GestureType::DRAG_SELECT;
+
+    if (!m_edge_scroll_.active) {
+      fillGestureResult(result);
+      result.needs_edge_scroll = false;
+      return result;
+    }
+
+    // Apply scroll delta; the same screen point now maps to a new text position.
+    m_view_state_.scroll_y += m_edge_scroll_.speed;
+    normalizeScrollState();
+
+    // Reuse existing drag logic to update selection with the shifted viewport.
+    // Both functions internally call updateEdgeScrollState() to re-evaluate
+    // whether the edge zone is still active after scrolling.
+    if (m_edge_scroll_.is_handle_drag) {
+      dragHandleTo(m_dragging_handle_, m_edge_scroll_.last_screen_point);
+    } else {
+      dragSelectTo(m_edge_scroll_.last_screen_point, m_edge_scroll_.is_mouse);
+    }
+
+    fillGestureResult(result);
+    result.needs_edge_scroll = m_edge_scroll_.active;
+    return result;
   }
 
   void EditorCore::moveCursorTo(const TextPosition& new_pos, bool extend_selection) {

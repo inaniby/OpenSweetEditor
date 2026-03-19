@@ -186,6 +186,24 @@ public class SweetEditor extends View {
         }
     };
 
+    // Edge-scroll timer: ticks at ~16ms while finger is in edge zone during drag
+    private static final int EDGE_SCROLL_INTERVAL_MS = 16;
+    private boolean mEdgeScrollActive = false;
+    private final Runnable mEdgeScrollTick = new Runnable() {
+        @Override
+        public void run() {
+            if (!mEdgeScrollActive) return;
+            EditorCore.GestureResult result = mEditorCore.tickEdgeScroll();
+            fireGestureEvents(result, null);
+            flush();
+            if (result.needsEdgeScroll) {
+                mHandler.postDelayed(this, EDGE_SCROLL_INTERVAL_MS);
+            } else {
+                mEdgeScrollActive = false;
+            }
+        }
+    };
+
     public SweetEditor(Context context) {
         super(context);
         initView(context);
@@ -225,6 +243,14 @@ public class SweetEditor extends View {
             syncPlatformScale(result.viewScale);
         }
         flush();
+        // Start/stop edge-scroll timer based on C++ core needs_edge_scroll flag
+        if (result.needsEdgeScroll && !mEdgeScrollActive) {
+            mEdgeScrollActive = true;
+            mHandler.postDelayed(mEdgeScrollTick, EDGE_SCROLL_INTERVAL_MS);
+        } else if (!result.needsEdgeScroll && mEdgeScrollActive) {
+            mEdgeScrollActive = false;
+            mHandler.removeCallbacks(mEdgeScrollTick);
+        }
         if (ENABLE_PERF_LOG) {
             float ms = (System.nanoTime() - t0) / 1_000_000f;
             if (ms >= PerfOverlay.WARN_INPUT_MS) {

@@ -15,4 +15,5 @@ public class GestureResult {
     @SerializedName("view_scroll_y") public float viewScrollY;
     @SerializedName("view_scale") public float viewScale;
     @SerializedName("hit_target") public HitTarget hitTarget;
+    @SerializedName("needs_edge_scroll") public boolean needsEdgeScroll;
 }

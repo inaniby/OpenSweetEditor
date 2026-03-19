@@ -349,6 +349,7 @@ static const uint8_t* gestureResultToBinary(const GestureResult& result, size_t*
   appendI32(buffer, static_cast<int32_t>(result.hit_target.column));
   appendI32(buffer, static_cast<int32_t>(result.hit_target.icon_id));
   appendI32(buffer, static_cast<int32_t>(result.hit_target.color_value));
+  appendI32(buffer, result.needs_edge_scroll ? 1 : 0);
   return allocBinaryPayload(buffer.data(), buffer.size(), out_size);
 }
 
@@ -631,6 +632,18 @@ const uint8_t* handle_editor_gesture_event_ex(intptr_t editor_handle, uint8_t ty
     event.points.push_back({points[i * 2], points[i * 2 + 1]});
   }
   GestureResult result = editor_core->handleGestureEvent(event);
+  return gestureResultToBinary(result, out_size);
+}
+
+const uint8_t* editor_tick_edge_scroll(intptr_t editor_handle, size_t* out_size) {
+  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  if (editor_core == nullptr) {
+    if (out_size != nullptr) {
+      *out_size = 0;
+    }
+    return nullptr;
+  }
+  GestureResult result = editor_core->tickEdgeScroll();
   return gestureResultToBinary(result, out_size);
 }
 

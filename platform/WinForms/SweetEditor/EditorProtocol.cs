@@ -970,6 +970,9 @@ namespace SweetEditor {
 					ColorValue = hitColor
 				};
 			}
+			if (TryReadInt32(data, ref offset, out int needsEdgeScrollInt)) {
+				result.NeedsEdgeScroll = needsEdgeScrollInt != 0;
+			}
 			return result;
 		}
 

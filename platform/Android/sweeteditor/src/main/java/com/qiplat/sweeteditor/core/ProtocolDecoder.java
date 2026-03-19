@@ -120,8 +120,13 @@ final class ProtocolDecoder {
             }
         }
 
+        boolean needsEdgeScroll = false;
+        if (data.remaining() >= 4) {
+            needsEdgeScroll = data.getInt() != 0;
+        }
+
         return new EditorCore.GestureResult(gestureType, tapPoint,
-                cursorPosition, hasSelection, selection, viewScrollX, viewScrollY, viewScale, hitTarget);
+                cursorPosition, hasSelection, selection, viewScrollX, viewScrollY, viewScale, hitTarget, needsEdgeScroll);
     }
 
     static ScrollMetrics decodeScrollMetrics(@Nullable ByteBuffer data) {

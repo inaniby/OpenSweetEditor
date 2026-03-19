@@ -150,6 +150,10 @@ namespace NS_SWEETEDITOR {
     float view_scale {1};
     /// Tap hit target (filled by EditorCore on TAP)
     HitTarget hit_target;
+    /// Whether the platform should start/continue an edge-scroll timer.
+    /// When true, the platform must call tickEdgeScroll() at ~16ms intervals.
+    /// When false, the platform should stop the edge-scroll timer.
+    bool needs_edge_scroll {false};
   };
 
   /// Gesture handler class
@@ -219,7 +223,7 @@ namespace NS_SWEETEDITOR {
     {HitTargetType::INLAY_HINT_COLOR, "INLAY_HINT_COLOR"},
   })
   NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(HitTarget, type, line, column, icon_id, color_value)
-  NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(GestureResult, type, tap_point, modifiers, scale, scroll_x, scroll_y, cursor_position, has_selection, selection, view_scroll_x, view_scroll_y, view_scale, hit_target)
+  NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(GestureResult, type, tap_point, modifiers, scale, scroll_x, scroll_y, cursor_position, has_selection, selection, view_scroll_x, view_scroll_y, view_scale, hit_target, needs_edge_scroll)
 }
 
 #endif //SWEETEDITOR_GESTURE_H

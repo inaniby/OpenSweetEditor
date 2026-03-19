@@ -120,6 +120,9 @@ final class ProtocolDecoder {
             hitTarget.colorValue = data.getInt();
         }
         result.hitTarget = hitTarget;
+        if (data.remaining() >= 4) {
+            result.needsEdgeScroll = data.getInt() != 0;
+        }
         return result;
     }
 
