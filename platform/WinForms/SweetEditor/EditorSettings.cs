@@ -1,0 +1,96 @@
+namespace SweetEditor {
+	/// <summary>
+	/// Centralized configuration for <see cref="EditorControl"/>.
+	/// <para>
+	/// Obtain via <see cref="EditorControl.Settings"/>. All setters take effect immediately.
+	/// </para>
+	/// </summary>
+	public class EditorSettings {
+
+		private readonly EditorControl editor;
+
+		private float scale = 1.0f;
+		private FoldArrowMode foldArrowMode = FoldArrowMode.ALWAYS;
+		private WrapMode wrapMode = WrapMode.NONE;
+		private float lineSpacingAdd = 0f;
+		private float lineSpacingMult = 1.0f;
+		private AutoIndentMode autoIndentMode = AutoIndentMode.NONE;
+		private bool readOnly = false;
+		private int maxGutterIcons = 0;
+
+		internal EditorSettings(EditorControl editor) {
+			this.editor = editor;
+		}
+
+		/// <summary>Sets editor scale.</summary>
+		public void SetScale(float scale) {
+			this.scale = scale;
+			editor.EditorCoreInternal.SetScale(scale);
+			editor.SyncPlatformScaleInternal(scale);
+			editor.Flush();
+		}
+
+		/// <summary>Gets editor scale.</summary>
+		public float GetScale() => scale;
+
+		/// <summary>Sets fold arrow mode.</summary>
+		public void SetFoldArrowMode(FoldArrowMode mode) {
+			foldArrowMode = mode;
+			editor.EditorCoreInternal.SetFoldArrowMode((int)mode);
+		}
+
+		/// <summary>Gets fold arrow mode.</summary>
+		public FoldArrowMode GetFoldArrowMode() => foldArrowMode;
+
+		/// <summary>Sets wrap mode.</summary>
+		public void SetWrapMode(WrapMode mode) {
+			wrapMode = mode;
+			editor.EditorCoreInternal.SetWrapMode((int)mode);
+			editor.Flush();
+		}
+
+		/// <summary>Gets wrap mode.</summary>
+		public WrapMode GetWrapMode() => wrapMode;
+
+		/// <summary>Sets line spacing.</summary>
+		public void SetLineSpacing(float add, float mult) {
+			lineSpacingAdd = add;
+			lineSpacingMult = mult;
+			editor.EditorCoreInternal.SetLineSpacing(add, mult);
+			editor.Flush();
+		}
+
+		/// <summary>Gets line spacing add.</summary>
+		public float GetLineSpacingAdd() => lineSpacingAdd;
+
+		/// <summary>Gets line spacing multiplier.</summary>
+		public float GetLineSpacingMult() => lineSpacingMult;
+
+		/// <summary>Sets auto indent mode.</summary>
+		public void SetAutoIndentMode(AutoIndentMode mode) {
+			autoIndentMode = mode;
+			editor.EditorCoreInternal.SetAutoIndentMode((int)mode);
+		}
+
+		/// <summary>Gets auto indent mode.</summary>
+		public AutoIndentMode GetAutoIndentMode() => autoIndentMode;
+
+		/// <summary>Sets read-only mode.</summary>
+		public void SetReadOnly(bool readOnly) {
+			this.readOnly = readOnly;
+			editor.EditorCoreInternal.SetReadOnly(readOnly);
+		}
+
+		/// <summary>Gets read-only mode.</summary>
+		public bool IsReadOnly() => readOnly;
+
+		/// <summary>Sets max gutter icons.</summary>
+		public void SetMaxGutterIcons(int count) {
+			maxGutterIcons = count;
+			editor.EditorCoreInternal.SetMaxGutterIcons(count);
+		}
+
+		/// <summary>Gets max gutter icons.</summary>
+		public int GetMaxGutterIcons() => maxGutterIcons;
+	}
+}

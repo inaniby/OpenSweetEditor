@@ -14,6 +14,7 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 
+import com.qiplat.sweeteditor.EditorSettings;
 import com.qiplat.sweeteditor.EditorTheme;
 import com.qiplat.sweeteditor.SweetEditor;
 import com.qiplat.sweeteditor.core.Document;
@@ -58,10 +59,11 @@ public class MainActivity extends AppCompatActivity {
         mStatusBar = findViewById(R.id.tv_status);
 
         // Set editor initial properties
-        mEditor.setTypeface(Typeface.create(Typeface.MONOSPACE, Typeface.NORMAL));
-        mEditor.setEditorTextSize(36f);
-        mEditor.setFoldArrowMode(FoldArrowMode.AUTO);
-        mEditor.setMaxGutterIcons(1);
+        EditorSettings settings = mEditor.getSettings();
+        settings.setTypeface(Typeface.create(Typeface.MONOSPACE, Typeface.NORMAL));
+        settings.setEditorTextSize(36f);
+        settings.setFoldArrowMode(FoldArrowMode.AUTO);
+        settings.setMaxGutterIcons(1);
         registerColorStyleForCurrentTheme();
 
         // Load initial document and apply decorations
@@ -193,7 +195,7 @@ public class MainActivity extends AppCompatActivity {
     private void cycleWrapMode() {
         WrapMode[] wrapModes = WrapMode.values();
         mWrapModePreset = wrapModes[(mWrapModePreset.ordinal() + 1) % wrapModes.length];
-        mEditor.setWrapMode(mWrapModePreset);
+        mEditor.getSettings().setWrapMode(mWrapModePreset);
         updateStatus("WrapMode: " + mWrapModePreset.name());
     }
 

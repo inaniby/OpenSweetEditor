@@ -128,6 +128,7 @@ public class SweetEditor extends View {
     // ==================== Construction/Init/Lifecycle ====================
 
     private EditorCore mEditorCore;
+    private EditorSettings mSettings;
     private TextMeasurer mTextMeasurer;
     private Document mDocument;
     private EditorIconProvider mEditorIconProvider;
@@ -442,78 +443,32 @@ public class SweetEditor extends View {
         return mDocument;
     }
 
-    // ==================== Viewport/Font/Appearance Config ====================
+    // ==================== Settings ====================
 
-    /**
-     * Set editor font, affects text measurement and rendering.
-     *
-     * @param typeface target font (monospace recommended for best alignment)
-     */
-    public void setTypeface(Typeface typeface) {
-        mTextMeasurer.setTypeface(typeface);
-        mEditorCore.resetMeasurer();
-        flush();
-    }
-
-    /**
-     * Set base text size (sp), InlayHint and line number sizes adjust proportionally.
-     *
-     * @param textSize text size (in px)
-     */
-    public void setEditorTextSize(float textSize) {
-        mTextMeasurer.setTextSize(textSize);
-        mInlayHintPaint.setTextSize(textSize * 0.9f);
-        mLineNumberPaint.setTextSize(textSize * 0.85f);
-        mEditorCore.resetMeasurer();
-        flush();
-    }
-
-    /**
-     * Set global scale, triggers layout recalculation.
-     *
-     * @param scale scale factor (1.0 = 100%)
-     */
-    public void setScale(float scale) {
-        mEditorCore.setScale(scale);
-        syncPlatformScale(scale);
-        flush();
+    @NonNull
+    public EditorSettings getSettings() {
+        return mSettings;
     }
 
     /** Sync platform-side text measurement and paint sizes to the latest scale. */
-    private void syncPlatformScale(float scale) {
+    void syncPlatformScale(float scale) {
         mTextMeasurer.setScale(scale);
         mInlayHintPaint.setTextSize(mTextPaint.getTextSize() * 0.9f);
         mLineNumberPaint.setTextSize(mTextPaint.getTextSize() * 0.85f);
         mEditorCore.resetMeasurer();
     }
 
-    /**
-     * Set fold arrow display mode (affects gutter area width reservation).
-     *
-     * @param mode fold arrow mode
-     */
-    public void setFoldArrowMode(@NonNull FoldArrowMode mode) {
-        mEditorCore.setFoldArrowMode(mode.value);
-    }
-
-    /**
-     * Set auto wrap mode.
-     *
-     * @param mode auto wrap mode
-     */
-    public void setWrapMode(@NonNull WrapMode mode) {
-        mEditorCore.setWrapMode(mode.value);
+    void applyTypeface(Typeface typeface) {
+        mTextMeasurer.setTypeface(typeface);
+        mEditorCore.resetMeasurer();
         flush();
     }
 
-    /**
-     * Set line spacing parameter (formula: line_height = font_height * mult + add).
-     *
-     * @param add  extra line spacing in pixels (default 0)
-     * @param mult line spacing multiplier (default 1.0)
-     */
-    public void setLineSpacing(float add, float mult) {
-        mEditorCore.setLineSpacing(add, mult);
+    void applyTextSize(float textSize) {
+        mTextMeasurer.setTextSize(textSize);
+        mInlayHintPaint.setTextSize(textSize * 0.9f);
+        mLineNumberPaint.setTextSize(textSize * 0.85f);
+        mEditorCore.resetMeasurer();
         flush();
     }
 
@@ -888,45 +843,7 @@ public class SweetEditor extends View {
         }
     }
 
-    // ==================== Read-Only Mode API ====================
 
-    /**
-     * Set read-only mode.
-     *
-     * @param readOnly true=read-only (disallow all edit operations), false=editable
-     */
-    public void setReadOnly(boolean readOnly) {
-        mEditorCore.setReadOnly(readOnly);
-    }
-
-    /**
-     * Get whether currently in read-only mode.
-     *
-     * @return {@code true} if currently read-only
-     */
-    public boolean isReadOnly() {
-        return mEditorCore.isReadOnly();
-    }
-
-    // ==================== Auto-Indent API ====================
-
-    /**
-     * Set auto-indent mode.
-     *
-     * @param mode auto-indent mode
-     */
-    public void setAutoIndentMode(@NonNull AutoIndentMode mode) {
-        mEditorCore.setAutoIndentMode(mode.value);
-    }
-
-    /**
-     * Get current auto-indent mode.
-     *
-     * @return auto-indent mode value
-     */
-    public int getAutoIndentMode() {
-        return mEditorCore.getAutoIndentMode();
-    }
 
     // ==================== Position/Coordinate Query API ====================
 
@@ -1090,15 +1007,7 @@ public class SweetEditor extends View {
 
     // -------------------- Gutter Icons --------------------
 
-    /**
-     * Set maximum gutter icon count, affects gutter area width reservation.
-     * <p>Set to 0 to enable overlay mode (icons overlay line numbers, no extra width, suitable for mobile).
-     *
-     * @param count Maximum icon count (0=overlay mode, default 0)
-     */
-    public void setMaxGutterIcons(int count) {
-        mEditorCore.setMaxGutterIcons(count);
-    }
+
 
     /**
      * Set gutter icons for a specified line (replaces entire line).
@@ -2013,7 +1922,8 @@ public class SweetEditor extends View {
             mEditorCore.registerStyle(entry.getKey(), style[0], style[1]);
         }
 
-        setTypeface(Typeface.create(Typeface.MONOSPACE, Typeface.NORMAL));
+        mSettings = new EditorSettings(this);
+        mSettings.setTypeface(Typeface.create(Typeface.MONOSPACE, Typeface.NORMAL));
         setFocusable(true);
         setFocusableInTouchMode(true);
         loadDocument(new Document(""));

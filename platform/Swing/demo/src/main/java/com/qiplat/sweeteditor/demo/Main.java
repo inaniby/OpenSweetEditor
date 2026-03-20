@@ -135,7 +135,7 @@ public class Main extends JFrame {
     private void cycleWrapMode() {
         WrapMode[] wrapModes = WrapMode.values();
         wrapModePreset = wrapModes[(wrapModePreset.ordinal() + 1) % wrapModes.length];
-        editor.setWrapMode(wrapModePreset);
+        editor.getSettings().setWrapMode(wrapModePreset);
         updateStatus("WrapMode: " + wrapModePreset.name());
     }
 

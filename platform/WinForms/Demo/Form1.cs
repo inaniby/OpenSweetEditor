@@ -150,7 +150,7 @@ using SweetEditor;
 
 		private void CycleWrapMode() {
 			wrapModePreset = (WrapMode)(((int)wrapModePreset + 1) % 3);
-			editorControl1.SetWrapMode(wrapModePreset);
+			editorControl1.Settings.SetWrapMode(wrapModePreset);
 			UpdateStatus($"WrapMode: {wrapModePreset}");
 		}
 

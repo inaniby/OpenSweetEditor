@@ -333,6 +333,7 @@ namespace SweetEditor {
 
 		// TextRenderer flags for consistent measuring/drawing.
 		private static readonly TextFormatFlags TextMeasureDrawFlags = TextFormatFlags.NoPadding | TextFormatFlags.SingleLine | TextFormatFlags.NoPrefix;
+		private EditorSettings? settings;
 		private readonly MeasurePerfStats perfMeasureStats = new MeasurePerfStats();
 		private readonly PerfOverlay perfOverlay = new PerfOverlay();
 
@@ -465,32 +466,15 @@ namespace SweetEditor {
 		/// <summary>Returns whether the performance overlay is enabled.</summary>
 		public bool IsPerfOverlayEnabled() => perfOverlay.IsEnabled;
 
+		/// <summary>Gets the centralized editor settings.</summary>
+		public EditorSettings Settings => settings;
+
+		/// <summary>Internal accessor for EditorCore, used by <see cref="EditorSettings"/>.</summary>
+		internal EditorCore EditorCoreInternal => editorCore;
+
 		#endregion
 
 		#region Public API - Viewport/Font/Appearance
-
- /// <summary>Sets fold arrow mode.</summary>
- /// <param name="mode">Mode value.</param>
-		public void SetFoldArrowMode(FoldArrowMode mode) => editorCore.SetFoldArrowMode((int)mode);
-
- /// <summary>Sets wrap mode.</summary>
- /// <param name="mode">Mode value.</param>
-		public void SetWrapMode(WrapMode mode) {
-			editorCore.SetWrapMode((int)mode);
-			Flush();
-		}
-
- /// <summary>Sets auto indent mode.</summary>
- /// <param name="mode">Mode value.</param>
-		public void SetAutoIndentMode(AutoIndentMode mode) {
-			editorCore.SetAutoIndentMode((int)mode);
-		}
-
- /// <summary>Gets auto indent mode.</summary>
- /// <returns>Returns the resulting value.</returns>
-		public AutoIndentMode GetAutoIndentMode() {
-			return (AutoIndentMode)editorCore.GetAutoIndentMode();
-		}
 
 		// ==================== LanguageConfiguration API ====================
 
@@ -545,22 +529,6 @@ namespace SweetEditor {
  /// <returns>Returns the cursor rectangle in control coordinates.</returns>
 		public CursorRect GetCursorRect() {
 			return editorCore.GetCursorRect();
-		}
-
-		/// <summary>Sets line spacing.</summary>
- /// <param name="add">Additional line spacing in pixels.</param>
- /// <param name="mult">Line spacing multiplier.</param>
-		public void SetLineSpacing(float add, float mult) {
-			editorCore.SetLineSpacing(add, mult);
-			Flush();
-		}
-
-		/// <summary>Sets editor scale.</summary>
- /// <param name="scale">Scale factor (1.0 = 100%).</param>
-		public void SetScale(float scale) {
-			editorCore.SetScale(scale);
-			SyncPlatformScale(scale);
-			Flush();
 		}
 
 		#endregion
@@ -826,8 +794,6 @@ namespace SweetEditor {
 
  /// <summary>Clears gutter icons.</summary>
 		public void ClearGutterIcons() { editorCore.ClearGutterIcons(); }
- /// <summary>Sets max gutter icons.</summary>
-		public void SetMaxGutterIcons(int count) => editorCore.SetMaxGutterIcons(count);
 
 		public void AddDecorationProvider(IDecorationProvider provider) => decorationProviderManager?.AddProvider(provider);
 		public void RemoveDecorationProvider(IDecorationProvider provider) => decorationProviderManager?.RemoveProvider(provider);
@@ -1050,6 +1016,8 @@ namespace SweetEditor {
 			foreach (var kvp in currentTheme.SyntaxStyles) {
 				editorCore.RegisterStyle(kvp.Key, kvp.Value.color, kvp.Value.fontStyle);
 			}
+
+			settings = new EditorSettings(this);
 		}
 
 		protected override void OnHandleCreated(EventArgs e) {
@@ -2103,6 +2071,9 @@ namespace SweetEditor {
 				model.Cursor.Position.Y,
 				model.Cursor.Height);
 		}
+
+		/// <summary>Internal accessor for SyncPlatformScale, used by <see cref="EditorSettings"/>.</summary>
+		internal void SyncPlatformScaleInternal(float scale) => SyncPlatformScale(scale);
 
 		/// <summary>Sync platform-side fonts and measurer to the latest scale.</summary>
 		private void SyncPlatformScale(float scale) {

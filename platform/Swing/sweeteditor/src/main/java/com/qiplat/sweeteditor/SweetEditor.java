@@ -91,6 +91,7 @@ public class SweetEditor extends JPanel implements EditorCore.TextMeasureCallbac
     private boolean edgeScrollActive = false;
 
     // Event bus
+    private EditorSettings settings;
     private final EditorEventBus eventBus = new EditorEventBus();
     private final DecorationProviderManager decorationProviderManager = new DecorationProviderManager(this);
     private CompletionProviderManager completionProviderManager;
@@ -121,6 +122,8 @@ public class SweetEditor extends JPanel implements EditorCore.TextMeasureCallbac
         completionProviderManager.setListener(completionPopupController);
         completionPopupController.setConfirmListener(this::applyCompletionItem);
 
+        settings = new EditorSettings(this);
+
         for (var entry : currentTheme.syntaxStyles.entrySet()) {
             int[] v = entry.getValue();
             editorCore.registerStyle(entry.getKey(), v[0], v[1]);
@@ -148,6 +151,8 @@ public class SweetEditor extends JPanel implements EditorCore.TextMeasureCallbac
 
     public EditorTheme getEditorTheme() { return currentTheme; }
 
+    public EditorSettings getSettings() { return settings; }
+
     public void applyTheme(EditorTheme theme) {
         this.currentTheme = theme;
         setBackground(argbToColor(theme.backgroundColor));
@@ -158,14 +163,7 @@ public class SweetEditor extends JPanel implements EditorCore.TextMeasureCallbac
         flush();
     }
 
-    public void setFoldArrowMode(FoldArrowMode mode) { editorCore.setFoldArrowMode(mode.value); }
-    public void setWrapMode(WrapMode mode) { editorCore.setWrapMode(mode.value); flush(); }
-    public void setLineSpacing(float add, float mult) { editorCore.setLineSpacing(add, mult); flush(); }
-    public void setScale(float scale) {
-        editorCore.setScale(scale);
-        syncPlatformScale(scale);
-        flush();
-    }
+
 
     public EditorCore getEditorCore() { return editorCore; }
 
@@ -277,15 +275,7 @@ public class SweetEditor extends JPanel implements EditorCore.TextMeasureCallbac
     public int[] getWordRangeAtCursor() { return editorCore.getWordRangeAtCursor(); }
     public String getWordAtCursor() { return editorCore.getWordAtCursor(); }
 
-    // ==================== Read-only Mode ====================
 
-    public void setReadOnly(boolean readOnly) { editorCore.setReadOnly(readOnly); }
-    public boolean isReadOnly() { return editorCore.isReadOnly(); }
-
-    // ==================== Auto-indent ====================
-
-    public void setAutoIndentMode(AutoIndentMode mode) { editorCore.setAutoIndentMode(mode.value); }
-    public int getAutoIndentMode() { return editorCore.getAutoIndentMode(); }
 
     // ==================== Position/Coordinate Query ====================
 
@@ -318,8 +308,6 @@ public class SweetEditor extends JPanel implements EditorCore.TextMeasureCallbac
 
     public void setLineGutterIcons(int line, List<? extends GutterIcon> icons) { editorCore.setLineGutterIcons(line, icons); }
     public void setBatchLineGutterIcons(Map<Integer, ? extends List<? extends GutterIcon>> iconsByLine) { editorCore.setBatchLineGutterIcons(iconsByLine); }
-    public void setMaxGutterIcons(int count) { editorCore.setMaxGutterIcons(count); }
-
     // -------------------- Diagnostic Decorations --------------------
 
     public void setLineDiagnostics(int line, List<? extends DiagnosticItem> items) { editorCore.setLineDiagnostics(line, items); }
@@ -1418,7 +1406,7 @@ public class SweetEditor extends JPanel implements EditorCore.TextMeasureCallbac
 
     // ===================== Helpers =====================
 
-    private void syncPlatformScale(float scale) {
+    void syncPlatformScale(float scale) {
         if (scale <= 0f) return;
 
         float textSize = baseRegularFont.getSize2D() * scale;
