@@ -18,7 +18,7 @@ import java.io.*;
     boolean enabled() default true;
 }
 
-// colors
+// colors (you can click the color block)
 static int[] colors = {0xFF5B9BD5, 0xFFED7D31, 0xFF70AD47};
 
 // enum type
