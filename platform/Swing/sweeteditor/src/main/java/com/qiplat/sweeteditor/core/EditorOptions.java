@@ -35,15 +35,15 @@ public class EditorOptions {
     public final long maxUndoStackSize;
 
     public EditorOptions() {
-        this(10f, 300, 500, 3.5f, 50f, 8000f, 512);
+this(10f, 300, 500, 2.0f, 30f, 12000f, 512);
     }
 
     public EditorOptions(float touchSlop, long doubleTapTimeout) {
-        this(touchSlop, doubleTapTimeout, 500, 3.5f, 50f, 8000f, 512);
+this(touchSlop, doubleTapTimeout, 500, 2.0f, 30f, 12000f, 512);
     }
 
     public EditorOptions(float touchSlop, long doubleTapTimeout, long longPressMs, long maxUndoStackSize) {
-        this(touchSlop, doubleTapTimeout, longPressMs, 3.5f, 50f, 8000f, maxUndoStackSize);
+this(touchSlop, doubleTapTimeout, longPressMs, 2.0f, 30f, 12000f, maxUndoStackSize);
     }
 
     public EditorOptions(float touchSlop, long doubleTapTimeout, long longPressMs,

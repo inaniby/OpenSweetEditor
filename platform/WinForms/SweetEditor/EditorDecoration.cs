@@ -155,6 +155,7 @@ namespace SweetEditor {
 		private int lastVisibleStartLine;
 		private int lastVisibleEndLine = -1;
 		private bool scrollRefreshScheduled;
+		private bool pendingScrollRefresh;
 		private long lastScrollRefreshTickMs;
 
 		public DecorationProviderManager(EditorControl editor) {
@@ -171,6 +172,10 @@ namespace SweetEditor {
 				debounceTimer.Stop();
 				DoRefresh();
 				lastScrollRefreshTickMs = Environment.TickCount64;
+				if (pendingScrollRefresh) {
+					pendingScrollRefresh = false;
+					ScheduleScrollRefresh();
+				}
 			};
 		}
 
@@ -203,6 +208,7 @@ namespace SweetEditor {
 				scrollRefreshTimer.Stop();
 				scrollRefreshScheduled = false;
 			}
+			pendingScrollRefresh = false;
 			debounceTimer.Stop();
 			debounceTimer.Interval = Math.Max(1, delayMs == 0 ? 1 : delayMs);
 			debounceTimer.Start();
@@ -216,6 +222,7 @@ namespace SweetEditor {
 				? 1
 				: (int)Math.Max(1, minInterval - elapsed);
 			if (scrollRefreshScheduled) {
+				pendingScrollRefresh = true;
 				return;
 			}
 			scrollRefreshScheduled = true;

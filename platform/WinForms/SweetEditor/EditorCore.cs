@@ -264,12 +264,12 @@ namespace SweetEditor {
 		public long DoubleTapTimeout { get; set; } = 300;
 		/// <summary>Long press time threshold in ms (default 500)</summary>
 		public long LongPressMs { get; set; } = 500;
-		/// <summary>Fling friction coefficient, higher = faster deceleration (default 3.5)</summary>
-		public float FlingFriction { get; set; } = 3.5f;
-		/// <summary>Minimum fling velocity threshold in px/s (default 50)</summary>
-		public float FlingMinVelocity { get; set; } = 50f;
-		/// <summary>Maximum fling velocity cap in px/s (default 8000)</summary>
-		public float FlingMaxVelocity { get; set; } = 8000f;
+		/// <summary>Fling friction coefficient, higher = faster deceleration (default 2.0)</summary>
+		public float FlingFriction { get; set; } = 2.0f;
+		/// <summary>Minimum fling velocity threshold in px/s (default 30)</summary>
+		public float FlingMinVelocity { get; set; } = 30f;
+		/// <summary>Maximum fling velocity cap in px/s (default 12000)</summary>
+		public float FlingMaxVelocity { get; set; } = 12000f;
 		/// <summary>Max undo stack size, 0 = unlimited (default 512)</summary>
 		public ulong MaxUndoStackSize { get; set; } = 512;
 	}

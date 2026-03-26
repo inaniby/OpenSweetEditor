@@ -38,6 +38,7 @@ public final class DecorationProviderManager {
     private volatile int lastVisibleStartLine;
     private volatile int lastVisibleEndLine = -1;
     private volatile boolean scrollRefreshScheduled;
+    private volatile boolean pendingScrollRefresh;
     private volatile long lastScrollRefreshUptimeMs;
 
     public DecorationProviderManager(SweetEditor editor) {
@@ -50,6 +51,10 @@ public final class DecorationProviderManager {
             debounceTimer.stop();
             doRefresh();
             lastScrollRefreshUptimeMs = System.currentTimeMillis();
+            if (pendingScrollRefresh) {
+                pendingScrollRefresh = false;
+                scheduleScrollRefresh();
+            }
         });
         this.scrollRefreshTimer.setRepeats(false);
     }
@@ -100,6 +105,7 @@ public final class DecorationProviderManager {
                 scrollRefreshTimer.stop();
                 scrollRefreshScheduled = false;
             }
+            pendingScrollRefresh = false;
             debounceTimer.stop();
             debounceTimer.setInitialDelay(Math.max(0, delayMs));
             debounceTimer.start();
@@ -114,6 +120,7 @@ public final class DecorationProviderManager {
                 ? 0
                 : (int) (minInterval - elapsed);
         if (scrollRefreshScheduled) {
+            pendingScrollRefresh = true;
             return;
         }
         scrollRefreshScheduled = true;
