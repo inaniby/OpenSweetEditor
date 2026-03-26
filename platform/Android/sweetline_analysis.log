@@ -1,0 +1,290 @@
+
+=== SweetLine Snapshot 2026-03-26 17:41:50.606 ===
+file=example.py, editorLines=10, contextTotalLines=10, visible=0-2, textChanges=0, guideOffset=0
+[document-lines]
+L0: import sys
+L1: 
+L2: 
+L3: def hello(name: str) -> str:
+L4:     return f"Hello, {name}"
+L5: 
+L6: 
+L7: if __name__ == "__main__":
+L8:     print(hello("Pydroid"))
+L9:     print("Python version:", sys.version)
+[highlight]
+lineCount=10
+token line=0 col=0-6 style=1 literal="import"
+token line=3 col=0-3 style=1 literal="def"
+token line=3 col=4-9 style=8 literal="hello"
+token line=3 col=9-10 style=10 literal="("
+token line=3 col=10-14 style=9 literal="name"
+token line=3 col=14-15 style=10 literal=":"
+token line=3 col=16-19 style=7 literal="str"
+token line=3 col=19-20 style=10 literal=")"
+token line=3 col=21-23 style=10 literal="->"
+token line=3 col=24-27 style=5 literal="str"
+token line=3 col=27-28 style=10 literal=":"
+token line=4 col=4-10 style=1 literal="return"
+token line=4 col=11-20 style=2 literal="f"Hello, "
+token line=4 col=20-26 style=11 literal="{name}"
+token line=4 col=26-27 style=2 literal="""
+token line=7 col=0-2 style=1 literal="if"
+token line=7 col=12-14 style=10 literal="=="
+token line=7 col=15-25 style=2 literal=""__main__""
+token line=7 col=25-26 style=10 literal=":"
+token line=8 col=4-9 style=5 literal="print"
+token line=8 col=9-10 style=10 literal="("
+token line=8 col=10-15 style=8 literal="hello"
+token line=8 col=15-16 style=10 literal="("
+token line=8 col=16-25 style=2 literal=""Pydroid""
+token line=8 col=25-27 style=10 literal="))"
+token line=9 col=4-9 style=5 literal="print"
+token line=9 col=9-10 style=10 literal="("
+token line=9 col=10-27 style=2 literal=""Python version:""
+token line=9 col=27-28 style=10 literal=","
+token line=9 col=29-32 style=9 literal="sys"
+token line=9 col=32-33 style=10 literal="."
+token line=9 col=33-40 style=9 literal="version"
+token line=9 col=40-41 style=10 literal=")"
+[indent-guides]
+#0 raw=4-4 col=4 normalized=4-4
+#1 raw=8-9 col=4 normalized=8-9
+[fold-regions]
+#0 8-9
+suspectShiftCount=1/1
+[gutter-icons]
+logPath=/data/user/0/com.nanib.pydroid/files/logs/sweetline_analysis.log
+
+=== SweetLine Snapshot 2026-03-26 17:41:50.619 ===
+file=example.py, editorLines=10, contextTotalLines=10, visible=0-9, textChanges=0, guideOffset=0
+[document-lines]
+L0: import sys
+L1: 
+L2: 
+L3: def hello(name: str) -> str:
+L4:     return f"Hello, {name}"
+L5: 
+L6: 
+L7: if __name__ == "__main__":
+L8:     print(hello("Pydroid"))
+L9:     print("Python version:", sys.version)
+[highlight]
+lineCount=10
+token line=0 col=0-6 style=1 literal="import"
+token line=3 col=0-3 style=1 literal="def"
+token line=3 col=4-9 style=8 literal="hello"
+token line=3 col=9-10 style=10 literal="("
+token line=3 col=10-14 style=9 literal="name"
+token line=3 col=14-15 style=10 literal=":"
+token line=3 col=16-19 style=7 literal="str"
+token line=3 col=19-20 style=10 literal=")"
+token line=3 col=21-23 style=10 literal="->"
+token line=3 col=24-27 style=5 literal="str"
+token line=3 col=27-28 style=10 literal=":"
+token line=4 col=4-10 style=1 literal="return"
+token line=4 col=11-20 style=2 literal="f"Hello, "
+token line=4 col=20-26 style=11 literal="{name}"
+token line=4 col=26-27 style=2 literal="""
+token line=7 col=0-2 style=1 literal="if"
+token line=7 col=12-14 style=10 literal="=="
+token line=7 col=15-25 style=2 literal=""__main__""
+token line=7 col=25-26 style=10 literal=":"
+token line=8 col=4-9 style=5 literal="print"
+token line=8 col=9-10 style=10 literal="("
+token line=8 col=10-15 style=8 literal="hello"
+token line=8 col=15-16 style=10 literal="("
+token line=8 col=16-25 style=2 literal=""Pydroid""
+token line=8 col=25-27 style=10 literal="))"
+token line=9 col=4-9 style=5 literal="print"
+token line=9 col=9-10 style=10 literal="("
+token line=9 col=10-27 style=2 literal=""Python version:""
+token line=9 col=27-28 style=10 literal=","
+token line=9 col=29-32 style=9 literal="sys"
+token line=9 col=32-33 style=10 literal="."
+token line=9 col=33-40 style=9 literal="version"
+token line=9 col=40-41 style=10 literal=")"
+[indent-guides]
+#0 raw=4-4 col=4 normalized=4-4
+#1 raw=8-9 col=4 normalized=8-9
+[fold-regions]
+#0 8-9
+suspectShiftCount=1/1
+[gutter-icons]
+line=4 icons=[2]
+logPath=/data/user/0/com.nanib.pydroid/files/logs/sweetline_analysis.log
+
+=== SweetLine Snapshot 2026-03-26 17:41:56.897 ===
+file=example.py, editorLines=10, contextTotalLines=10, visible=0-9, textChanges=0, guideOffset=0
+[document-lines]
+L0: import sys
+L1: 
+L2: 
+L3: def hello(name: str) -> str:
+L4:     return f"Hello, {name}"
+L5: 
+L6: 
+L7: if __name__ == "__main__":
+L8:     print(hello("Pydroid"))
+L9:     print("Python version:", sys.version)
+[highlight]
+lineCount=10
+token line=0 col=0-6 style=1 literal="import"
+token line=3 col=0-3 style=1 literal="def"
+token line=3 col=4-9 style=8 literal="hello"
+token line=3 col=9-10 style=10 literal="("
+token line=3 col=10-14 style=9 literal="name"
+token line=3 col=14-15 style=10 literal=":"
+token line=3 col=16-19 style=7 literal="str"
+token line=3 col=19-20 style=10 literal=")"
+token line=3 col=21-23 style=10 literal="->"
+token line=3 col=24-27 style=5 literal="str"
+token line=3 col=27-28 style=10 literal=":"
+token line=4 col=4-10 style=1 literal="return"
+token line=4 col=11-20 style=2 literal="f"Hello, "
+token line=4 col=20-26 style=11 literal="{name}"
+token line=4 col=26-27 style=2 literal="""
+token line=7 col=0-2 style=1 literal="if"
+token line=7 col=12-14 style=10 literal="=="
+token line=7 col=15-25 style=2 literal=""__main__""
+token line=7 col=25-26 style=10 literal=":"
+token line=8 col=4-9 style=5 literal="print"
+token line=8 col=9-10 style=10 literal="("
+token line=8 col=10-15 style=8 literal="hello"
+token line=8 col=15-16 style=10 literal="("
+token line=8 col=16-25 style=2 literal=""Pydroid""
+token line=8 col=25-27 style=10 literal="))"
+token line=9 col=4-9 style=5 literal="print"
+token line=9 col=9-10 style=10 literal="("
+token line=9 col=10-27 style=2 literal=""Python version:""
+token line=9 col=27-28 style=10 literal=","
+token line=9 col=29-32 style=9 literal="sys"
+token line=9 col=32-33 style=10 literal="."
+token line=9 col=33-40 style=9 literal="version"
+token line=9 col=40-41 style=10 literal=")"
+[indent-guides]
+#0 raw=4-4 col=4 normalized=4-4
+#1 raw=8-9 col=4 normalized=8-9
+[fold-regions]
+#0 8-9
+suspectShiftCount=1/1
+[gutter-icons]
+line=4 icons=[2]
+logPath=/data/user/0/com.nanib.pydroid/files/logs/sweetline_analysis.log
+
+=== SweetLine Snapshot 2026-03-26 17:46:35.263 ===
+file=example.py, editorLines=10, contextTotalLines=10, visible=0-2, textChanges=0, guideOffset=0
+[document-lines]
+L0: import sys
+L1: 
+L2: 
+L3: def hello(name: str) -> str:
+L4:     return f"Hello, {name}"
+L5: 
+L6: 
+L7: if __name__ == "__main__":
+L8:     print(hello("Pydroid"))
+L9:     print("Python version:", sys.version)
+[highlight]
+lineCount=10
+token line=0 col=0-6 style=1 literal="import"
+token line=3 col=0-3 style=1 literal="def"
+token line=3 col=4-9 style=8 literal="hello"
+token line=3 col=9-10 style=10 literal="("
+token line=3 col=10-14 style=9 literal="name"
+token line=3 col=14-15 style=10 literal=":"
+token line=3 col=16-19 style=7 literal="str"
+token line=3 col=19-20 style=10 literal=")"
+token line=3 col=21-23 style=10 literal="->"
+token line=3 col=24-27 style=5 literal="str"
+token line=3 col=27-28 style=10 literal=":"
+token line=4 col=4-10 style=1 literal="return"
+token line=4 col=11-20 style=2 literal="f"Hello, "
+token line=4 col=20-26 style=11 literal="{name}"
+token line=4 col=26-27 style=2 literal="""
+token line=7 col=0-2 style=1 literal="if"
+token line=7 col=12-14 style=10 literal="=="
+token line=7 col=15-25 style=2 literal=""__main__""
+token line=7 col=25-26 style=10 literal=":"
+token line=8 col=4-9 style=5 literal="print"
+token line=8 col=9-10 style=10 literal="("
+token line=8 col=10-15 style=8 literal="hello"
+token line=8 col=15-16 style=10 literal="("
+token line=8 col=16-25 style=2 literal=""Pydroid""
+token line=8 col=25-27 style=10 literal="))"
+token line=9 col=4-9 style=5 literal="print"
+token line=9 col=9-10 style=10 literal="("
+token line=9 col=10-27 style=2 literal=""Python version:""
+token line=9 col=27-28 style=10 literal=","
+token line=9 col=29-32 style=9 literal="sys"
+token line=9 col=32-33 style=10 literal="."
+token line=9 col=33-40 style=9 literal="version"
+token line=9 col=40-41 style=10 literal=")"
+[indent-guides]
+#0 raw=4-4 col=4 normalized=4-4
+#1 raw=8-9 col=4 normalized=8-9
+[fold-regions]
+#0 3-4
+#1 7-9
+suspectShiftCount=0/2
+[gutter-icons]
+logPath=/data/user/0/com.nanib.pydroid/files/logs/sweetline_analysis.log
+
+=== SweetLine Snapshot 2026-03-26 17:46:35.276 ===
+file=example.py, editorLines=10, contextTotalLines=10, visible=0-9, textChanges=0, guideOffset=0
+[document-lines]
+L0: import sys
+L1: 
+L2: 
+L3: def hello(name: str) -> str:
+L4:     return f"Hello, {name}"
+L5: 
+L6: 
+L7: if __name__ == "__main__":
+L8:     print(hello("Pydroid"))
+L9:     print("Python version:", sys.version)
+[highlight]
+lineCount=10
+token line=0 col=0-6 style=1 literal="import"
+token line=3 col=0-3 style=1 literal="def"
+token line=3 col=4-9 style=8 literal="hello"
+token line=3 col=9-10 style=10 literal="("
+token line=3 col=10-14 style=9 literal="name"
+token line=3 col=14-15 style=10 literal=":"
+token line=3 col=16-19 style=7 literal="str"
+token line=3 col=19-20 style=10 literal=")"
+token line=3 col=21-23 style=10 literal="->"
+token line=3 col=24-27 style=5 literal="str"
+token line=3 col=27-28 style=10 literal=":"
+token line=4 col=4-10 style=1 literal="return"
+token line=4 col=11-20 style=2 literal="f"Hello, "
+token line=4 col=20-26 style=11 literal="{name}"
+token line=4 col=26-27 style=2 literal="""
+token line=7 col=0-2 style=1 literal="if"
+token line=7 col=12-14 style=10 literal="=="
+token line=7 col=15-25 style=2 literal=""__main__""
+token line=7 col=25-26 style=10 literal=":"
+token line=8 col=4-9 style=5 literal="print"
+token line=8 col=9-10 style=10 literal="("
+token line=8 col=10-15 style=8 literal="hello"
+token line=8 col=15-16 style=10 literal="("
+token line=8 col=16-25 style=2 literal=""Pydroid""
+token line=8 col=25-27 style=10 literal="))"
+token line=9 col=4-9 style=5 literal="print"
+token line=9 col=9-10 style=10 literal="("
+token line=9 col=10-27 style=2 literal=""Python version:""
+token line=9 col=27-28 style=10 literal=","
+token line=9 col=29-32 style=9 literal="sys"
+token line=9 col=32-33 style=10 literal="."
+token line=9 col=33-40 style=9 literal="version"
+token line=9 col=40-41 style=10 literal=")"
+[indent-guides]
+#0 raw=4-4 col=4 normalized=4-4
+#1 raw=8-9 col=4 normalized=8-9
+[fold-regions]
+#0 3-4
+#1 7-9
+suspectShiftCount=0/2
+[gutter-icons]
+line=4 icons=[2]
+logPath=/data/user/0/com.nanib.pydroid/files/logs/sweetline_analysis.log

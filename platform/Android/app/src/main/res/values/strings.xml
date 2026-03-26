@@ -1,3 +1,24 @@
 <resources>
-    <string name="app_name">Android</string>
+    <string name="app_name">Pydroid</string>
+    <string name="status_ready">Ready</string>
+    <string name="action_undo">Undo</string>
+    <string name="action_redo">Redo</string>
+    <string name="action_theme">Switch theme</string>
+    <string name="action_wrap">Wrap mode</string>
+    <string name="action_run_python">Run Python</string>
+    <string name="action_python_tools">Python tools</string>
+    <string name="title_python_tools">Python Package Tools</string>
+    <string name="action_back">Back</string>
+    <string name="action_close_output">Close output</string>
+    <string name="action_toggle_console">Toggle console</string>
+    <string name="title_console">Python Console</string>
+    <string name="hint_console_command">Type command and press Enter</string>
+    <string name="action_send_command">Send command</string>
+
+    <string name="action_install_tar">Install .tar.gz</string>
+    <string name="action_import_dir">Import extracted dir</string>
+    <string name="action_import_get_pip">Import get-pip.py</string>
+    <string name="action_pip_install">pip install</string>
+    <string name="hint_pip_requirement">Requirement (e.g. requests)</string>
+    <string name="hint_pip_index">Optional pip index URL</string>
 </resources>

@@ -3,17 +3,29 @@ plugins {
 }
 
 android {
-    namespace 'com.qiplat.sweeteditor.demo'
+    namespace 'com.nanib.pydroid'
     compileSdk 34
+    ndkPath '/data/data/com.termux/files/usr/share/ndk/android-ndk-r29b'
 
     defaultConfig {
-        applicationId "com.qiplat.sweeteditor.demo"
+        applicationId "com.nanib.pydroid"
         minSdk 21
         targetSdk 34
         versionCode 1
         versionName "1.0"
+        ndkVersion '29.0.13113456'
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+
+        ndk {
+            abiFilters "arm64-v8a", "x86_64"
+        }
+
+        externalNativeBuild {
+            cmake {
+                arguments "-DANDROID_HOST_TAG=linux-aarch64"
+            }
+        }
     }
 
     buildTypes {
@@ -44,11 +56,19 @@ android {
             assets.srcDirs = ['../../_res']
         }
     }
+
+    externalNativeBuild {
+        cmake {
+            path file("src/main/cpp/CMakeLists.txt")
+        }
+    }
 }
 
 dependencies {
     implementation project(":sweeteditor")
     implementation 'com.qiplat:sweetline:1.1.1'
+    implementation 'androidx.documentfile:documentfile:1.1.0'
+    implementation 'org.apache.commons:commons-compress:1.28.0'
     implementation libs.activity
     implementation libs.constraintlayout
     implementation libs.appcompat

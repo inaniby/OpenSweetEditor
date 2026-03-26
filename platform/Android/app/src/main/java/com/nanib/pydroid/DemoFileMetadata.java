@@ -1,4 +1,4 @@
-package com.qiplat.sweeteditor.demo;
+package com.nanib.pydroid;
 
 import androidx.annotation.NonNull;
 

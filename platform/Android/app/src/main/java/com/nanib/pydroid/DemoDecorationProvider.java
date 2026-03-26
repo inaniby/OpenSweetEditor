@@ -1,10 +1,7 @@
-package com.qiplat.sweeteditor.demo;
-
+package com.nanib.pydroid;
 import android.content.Context;
 import android.util.SparseArray;
-
 import androidx.annotation.NonNull;
-
 import com.qiplat.sweeteditor.EditorTheme;
 import com.qiplat.sweeteditor.SweetEditor;
 import com.qiplat.sweeteditor.core.Document;
@@ -14,7 +11,6 @@ import com.qiplat.sweeteditor.core.adornment.FoldRegion;
 import com.qiplat.sweeteditor.core.adornment.GutterIcon;
 import com.qiplat.sweeteditor.core.adornment.IndentGuide;
 import com.qiplat.sweeteditor.core.adornment.InlayHint;
-
 import com.qiplat.sweeteditor.core.adornment.SeparatorGuide;
 import com.qiplat.sweeteditor.core.adornment.StyleSpan;
 import com.qiplat.sweeteditor.core.foundation.TextPosition;
@@ -33,7 +29,6 @@ import com.qiplat.sweetline.IndentGuideResult;
 import com.qiplat.sweetline.LineHighlight;
 import com.qiplat.sweetline.SyntaxCompileError;
 import com.qiplat.sweetline.TokenSpan;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -46,7 +41,6 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-
 /**
  * Demo DecorationProvider:
  * 1) sync push InlayHint
@@ -54,28 +48,24 @@ import java.util.concurrent.Executors;
  * 3) async push simulated diagnostics
  */
 public class DemoDecorationProvider implements DecorationProvider {
-
     private static final String SYNTAX_ASSET_DIR = "syntaxes";
     private static final String DEFAULT_ANALYSIS_FILE_NAME = "sample.cpp";
     private static final int STYLE_COLOR = EditorTheme.STYLE_USER_BASE + 1;
     private static final int MAX_DYNAMIC_DIAGNOSTICS = 8;
-
     public static final int ICON_TYPE = 1;
     public static final int ICON_AT = 2;
-
     private final SweetEditor editor;
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
-
+    private final SweetLineAnalysisLogger analysisLogger;
     private static HighlightEngine highlightEngine;
     private DocumentAnalyzer documentAnalyzer;
     private DocumentHighlight cacheHighlight;
     @NonNull
     private String analyzedFileName = DEFAULT_ANALYSIS_FILE_NAME;
-
     public DemoDecorationProvider(@NonNull SweetEditor editor) {
         this.editor = editor;
+        this.analysisLogger = new SweetLineAnalysisLogger(editor.getContext());
     }
-
     @NonNull
     @Override
     public EnumSet<DecorationType> getCapabilities() {
@@ -87,30 +77,24 @@ public class DemoDecorationProvider implements DecorationProvider {
                 DecorationType.DIAGNOSTIC
         );
     }
-
     @Override
     public void provideDecorations(@NonNull DecorationContext context, @NonNull DecorationReceiver receiver) {
         SparseArray<List<DiagnosticItem>> diagnostics = new SparseArray<>();
-
         DecorationResult sweetLineResult = buildSweetLineDecorationResult(context, diagnostics);
         receiver.accept(sweetLineResult);
-
         executor.submit(() -> {
             try {
                 Thread.sleep(500);
             } catch (InterruptedException ignored) {
             }
-
             if (receiver.isCancelled()) {
                 return;
             }
-
             receiver.accept(new DecorationResult.Builder()
                     .diagnostics(diagnostics, DecorationResult.ApplyMode.REPLACE_ALL)
                     .build());
         });
     }
-
     @NonNull
     private DecorationResult buildSweetLineDecorationResult(@NonNull DecorationContext context,
                                                             @NonNull SparseArray<List<DiagnosticItem>> dynamicDiagnostics) {
@@ -127,7 +111,8 @@ public class DemoDecorationProvider implements DecorationProvider {
         Set<String> seenDiagnostics = new HashSet<>();
         int[] diagnosticCount = new int[]{0};
         TokenRangeInfo firstKeywordRange = null;
-
+        String currentFileName = resolveCurrentFileName(context);
+        boolean isPythonFile = currentFileName.toLowerCase(Locale.ROOT).endsWith(".py");
         Document editorDocument = editor.getDocument();
         if (editorDocument == null) {
             return new DecorationResult.Builder()
@@ -140,8 +125,6 @@ public class DemoDecorationProvider implements DecorationProvider {
                     .build();
         }
         String text = editorDocument.getText();
-        String currentFileName = resolveCurrentFileName(context);
-
         boolean fileChanged = !currentFileName.equals(analyzedFileName);
         if (cacheHighlight == null || documentAnalyzer == null || fileChanged) {
             documentAnalyzer = highlightEngine.loadDocument(
@@ -156,8 +139,10 @@ public class DemoDecorationProvider implements DecorationProvider {
                 );
             }
         }
+        IndentGuideResult guideResult = null;
+        int guideLineOffset = 0;
         if (cacheHighlight == null || cacheHighlight.lines == null || cacheHighlight.lines.isEmpty()) {
-            return new DecorationResult.Builder()
+            DecorationResult emptyResult = new DecorationResult.Builder()
                     .syntaxSpans(syntaxSpans, DecorationResult.ApplyMode.MERGE)
                     .inlayHints(colorInlayHints, DecorationResult.ApplyMode.REPLACE_RANGE)
                     .indentGuides(indentGuides, DecorationResult.ApplyMode.REPLACE_ALL)
@@ -165,6 +150,19 @@ public class DemoDecorationProvider implements DecorationProvider {
                     .separatorGuides(separatorGuides, DecorationResult.ApplyMode.REPLACE_ALL)
                     .gutterIcons(gutterIcons, DecorationResult.ApplyMode.REPLACE_ALL)
                     .build();
+            if (isPythonFile) {
+                analysisLogger.logIfPython(
+                        currentFileName,
+                        context,
+                        editorDocument,
+                        cacheHighlight,
+                        guideResult,
+                        guideLineOffset,
+                        foldRegions,
+                        gutterIcons
+                );
+            }
+            return emptyResult;
         }
         int renderStartLine = Math.max(0, context.visibleStartLine);
         int maxLine = Math.min(context.visibleEndLine, cacheHighlight.lines.size() - 1);
@@ -187,32 +185,49 @@ public class DemoDecorationProvider implements DecorationProvider {
             }
         }
         appendDiagnosticFallbackIfNeeded(dynamicDiagnostics, seenDiagnostics, diagnosticCount, firstKeywordRange);
-
         // Only analyze indent guides under 2048 lines
-        if (context.totalLineCount < 2048) {
-            IndentGuideResult guideResult = documentAnalyzer.analyzeIndentGuides();
+        if (context.totalLineCount < 2048 && documentAnalyzer != null) {
+            guideResult = documentAnalyzer.analyzeIndentGuides();
             if (guideResult != null && guideResult.guideLines != null) {
+                guideLineOffset = isPythonFile ? detectGuideLineOffset(guideResult, context.totalLineCount) : 0;
                 Set<String> seenFolds = new HashSet<>();
                 for (IndentGuideLine guide : guideResult.guideLines) {
-                    if (guide == null) continue;
-                    if (guide.endLine < guide.startLine) continue;
-
+                    if (guide == null) {
+                        continue;
+                    }
+                    int startLine = guide.startLine - guideLineOffset;
+                    int endLine = guide.endLine - guideLineOffset;
+                    if (endLine < startLine) {
+                        continue;
+                    }
+                    if (startLine < 0 || startLine >= context.totalLineCount) {
+                        continue;
+                    }
+                    if (endLine < 0) {
+                        continue;
+                    }
+                    if (endLine >= context.totalLineCount) {
+                        endLine = context.totalLineCount - 1;
+                    }
                     int column = Math.max(guide.column, 0);
                     indentGuides.add(new IndentGuide(
-                            new TextPosition(guide.startLine, column),
-                            new TextPosition(guide.endLine, column)
+                            new TextPosition(startLine, column),
+                            new TextPosition(endLine, column)
                     ));
-
-                    if (guide.endLine <= guide.startLine) continue;
-                    String key = guide.startLine + ":" + guide.endLine;
+                    int foldStartLine = isPythonFile
+                            ? adjustPythonFoldStart(editorDocument, startLine, column)
+                            : startLine;
+                    if (endLine <= foldStartLine) {
+                        continue;
+                    }
+                    String key = foldStartLine + ":" + endLine;
                     if (seenFolds.add(key)) {
-                        foldRegions.add(new FoldRegion(guide.startLine, guide.endLine));
+                        foldRegions.add(new FoldRegion(foldStartLine, endLine));
                     }
                 }
             }
         }
-
-        return new DecorationResult.Builder()
+        DecorationResult result = new DecorationResult.Builder()
                 .syntaxSpans(syntaxSpans, DecorationResult.ApplyMode.MERGE)
                 .inlayHints(colorInlayHints, DecorationResult.ApplyMode.REPLACE_RANGE)
                 .indentGuides(indentGuides, DecorationResult.ApplyMode.REPLACE_ALL)
@@ -220,8 +235,20 @@ public class DemoDecorationProvider implements DecorationProvider {
                 .separatorGuides(separatorGuides, DecorationResult.ApplyMode.REPLACE_ALL)
                 .gutterIcons(gutterIcons, DecorationResult.ApplyMode.REPLACE_ALL)
                 .build();
+        if (isPythonFile) {
+            analysisLogger.logIfPython(
+                    currentFileName,
+                    context,
+                    editorDocument,
+                    cacheHighlight,
+                    guideResult,
+                    guideLineOffset,
+                    foldRegions,
+                    gutterIcons
+            );
+        }
+        return result;
     }
-
     private TokenRangeInfo appendDynamicDemoDecorations(@NonNull SparseArray<List<DiagnosticItem>> diagnostics,
                                                         @NonNull Set<String> seenDiagnostics,
                                                         @NonNull int[] diagnosticCount,
@@ -236,14 +263,12 @@ public class DemoDecorationProvider implements DecorationProvider {
         if (literal.isEmpty()) {
             return firstKeywordRange;
         }
-
         if (token.styleId == EditorTheme.STYLE_KEYWORD) {
             if (firstKeywordRange == null) {
                 firstKeywordRange = range;
             }
             return firstKeywordRange;
         }
-
         if (token.styleId == EditorTheme.STYLE_COMMENT) {
             String upper = literal.toUpperCase(Locale.ROOT);
             int fixmeIndex = upper.indexOf("FIXME");
@@ -258,18 +283,15 @@ public class DemoDecorationProvider implements DecorationProvider {
             }
             return firstKeywordRange;
         }
-
         if (token.styleId == STYLE_COLOR) {
             return firstKeywordRange;
         }
-
         if (token.styleId == EditorTheme.STYLE_ANNOTATION) {
             appendDiagnostic(diagnostics, seenDiagnostics, diagnosticCount,
                     range.line, range.startColumn, range.length(), 3, 0);
         }
         return firstKeywordRange;
     }
-
     private static void appendDiagnostic(@NonNull SparseArray<List<DiagnosticItem>> diagnostics,
                                          @NonNull Set<String> seenDiagnostics,
                                          @NonNull int[] diagnosticCount,
@@ -296,7 +318,6 @@ public class DemoDecorationProvider implements DecorationProvider {
         lineItems.add(new DiagnosticItem(column, length, severity, color));
         diagnosticCount[0]++;
     }
-
     private static void appendDiagnosticFallbackIfNeeded(@NonNull SparseArray<List<DiagnosticItem>> diagnostics,
                                                          @NonNull Set<String> seenDiagnostics,
                                                          @NonNull int[] diagnosticCount,
@@ -311,12 +332,10 @@ public class DemoDecorationProvider implements DecorationProvider {
                 3,
                 0);
     }
-
     @NonNull
     private static String buildAnalysisUri(@NonNull String fileName) {
         return "file:///" + fileName;
     }
-
     @NonNull
     private static String resolveCurrentFileName(@NonNull DecorationContext context) {
         if (context.editorMetadata instanceof DemoFileMetadata) {
@@ -327,7 +346,6 @@ public class DemoDecorationProvider implements DecorationProvider {
         }
         return DEFAULT_ANALYSIS_FILE_NAME;
     }
-
     private void appendStyleSpan(@NonNull SparseArray<List<StyleSpan>> syntaxSpans,
                                  TokenSpan token) {
         if (token.styleId <= 0) {
@@ -337,7 +355,6 @@ public class DemoDecorationProvider implements DecorationProvider {
         if (range == null) {
             return;
         }
-
         List<StyleSpan> lineSpans = syntaxSpans.get(range.line);
         if (lineSpans == null) {
             lineSpans = new ArrayList<>();
@@ -345,7 +362,6 @@ public class DemoDecorationProvider implements DecorationProvider {
         }
         lineSpans.add(new StyleSpan(range.startColumn, range.length(), token.styleId));
     }
-
     private void appendColorInlayHint(@NonNull SparseArray<List<InlayHint>> colorHints,
                                       @NonNull Set<String> seenHints,
                                       @NonNull Document editorDocument,
@@ -362,12 +378,10 @@ public class DemoDecorationProvider implements DecorationProvider {
         if (color == null) {
             return;
         }
-
         String key = range.line + ":" + range.startColumn + ":" + literal;
         if (!seenHints.add(key)) {
             return;
         }
-
         List<InlayHint> lineHints = colorHints.get(range.line);
         if (lineHints == null) {
             lineHints = new ArrayList<>();
@@ -375,7 +389,6 @@ public class DemoDecorationProvider implements DecorationProvider {
         }
         lineHints.add(InlayHint.color(range.startColumn, color));
     }
-
     private Integer parseColorLiteral(@NonNull String literal) {
         if (literal.length() > 2
                 && literal.charAt(0) == '0'
@@ -389,7 +402,6 @@ public class DemoDecorationProvider implements DecorationProvider {
         }
         return null;
     }
-
     private void appendTextInlayHint(@NonNull SparseArray<List<InlayHint>> colorHints,
                                      @NonNull Document editorDocument, TokenSpan token) {
         if (token.styleId != EditorTheme.STYLE_KEYWORD) {
@@ -413,7 +425,6 @@ public class DemoDecorationProvider implements DecorationProvider {
             lineHints.add(InlayHint.text(range.endColumn + 1, "condition: "));
         }
     }
-
     private void appendSeparator(@NonNull List<SeparatorGuide> separatorGuides,
                                  @NonNull Document editorDocument, TokenSpan token) {
         if (token.styleId != EditorTheme.STYLE_COMMENT) {
@@ -458,7 +469,6 @@ public class DemoDecorationProvider implements DecorationProvider {
             separatorGuides.add(separatorGuide);
         }
     }
-
     private void appendGutterIcons(@NonNull SparseArray<List<GutterIcon>> gutterIcons,
                                    @NonNull Document editorDocument, TokenSpan token) {
         if (token.styleId != EditorTheme.STYLE_KEYWORD && token.styleId != EditorTheme.STYLE_ANNOTATION) {
@@ -487,23 +497,75 @@ public class DemoDecorationProvider implements DecorationProvider {
             lineIcons.add(new GutterIcon(ICON_AT));
         }
     }
+    private static int detectGuideLineOffset( IndentGuideResult guideResult, int totalLineCount) {
+        if (guideResult == null || guideResult.guideLines == null || guideResult.guideLines.isEmpty()) {
+            return 0;
+        }
+        boolean hasOutOfRange = false;
+        for (IndentGuideLine guide : guideResult.guideLines) {
+            if (guide == null) continue;
+            if (guide.startLine >= totalLineCount || guide.endLine >= totalLineCount) {
+                hasOutOfRange = true;
+                break;
+            }
+        }
+        return hasOutOfRange ? 1 : 0;
+    }
+
+    private static int adjustPythonFoldStart(@NonNull Document editorDocument, int startLine, int guideColumn) {
+        if (startLine <= 0) {
+            return startLine;
+        }
+        int line = startLine - 1;
+        while (line >= 0) {
+            String text = editorDocument.getLineText(line);
+            if (text == null) {
+                break;
+            }
+            String trimmed = text.trim();
+            if (trimmed.isEmpty()) {
+                line--;
+                continue;
+            }
+            int indent = countLeadingColumns(text);
+            if (trimmed.endsWith(":") && indent < guideColumn) {
+                return line;
+            }
+            break;
+        }
+        return startLine;
+    }
+
+    private static int countLeadingColumns(@NonNull String lineText) {
+        int count = 0;
+        for (int i = 0; i < lineText.length(); i++) {
+            char ch = lineText.charAt(i);
+            if (ch == ' ') {
+                count++;
+                continue;
+            }
+            if (ch == '	') {
+                count += 4;
+                continue;
+            }
+            break;
+        }
+        return count;
+    }
 
     private static final class TokenRangeInfo {
         final int line;
         final int startColumn;
         final int endColumn;
-
         TokenRangeInfo(int line, int startColumn, int endColumn) {
             this.line = line;
             this.startColumn = startColumn;
             this.endColumn = endColumn;
         }
-
         int length() {
             return endColumn - startColumn;
         }
     }
-
     private static TokenRangeInfo extractSingleLineTokenRange(TokenSpan token) {
         if (token == null || token.range == null || token.range.start == null || token.range.end == null) {
             return null;
@@ -517,7 +579,6 @@ public class DemoDecorationProvider implements DecorationProvider {
         }
         return new TokenRangeInfo(startLine, startColumn, endColumn);
     }
-
     private static String getTokenLiteral(@NonNull Document editorDocument, @NonNull TokenRangeInfo range) {
         String lineText = editorDocument.getLineText(range.line);
         if (lineText == null || range.endColumn > lineText.length()) {
@@ -525,16 +586,13 @@ public class DemoDecorationProvider implements DecorationProvider {
         }
         return lineText.substring(range.startColumn, range.endColumn);
     }
-
     public static boolean ensureSweetLineReady(Context context) throws IOException {
         if (highlightEngine != null) {
             return true;
         }
-
         HighlightConfig config = new HighlightConfig(false, false, 4);
         HighlightEngine engine = new HighlightEngine(config);
         registerDemoStyleMap(engine);
-
         List<String> syntaxAssets = collectSyntaxAssetFiles(context, SYNTAX_ASSET_DIR);
         if (syntaxAssets.isEmpty()) {
             throw new IOException("No syntax files found under assets/" + SYNTAX_ASSET_DIR);
@@ -547,11 +605,9 @@ public class DemoDecorationProvider implements DecorationProvider {
                 throw new RuntimeException("Failed to compile syntax asset: " + assetPath, e);
             }
         }
-
         highlightEngine = engine;
         return true;
     }
-
     @NonNull
     private static List<String> collectSyntaxAssetFiles(@NonNull Context context, @NonNull String assetDir) throws IOException {
         List<String> files = new ArrayList<>();
@@ -559,7 +615,6 @@ public class DemoDecorationProvider implements DecorationProvider {
         files.sort(String::compareToIgnoreCase);
         return files;
     }
-
     private static void collectSyntaxAssetFilesRecursive(@NonNull Context context,
                                                          @NonNull String assetPath,
                                                          @NonNull List<String> outFiles) throws IOException {
@@ -578,7 +633,6 @@ public class DemoDecorationProvider implements DecorationProvider {
             collectSyntaxAssetFilesRecursive(context, childPath, outFiles);
         }
     }
-
     private static void registerDemoStyleMap(@NonNull HighlightEngine engine) {
         engine.registerStyleName("keyword", EditorTheme.STYLE_KEYWORD);
         engine.registerStyleName("type", EditorTheme.STYLE_TYPE);
@@ -596,7 +650,6 @@ public class DemoDecorationProvider implements DecorationProvider {
         engine.registerStyleName("annotation", EditorTheme.STYLE_ANNOTATION);
         engine.registerStyleName("color", STYLE_COLOR);
     }
-
     @NonNull
     private static String loadAssetText(Context context, String assetPath) throws IOException {
         StringBuilder builder = new StringBuilder();
@@ -612,7 +665,6 @@ public class DemoDecorationProvider implements DecorationProvider {
         }
         return builder.toString();
     }
-
     private static com.qiplat.sweetline.TextRange convertAsSLTextRange(TextRange seRange) {
         com.qiplat.sweetline.TextPosition slStart = new com.qiplat.sweetline.TextPosition(seRange.start.line, seRange.start.column);
         com.qiplat.sweetline.TextPosition slEnd = new com.qiplat.sweetline.TextPosition(seRange.end.line, seRange.end.column);
