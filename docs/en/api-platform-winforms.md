@@ -5,7 +5,10 @@ This document maps to the current WinForms implementation:
 - Control layer: `platform/WinForms/SweetEditor/EditorControl.cs`
 - Bridge layer: `platform/WinForms/SweetEditor/EditorCore.cs`
 - Protocol decode: `platform/WinForms/SweetEditor/EditorProtocol.cs`
-- Extension/Provider: `platform/WinForms/SweetEditor/EditorExtension.cs`
+- Extension/Provider:
+  - `platform/WinForms/SweetEditor/EditorCompletion.cs`
+  - `platform/WinForms/SweetEditor/EditorDecoration.cs`
+  - `platform/WinForms/SweetEditor/EditorNewLine.cs`
 - Performance debug: `platform/WinForms/SweetEditor/Perf.cs`
 - Demo: `platform/WinForms/Demo/Form1.cs`
 
@@ -16,6 +19,68 @@ This document maps to the current WinForms implementation:
 - The current bridge protocol is binary payload.
 - `EditorControl` handles input, drawing, event publishing, and provider management.
 - `Document` creation and line-text query use UTF-16 boundary; text fields in render model and edit results are currently decoded as UTF-8.
+
+## Quick Start
+
+### Environment Requirements (current repository setup)
+
+- .NET SDK: `8.0+`
+- Runtime platform: Windows x64
+
+### Run the WinForms Demo in this repository
+
+```powershell
+cd platform/WinForms
+dotnet build .\WinForms.sln -c Release
+dotnet run --project .\Demo\Demo.csproj -c Release
+```
+
+### Integrate into an existing WinForms app via NuGet
+
+Recommended: install from NuGet directly:
+
+```powershell
+dotnet add package SweetEditor --version 1.0.3
+```
+
+Or add this in your project file:
+
+```xml
+<ItemGroup>
+  <PackageReference Include="SweetEditor" Version="1.0.3" />
+</ItemGroup>
+```
+
+> Use the latest published version when integrating; `1.0.3` is the current example in this document.
+
+### Minimal Integration Example
+
+```csharp
+using System.Windows.Forms;
+using SweetEditor;
+
+public sealed class MainForm : Form
+{
+    public MainForm()
+    {
+        var editor = new EditorControl
+        {
+            Dock = DockStyle.Fill
+        };
+        Controls.Add(editor);
+
+        editor.ApplyTheme(EditorTheme.Dark());
+        editor.LoadDocument(new Document("Hello, SweetEditor!"));
+        editor.Settings.SetWrapMode(WrapMode.WORD_BREAK);
+    }
+}
+```
+
+### Notes
+
+- The NuGet package includes native runtime:
+  `runtimes/win-x64/native/sweeteditor.dll`
+- No manual `DllImport` setup or manual native file copy is required in normal NuGet restore flow.
 
 ## Public Control Layer: `EditorControl`
 

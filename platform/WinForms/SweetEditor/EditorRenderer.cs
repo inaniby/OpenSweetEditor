@@ -269,6 +269,7 @@ namespace SweetEditor {
 		}
 
 		private void DrawLineNumbers(Graphics g, EditorRenderModel model) {
+			if (!model.GutterVisible) return;
 			List<VisualLine> lines = model.VisualLines;
 			if (lines == null) return;
 			List<GutterIconRenderItem>? gutterIcons = model.GutterIcons;
@@ -510,18 +511,18 @@ namespace SweetEditor {
 					using (var bgBrush = new SolidBrush(currentTheme.InlayHintBgColor)) {
 						DrawRoundedRect(g, bgBrush, bgLeft, bgTop, bgWidth, bgHeight, radius);
 					}
-						if (visualRun.IconId > 0 && editorIconProvider != null) {
-							float iconSize = Math.Min(bgWidth, bgHeight);
-							float iconLeft = bgLeft + (bgWidth - iconSize) * 0.5f;
-							float iconTop2 = bgTop + (bgHeight - iconSize) * 0.5f;
-							DrawGutterIcon(g, new GutterIconRenderItem {
-								LogicalLine = -1,
-								IconId = visualRun.IconId,
-								Origin = new PointF(iconLeft, iconTop2),
-								Width = iconSize,
-								Height = iconSize,
-							});
-						} else if (hasText) {
+					if (visualRun.IconId > 0 && editorIconProvider != null) {
+						float iconSize = Math.Min(bgWidth, bgHeight);
+						float iconLeft = bgLeft + (bgWidth - iconSize) * 0.5f;
+						float iconTop2 = bgTop + (bgHeight - iconSize) * 0.5f;
+						DrawGutterIcon(g, new GutterIconRenderItem {
+							LogicalLine = -1,
+							IconId = visualRun.IconId,
+							Origin = new PointF(iconLeft, iconTop2),
+							Width = iconSize,
+							Height = iconSize,
+						});
+					} else if (hasText) {
 						float textX = visualRun.X + mgn + visualRun.Padding;
 						int inlayW = Math.Max(1, (int)Math.Ceiling(visualRun.Width - mgn * 2 - visualRun.Padding * 2));
 						inlayW = Math.Max(inlayW, measuredSize.Width);

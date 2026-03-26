@@ -21,8 +21,8 @@ namespace {
   EditorCore makeEditor(const U8String& text,
                         const Viewport& viewport,
                         WrapMode wrap_mode = WrapMode::NONE) {
-    EditorConfig config;
-    EditorCore editor(config, makePtr<FixedWidthTextMeasurer>(10.0f));
+    EditorOptions options;
+    EditorCore editor(makePtr<FixedWidthTextMeasurer>(10.0f), options);
     editor.loadDocument(makePtr<LineArrayDocument>(text));
     editor.setViewport(viewport);
     editor.setWrapMode(wrap_mode);
@@ -87,8 +87,8 @@ TEST_CASE("Performance baseline: hitTest mapping on large wrapped layout") {
 }
 
 TEST_CASE("Performance baseline: render model with guide and diagnostic decorations") {
-  EditorConfig config;
-  EditorCore editor(config, makePtr<FixedWidthTextMeasurer>(10.0f));
+  EditorOptions options;
+  EditorCore editor(makePtr<FixedWidthTextMeasurer>(10.0f), options);
   editor.loadDocument(makePtr<LineArrayDocument>(makeRepeatedLines(800, "    if (value > 0) return value;")));
   editor.setViewport({240, 220});
 

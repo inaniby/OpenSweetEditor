@@ -53,10 +53,10 @@ public class SweetEditor extends JPanel {
     private Timer cursorBlinkTimer;
     private boolean cursorVisible = true;
 
-    // Edge-scroll timer for auto-scrolling during mouse drag selection
-    private static final int EDGE_SCROLL_INTERVAL_MS = 16;
-    private Timer edgeScrollTimer;
-    private boolean edgeScrollActive = false;
+    // Unified animation timer: drives edge-scroll, fling, etc. at ~16ms
+    private static final int ANIMATION_INTERVAL_MS = 16;
+    private Timer animationTimer;
+    private boolean animationActive = false;
 
     // Event bus
     private EditorSettings settings;
@@ -91,16 +91,15 @@ public class SweetEditor extends JPanel {
         settings = new EditorSettings(this);
         settings.setContentStartPadding(dpToPx(DEFAULT_CONTENT_START_PADDING_DP));
 
-        for (var entry : currentTheme.textStyles.entrySet()) {
-            TextStyle v = entry.getValue();
-            editorCore.registerTextStyle(entry.getKey(), v.color, v.backgroundColor, v.fontStyle);
+        if (currentTheme != null && !currentTheme.textStyles.isEmpty()) {
+            editorCore.registerBatchTextStyles(currentTheme.textStyles);
         }
 
         setBackground(currentTheme.backgroundColor);
         setFont(renderer.getRegularFont());
         setupEventListeners();
         setupCursorBlink();
-        setupEdgeScrollTimer();
+        setupAnimationTimer();
         enableInputMethods(true);
     }
 
@@ -140,9 +139,8 @@ public class SweetEditor extends JPanel {
         this.currentTheme = theme;
         renderer.applyTheme(theme);
         setBackground(theme.backgroundColor);
-        for (var entry : theme.textStyles.entrySet()) {
-            TextStyle v = entry.getValue();
-            editorCore.registerTextStyle(entry.getKey(), v.color, v.backgroundColor, v.fontStyle);
+        if (theme != null && !theme.textStyles.isEmpty()) {
+            editorCore.registerBatchTextStyles(theme.textStyles);
         }
         if (completionPopupController != null) {
             completionPopupController.applyTheme(theme);
@@ -279,8 +277,13 @@ public class SweetEditor extends JPanel {
 
     // -------------------- Style Registration + Highlight Spans --------------------
 
-    public void registerTextStyle(int styleId, int color, int bgColor, int fontStyle) { editorCore.registerTextStyle(styleId, color, bgColor, fontStyle); }
-    public void registerTextStyle(int styleId, int color, int fontStyle) { editorCore.registerTextStyle(styleId, color, fontStyle); }
+    public void registerTextStyle(int styleId, int color, int bgColor, int fontStyle) {
+        editorCore.registerTextStyle(styleId, color, bgColor, fontStyle);
+    }
+    public void registerTextStyle(int styleId, int color, int fontStyle) {
+        editorCore.registerTextStyle(styleId, color, fontStyle);
+    }
+    public void registerBatchTextStyles(Map<Integer, ? extends TextStyle> textStyles) { editorCore.registerBatchTextStyles(textStyles); }
     public void setLineSpans(int line, int layer, List<? extends StyleSpan> spans) { editorCore.setLineSpans(line, layer, spans); }
     public void setBatchLineSpans(int layer, Map<Integer, ? extends List<? extends StyleSpan>> spansByLine) { editorCore.setBatchLineSpans(layer, spansByLine); }
 
@@ -678,7 +681,7 @@ public class SweetEditor extends JPanel {
         flush();
         if (result != null) {
             fireGestureEvents(result, new Point((int) x, (int) y));
-            updateEdgeScrollTimer(result.needsEdgeScroll);
+            updateAnimationTimer(result.needsAnimation);
         }
     }
 
@@ -879,31 +882,29 @@ public class SweetEditor extends JPanel {
         }
     }
 
-    // ===================== Edge Scroll =====================
-
-    private void setupEdgeScrollTimer() {
-        edgeScrollTimer = new Timer(EDGE_SCROLL_INTERVAL_MS, e -> {
-            if (!edgeScrollActive) return;
-            GestureResult result = editorCore.tickEdgeScroll();
+    private void setupAnimationTimer() {
+        animationTimer = new Timer(ANIMATION_INTERVAL_MS, e -> {
+            if (!animationActive) return;
+            GestureResult result = editorCore.tickAnimations();
             if (result != null) {
                 fireGestureEvents(result, null);
             }
             flush();
-            if (result == null || !result.needsEdgeScroll) {
-                edgeScrollActive = false;
-                edgeScrollTimer.stop();
+            if (result == null || !result.needsAnimation) {
+                animationActive = false;
+                animationTimer.stop();
             }
         });
-        edgeScrollTimer.setRepeats(true);
+        animationTimer.setRepeats(true);
     }
 
-    private void updateEdgeScrollTimer(boolean needsEdgeScroll) {
-        if (needsEdgeScroll && !edgeScrollActive) {
-            edgeScrollActive = true;
-            edgeScrollTimer.start();
-        } else if (!needsEdgeScroll && edgeScrollActive) {
-            edgeScrollActive = false;
-            edgeScrollTimer.stop();
+    private void updateAnimationTimer(boolean needsAnimation) {
+        if (needsAnimation && !animationActive) {
+            animationActive = true;
+            animationTimer.start();
+        } else if (!needsAnimation && animationActive) {
+            animationActive = false;
+            animationTimer.stop();
         }
     }
 
@@ -928,4 +929,3 @@ public class SweetEditor extends JPanel {
     }
 
 }
-

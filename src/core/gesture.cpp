@@ -392,6 +392,15 @@ namespace NS_SWEETEDITOR {
 
     out_dx = m_velocity_x_ * factor;
     out_dy = m_velocity_y_ * factor;
+
+    // Stop early when per-frame displacement is sub-pixel to prevent tail jitter
+    if (std::abs(out_dx) + std::abs(out_dy) < 0.5f) {
+      m_active_ = false;
+      out_dx = 0;
+      out_dy = 0;
+      return false;
+    }
+
     m_elapsed_ms_ += dt_ms;
 
     float current_vx = m_velocity_x_ * e1;

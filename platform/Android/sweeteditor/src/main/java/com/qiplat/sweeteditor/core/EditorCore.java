@@ -27,6 +27,7 @@ import com.qiplat.sweeteditor.core.adornment.TextStyle;
 
 import java.nio.ByteBuffer;
 import java.util.List;
+import java.util.Map;
 
 import dalvik.annotation.optimization.CriticalNative;
 import dalvik.annotation.optimization.FastNative;
@@ -183,6 +184,26 @@ public class EditorCore {
     }
 
     /**
+     * Sets whether gutter stays fixed during horizontal scroll.
+     *
+     * @param sticky true=gutter fixed (desktop style), false=gutter scrolls with content (mobile style)
+     */
+    public void setGutterSticky(boolean sticky) {
+        if (mNativeHandle == 0) return;
+        nativeSetGutterSticky(mNativeHandle, sticky);
+    }
+
+    /**
+     * Sets whether gutter area is visible.
+     *
+     * @param visible true=show gutter (line numbers, icons, fold arrows), false=hide entire gutter
+     */
+    public void setGutterVisible(boolean visible) {
+        if (mNativeHandle == 0) return;
+        nativeSetGutterVisible(mNativeHandle, visible);
+    }
+
+    /**
      * Sets current line render mode.
      *
      * @param mode 0=BACKGROUND(fill), 1=BORDER(stroke), 2=NONE(disabled)
@@ -255,6 +276,22 @@ public class EditorCore {
             return new GestureResult();
         }
         ByteBuffer data = nativeTickFling(mNativeHandle);
+        try {
+            return ProtocolDecoder.decodeGestureResult(data);
+        } finally {
+            nativeFreeBinaryData(data);
+        }
+    }
+
+    /**
+     * Unified animation tick: advances all active animations (edge-scroll, fling).
+     * Platform can use a single frame callback driven by GestureResult.needsAnimation.
+     */
+    public GestureResult tickAnimations() {
+        if (mNativeHandle == 0) {
+            return new GestureResult();
+        }
+        ByteBuffer data = nativeTickAnimations(mNativeHandle);
         try {
             return ProtocolDecoder.decodeGestureResult(data);
         } finally {
@@ -802,6 +839,27 @@ public class EditorCore {
      */
     public void registerTextStyle(int styleId, int color, int fontStyle) {
         registerTextStyle(styleId, color, 0, fontStyle);
+    }
+
+    /**
+     * Registers multiple highlight styles in one JNI call.
+     *
+     * @param stylesById style ID -> style mapping
+     */
+    public void registerBatchTextStyles(@Nullable Map<Integer, TextStyle> stylesById) {
+        if (mNativeHandle == 0 || stylesById == null || stylesById.isEmpty()) return;
+        ByteBuffer payload = ProtocolEncoder.packBatchTextStyles(stylesById);
+        registerBatchTextStyles(payload);
+    }
+
+    /**
+     * Registers multiple highlight styles in one JNI call (already encoded by caller).
+     *
+     * @param payload Packed ByteBuffer
+     */
+    public void registerBatchTextStyles(@Nullable ByteBuffer payload) {
+        if (mNativeHandle == 0 || payload == null) return;
+        nativeRegisterBatchTextStyles(mNativeHandle, payload, payload.remaining());
     }
 
     /**
@@ -1563,6 +1621,15 @@ public class EditorCore {
          * Whether the platform should start/continue a ~16ms timer calling tickFling().
          */
         public final boolean needsFling;
+        /**
+         * Whether any animation is still active; platform can use a single
+         * frame callback calling tickAnimations() instead of separate tick calls.
+         */
+        public final boolean needsAnimation;
+        /**
+         * Whether this gesture event is part of a selection handle drag.
+         */
+        public final boolean isHandleDrag;
 
         public GestureResult() {
             this.type = GestureType.UNDEFINED;
@@ -1576,12 +1643,15 @@ public class EditorCore {
             this.hitTarget = HitTarget.NONE;
             this.needsEdgeScroll = false;
             this.needsFling = false;
+            this.needsAnimation = false;
+            this.isHandleDrag = false;
         }
 
         public GestureResult(GestureType type, PointF tapPoint,
                              TextPosition cursorPosition, boolean hasSelection, TextRange selection,
                              float viewScrollX, float viewScrollY, float viewScale,
-                             HitTarget hitTarget, boolean needsEdgeScroll, boolean needsFling) {
+                             HitTarget hitTarget, boolean needsEdgeScroll, boolean needsFling,
+                             boolean needsAnimation, boolean isHandleDrag) {
             this.type = type;
             this.tapPoint = tapPoint;
             this.cursorPosition = cursorPosition;
@@ -1593,6 +1663,8 @@ public class EditorCore {
             this.hitTarget = hitTarget;
             this.needsEdgeScroll = needsEdgeScroll;
             this.needsFling = needsFling;
+            this.needsAnimation = needsAnimation;
+            this.isHandleDrag = isHandleDrag;
         }
 
         @NonNull
@@ -1670,6 +1742,12 @@ public class EditorCore {
     private static native void nativeSetShowSplitLine(long handle, boolean show);
 
     @CriticalNative
+    private static native void nativeSetGutterSticky(long handle, boolean sticky);
+
+    @CriticalNative
+    private static native void nativeSetGutterVisible(long handle, boolean visible);
+
+    @CriticalNative
     private static native void nativeSetCurrentLineRenderMode(long handle, int mode);
 
     @FastNative
@@ -1683,6 +1761,9 @@ public class EditorCore {
 
     @FastNative
     private static native ByteBuffer nativeTickFling(long handle);
+
+    @FastNative
+    private static native ByteBuffer nativeTickAnimations(long handle);
 
     @FastNative
     private static native ByteBuffer nativeHandleKeyEvent(long handle, int keyCode, String text, int modifiers);
@@ -1820,6 +1901,9 @@ public class EditorCore {
     private static native void nativeRegisterTextStyle(long handle, int styleId, int color, int backgroundColor, int fontStyle);
 
     @FastNative
+    private static native void nativeRegisterBatchTextStyles(long handle, ByteBuffer data, int size);
+
+    @FastNative
     private static native void nativeSetLineSpans(long handle, ByteBuffer data, int size);
 
     @FastNative
@@ -1943,4 +2027,3 @@ public class EditorCore {
         System.loadLibrary("sweeteditor");
     }
 }
-

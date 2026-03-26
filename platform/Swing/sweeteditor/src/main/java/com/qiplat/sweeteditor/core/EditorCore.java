@@ -122,6 +122,14 @@ public class EditorCore implements AutoCloseable {
         EditorNative.setShowSplitLine(nativeHandle, show);
     }
 
+    public void setGutterSticky(boolean sticky) {
+        EditorNative.setGutterSticky(nativeHandle, sticky);
+    }
+
+    public void setGutterVisible(boolean visible) {
+        EditorNative.setGutterVisible(nativeHandle, visible);
+    }
+
     public void setCurrentLineRenderMode(int mode) {
         EditorNative.setCurrentLineRenderMode(nativeHandle, mode);
     }
@@ -159,6 +167,16 @@ public class EditorCore implements AutoCloseable {
     /** Advances edge-scroll by one tick and returns an updated gesture result. */
     public GestureResult tickEdgeScroll() {
         EditorNative.NativeBinaryResult result = EditorNative.tickEdgeScroll(nativeHandle);
+        try {
+            return ProtocolDecoder.decodeGestureResult(result.asByteBuffer());
+        } finally {
+            result.free();
+        }
+    }
+
+    /** Unified animation tick: advances all active animations (edge-scroll, fling). */
+    public GestureResult tickAnimations() {
+        EditorNative.NativeBinaryResult result = EditorNative.tickAnimations(nativeHandle);
         try {
             return ProtocolDecoder.decodeGestureResult(result.asByteBuffer());
         } finally {
@@ -550,6 +568,15 @@ public class EditorCore implements AutoCloseable {
         registerTextStyle(styleId, color, 0, fontStyle);
     }
 
+    public void registerBatchTextStyles(Map<Integer, ? extends TextStyle> textStyles) {
+        if (textStyles == null || textStyles.isEmpty()) return;
+        byte[] payload = ProtocolEncoder.packBatchTextStyles(textStyles);
+        if (payload == null) return;
+        try (Arena tempArena = Arena.ofConfined()) {
+            EditorNative.registerBatchTextStyles(nativeHandle, payload, tempArena);
+        }
+    }
+
     /** Set highlight spans for a specific line (model overload) */
     public void setLineSpans(int line, int layer, List<? extends StyleSpan> spans) {
         if (spans == null) return;
@@ -835,4 +862,3 @@ public class EditorCore implements AutoCloseable {
     public void clearMatchedBrackets() { EditorNative.clearMatchedBrackets(nativeHandle); }
     public void clearAllDecorations() { EditorNative.clearAllDecorations(nativeHandle); }
 }
-

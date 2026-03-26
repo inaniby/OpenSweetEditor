@@ -20,11 +20,11 @@ namespace NS_SWEETEDITOR {
     /// Time threshold for long press
     int64_t long_press_ms {500};
     /// Fling friction coefficient (higher = faster deceleration)
-    float fling_friction {3.5f};
+    float fling_friction {2.0f};
     /// Minimum fling velocity threshold in pixels/second
-    float fling_min_velocity {50.0f};
+    float fling_min_velocity {30.0f};
     /// Maximum fling velocity cap in pixels/second
-    float fling_max_velocity {8000.0f};
+    float fling_max_velocity {12000.0f};
   };
 
   /// Fling (inertial scroll) animator driven by exponential velocity decay.
@@ -62,7 +62,7 @@ namespace NS_SWEETEDITOR {
     float m_elapsed_ms_ {0};
     int64_t m_last_tick_time_ {0};
 
-    static constexpr int kMaxSamples = 5;
+    static constexpr int kMaxSamples = 8;
     struct Sample {
       PointF point;
       int64_t timestamp_ms {0};
@@ -210,6 +210,13 @@ namespace NS_SWEETEDITOR {
     /// When true, the platform must call tickFling() each frame (e.g. via Choreographer).
     /// When false, the platform should stop the fling timer.
     bool needs_fling {false};
+    /// Aggregated animation flag (needs_edge_scroll || needs_fling).
+    /// Platform can use a single animation loop driven by this flag
+    /// and call tickAnimations() instead of separate tick functions.
+    bool needs_animation {false};
+    /// Whether this gesture event is part of a selection handle drag.
+    /// True while the user is dragging a selection handle (start or end).
+    bool is_handle_drag {false};
   };
 
   /// Gesture handler class
@@ -280,7 +287,7 @@ namespace NS_SWEETEDITOR {
     {HitTargetType::INLAY_HINT_COLOR, "INLAY_HINT_COLOR"},
   })
   NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(HitTarget, type, line, column, icon_id, color_value)
-  NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(GestureResult, type, tap_point, modifiers, scale, scroll_x, scroll_y, cursor_position, has_selection, selection, view_scroll_x, view_scroll_y, view_scale, hit_target, needs_edge_scroll, needs_fling)
+  NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(GestureResult, type, tap_point, modifiers, scale, scroll_x, scroll_y, cursor_position, has_selection, selection, view_scroll_x, view_scroll_y, view_scale, hit_target, needs_edge_scroll, needs_fling, needs_animation, is_handle_drag)
 }
 
 #endif //SWEETEDITOR_GESTURE_H

@@ -31,8 +31,11 @@ public class SweetEditorInputConnection extends BaseInputConnection {
         return mEditable;
     }
 
+    private static final int MAX_IME_TEXT_LENGTH = 2048;
+
     @Override
     public CharSequence getTextBeforeCursor(int n, int flags) {
+        n = Math.min(n, MAX_IME_TEXT_LENGTH);
         Document doc = mEditor.getDocument();
         if (doc == null) return "";
 
@@ -68,6 +71,7 @@ public class SweetEditorInputConnection extends BaseInputConnection {
 
     @Override
     public CharSequence getTextAfterCursor(int n, int flags) {
+        n = Math.min(n, MAX_IME_TEXT_LENGTH);
         Document doc = mEditor.getDocument();
         if (doc == null) return "";
 

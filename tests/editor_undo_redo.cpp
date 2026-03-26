@@ -5,8 +5,8 @@
 using namespace NS_SWEETEDITOR;
 
 TEST_CASE("Sequential single-char insertions are merged into one undo step") {
-  EditorConfig config;
-  EditorCore editor(config, makePtr<FixedWidthTextMeasurer>());
+  EditorOptions options;
+  EditorCore editor(makePtr<FixedWidthTextMeasurer>(), options);
 
   Ptr<Document> document = makePtr<LineArrayDocument>("");
   editor.loadDocument(document);
@@ -31,8 +31,8 @@ TEST_CASE("Sequential single-char insertions are merged into one undo step") {
 }
 
 TEST_CASE("Move line down is undoable as one grouped operation") {
-  EditorConfig config;
-  EditorCore editor(config, makePtr<FixedWidthTextMeasurer>());
+  EditorOptions options;
+  EditorCore editor(makePtr<FixedWidthTextMeasurer>(), options);
 
   Ptr<Document> document = makePtr<LineArrayDocument>("a\nb\nc");
   editor.loadDocument(document);
@@ -56,8 +56,8 @@ TEST_CASE("Move line down is undoable as one grouped operation") {
 }
 
 TEST_CASE("New edit clears redo stack after undo") {
-  EditorConfig config;
-  EditorCore editor(config, makePtr<FixedWidthTextMeasurer>());
+  EditorOptions options;
+  EditorCore editor(makePtr<FixedWidthTextMeasurer>(), options);
 
   Ptr<Document> document = makePtr<LineArrayDocument>("abc");
   editor.loadDocument(document);

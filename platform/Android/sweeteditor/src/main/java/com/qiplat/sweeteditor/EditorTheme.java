@@ -117,6 +117,13 @@ public class EditorTheme {
     /** Completion popup detail text color (ARGB). */
     public int completionDetailColor;
 
+    /** Selection menu background color (ARGB). */
+    public int selectionMenuBgColor;
+    /** Selection menu button text color (ARGB). */
+    public int selectionMenuTextColor;
+    /** Selection menu divider color (ARGB). */
+    public int selectionMenuDividerColor;
+
     /**
      * Theme text style mapping (extensible).
      * <p>Key: styleId, Value: {@link TextStyle}.
@@ -181,6 +188,9 @@ public class EditorTheme {
         t.completionSelectedBgColor      = 0x3D5580BB;
         t.completionLabelColor           = 0xFFD8DEE9;
         t.completionDetailColor          = 0xFF7A8494;
+        t.selectionMenuBgColor           = t.completionBgColor;
+        t.selectionMenuTextColor         = t.completionLabelColor;
+        t.selectionMenuDividerColor      = 0x33D8DEE9;
 
         t.defineTextStyle(STYLE_KEYWORD, new TextStyle(0xFF7AA2F7, TextStyle.BOLD));
         t.defineTextStyle(STYLE_STRING, new TextStyle(0xFF9ECE6A, TextStyle.NORMAL));
@@ -240,6 +250,9 @@ public class EditorTheme {
         t.completionSelectedBgColor      = 0x3D3B82F6;
         t.completionLabelColor           = 0xFF1F2937;
         t.completionDetailColor          = 0xFF8A94A6;
+        t.selectionMenuBgColor           = t.completionBgColor;
+        t.selectionMenuTextColor         = t.completionLabelColor;
+        t.selectionMenuDividerColor      = 0x331F2937;
 
         t.defineTextStyle(STYLE_KEYWORD, new TextStyle(0xFF3559D6, TextStyle.BOLD));
         t.defineTextStyle(STYLE_STRING, new TextStyle(0xFF0F7B6C, TextStyle.NORMAL));

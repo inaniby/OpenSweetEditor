@@ -6,6 +6,7 @@ import SweetEditorCoreInternal
 
 public class SweetEditorViewMacOS: NSView, NSTextInputClient, CompletionEditorAccessor, EditorSettingsHost {
     public static weak var activeEditor: SweetEditorViewMacOS?
+    private static let scrollbarDiagnosticsEnabled = ProcessInfo.processInfo.environment["SWEETEDITOR_SCROLLBAR_DIAGNOSTICS"] == "1"
     public let settings = EditorSettings(host: nil)
     public var onFoldToggle: ((SweetEditorFoldToggleEvent) -> Void)?
     public var onInlayHintClick: ((SweetEditorInlayHintClickEvent) -> Void)?
@@ -207,6 +208,11 @@ public class SweetEditorViewMacOS: NSView, NSTextInputClient, CompletionEditorAc
 
     public func registerStyle(styleId: UInt32, color: Int32, backgroundColor: Int32, fontStyle: Int32) {
         editorCore.registerStyle(styleId: styleId, color: color, backgroundColor: backgroundColor, fontStyle: fontStyle)
+    }
+
+    public func registerBatchStyles(_ stylesById: [UInt32: (color: Int32, backgroundColor: Int32, fontStyle: Int32)]) {
+        editorCore.registerBatchStyles(stylesById)
+        rebuildAndRedraw()
     }
 
     public func setLineSpans(line: Int, layer: SpanLayer, spans: [SweetEditorCore.StyleSpan]) {
@@ -642,7 +648,7 @@ public class SweetEditorViewMacOS: NSView, NSTextInputClient, CompletionEditorAc
     func applyTheme(_ theme: EditorTheme) {
         let bgColor = EditorRenderer.applyTheme(theme, core: editorCore)
         layer?.backgroundColor = bgColor
-        rehighlightAndRedraw()
+        rebuildAndRedraw()
     }
 
     public func applyTheme(isDark: Bool) {
@@ -746,6 +752,24 @@ public class SweetEditorViewMacOS: NSView, NSTextInputClient, CompletionEditorAc
     override func draw(_ dirtyRect: NSRect) {
         guard let context = NSGraphicsContext.current?.cgContext,
               let model = renderModel else { return }
+
+        if Self.scrollbarDiagnosticsEnabled {
+            let vertical = model.vertical_scrollbar
+            let thumb = vertical.thumb
+            let track = vertical.track
+            let visualStyle = scrollbarPolicy.visualStyle(for: EditorRenderer.theme)
+            NSLog("[SweetEditor][Scrollbar] style=%@ hover=%@ visible=%@ alpha=%.3f track=(x=%.2f y=%.2f w=%.2f h=%.2f) thumb=(x=%.2f y=%.2f w=%.2f h=%.2f) themeTrackAlpha=%.3f themeThumbAlpha=%.3f insetV=%.2f insetH=%.2f",
+                  String(describing: scrollbarPolicy.scrollerStyle),
+                  scrollbarPolicy.hoverRevealEnabled ? "true" : "false",
+                  vertical.visible ? "true" : "false",
+                  Double(vertical.alpha),
+                  Double(track.origin.x), Double(track.origin.y), Double(track.width), Double(track.height),
+                  Double(thumb.origin.x), Double(thumb.origin.y), Double(thumb.width), Double(thumb.height),
+                  Double(visualStyle.trackColor.alpha),
+                  Double(visualStyle.thumbColor.alpha),
+                  Double(visualStyle.verticalInset),
+                  Double(visualStyle.horizontalInset))
+        }
 
         let frameStart = CACurrentMediaTime()
         if performanceWindowStartTimestamp == nil {

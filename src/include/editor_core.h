@@ -101,6 +101,10 @@ namespace NS_SWEETEDITOR {
     bool show_split_line {true};
     /// Current line render mode
     CurrentLineRenderMode current_line_render_mode {CurrentLineRenderMode::BACKGROUND};
+    /// Whether gutter stays fixed during horizontal scroll (true=fixed, false=scrolls with content)
+    bool gutter_sticky {true};
+    /// Whether gutter area is visible (false = hide line numbers, icons, fold arrows)
+    bool gutter_visible {true};
 
     U8String dump() const;
   };
@@ -234,6 +238,14 @@ namespace NS_SWEETEDITOR {
     /// Set current line render mode
     /// @param mode BACKGROUND=fill line background, BORDER=draw line border, NONE=disable
     void setCurrentLineRenderMode(CurrentLineRenderMode mode);
+
+    /// Set whether gutter stays fixed during horizontal scroll
+    /// @param sticky true=gutter fixed (desktop style), false=gutter scrolls with content (mobile style)
+    void setGutterSticky(bool sticky);
+
+    /// Set whether gutter area is visible
+    /// @param visible true=show gutter (line numbers, icons, fold arrows), false=hide entire gutter
+    void setGutterVisible(bool visible);
 #pragma endregion
 
 #pragma region [Rendering]
@@ -272,6 +284,12 @@ namespace NS_SWEETEDITOR {
     /// @return Updated gesture result (platform should redraw; check needs_fling to decide
     ///         whether to continue the timer)
     GestureResult tickFling();
+
+    /// Unified animation tick: advances all active animations (edge-scroll, fling).
+    /// Platform can use a single frame callback driven by needs_animation and call this
+    /// instead of tickEdgeScroll() / tickFling() separately.
+    /// @return Updated gesture result with needs_animation reflecting whether any animation is still active
+    GestureResult tickAnimations();
 
     /// Immediately stop any active fling animation
     void stopFling();
@@ -527,6 +545,10 @@ namespace NS_SWEETEDITOR {
     /// @param style Text style definition
     void registerTextStyle(uint32_t style_id, TextStyle&& style);
 
+    /// Batch register highlight styles (loop register in registry + mark dirty once)
+    /// @param entries Array of style_id->text style pairs (passed with move semantics)
+    void registerBatchTextStyles(Vector<std::pair<uint32_t, TextStyle>>&& entries);
+
     /// Set highlight spans for given line and layer
     /// @param line Line number
     /// @param layer Highlight layer (SYNTAX / SEMANTIC)
@@ -703,10 +725,11 @@ namespace NS_SWEETEDITOR {
     /// The platform timer calls tickEdgeScroll() which uses this state to scroll + update selection.
     struct EdgeScrollState {
       bool active {false};         ///< Whether edge scrolling is needed
-      float speed {0};             ///< Scroll speed in pixels per tick (positive = down, negative = up)
+      float speed {0};             ///< Scroll speed in pixels per second (positive = down, negative = up)
       PointF last_screen_point;    ///< Last finger position (used to re-run hitTest after scroll)
       bool is_handle_drag {false}; ///< true = handle drag, false = select drag
       bool is_mouse {false};       ///< Mouse drag (no y-offset)
+      int64_t last_tick_time {0};  ///< Monotonic timestamp of last tick (for dt calculation)
     };
     EdgeScrollState m_edge_scroll_;
 
@@ -832,4 +855,3 @@ namespace NS_SWEETEDITOR {
 }
 
 #endif //SWEETEDITOR_EDITOR_CORE_H
-

@@ -132,7 +132,7 @@ namespace SweetEditor {
 		/// <summary>Scrollbar thumb color (ARGB).</summary>
 		public Color ScrollbarThumbColor { get; set; } = Color.FromArgb(unchecked((int)0xAA858585));
 		/// <summary>Scrollbar thumb active (dragging) color (ARGB).</summary>
-public Color ScrollbarThumbActiveColor { get; set; } = Color.FromArgb(unchecked((int)0xFFBBBBBB));
+		public Color ScrollbarThumbActiveColor { get; set; } = Color.FromArgb(unchecked((int)0xFFBBBBBB));
 
 		/// <summary>IME composition underline color (ARGB).</summary>
 		public Color CompositionColor { get; set; }
@@ -217,7 +217,7 @@ public Color ScrollbarThumbActiveColor { get; set; } = Color.FromArgb(unchecked(
 			SplitLineColor = Color.FromArgb(unchecked((int)0x3356617A)),
 			ScrollbarTrackColor = Color.FromArgb(unchecked((int)0x2AFFFFFF)),
 			ScrollbarThumbColor = Color.FromArgb(unchecked((int)0x9A7282A0)),
-ScrollbarThumbActiveColor = Color.FromArgb(unchecked((int)0xFFAABEDD)),
+			ScrollbarThumbActiveColor = Color.FromArgb(unchecked((int)0xFFAABEDD)),
 			CompositionColor = Color.FromArgb(unchecked((int)0xFF7AA2F7)),
 			InlayHintBgColor = Color.FromArgb(unchecked((int)0x223A4A66)),
 			InlayHintTextColor = Color.FromArgb(unchecked((int)0xC0AFC2E0)),
@@ -270,7 +270,7 @@ ScrollbarThumbActiveColor = Color.FromArgb(unchecked((int)0xFFAABEDD)),
 			SplitLineColor = Color.FromArgb(unchecked((int)0x1F29426B)),
 			ScrollbarTrackColor = Color.FromArgb(unchecked((int)0x1F2A3B55)),
 			ScrollbarThumbColor = Color.FromArgb(unchecked((int)0x80446C9C)),
-ScrollbarThumbActiveColor = Color.FromArgb(unchecked((int)0xEE6A9AD0)),
+			ScrollbarThumbActiveColor = Color.FromArgb(unchecked((int)0xEE6A9AD0)),
 			CompositionColor = Color.FromArgb(unchecked((int)0xFF2563EB)),
 			InlayHintBgColor = Color.FromArgb(unchecked((int)0x143B82F6)),
 			InlayHintTextColor = Color.FromArgb(unchecked((int)0xB0344A73)),
@@ -459,10 +459,10 @@ ScrollbarThumbActiveColor = Color.FromArgb(unchecked((int)0xEE6A9AD0)),
 
 		private EditorSettings? settings;
 
-		// Edge-scroll timer for auto-scrolling during mouse drag selection
-		private const int EdgeScrollIntervalMs = 16;
-		private System.Windows.Forms.Timer? edgeScrollTimer;
-		private bool edgeScrollActive = false;
+		// Unified animation timer: drives edge-scroll, fling, etc. at ~16ms
+		private const int AnimationIntervalMs = 16;
+		private System.Windows.Forms.Timer? animationTimer;
+		private bool animationActive = false;
 		private const float DefaultContentStartPaddingDp = 3.0f;
 
 		public EditorControl() {
@@ -498,9 +498,7 @@ ScrollbarThumbActiveColor = Color.FromArgb(unchecked((int)0xEE6A9AD0)),
 			this.ForeColor = currentTheme.TextColor;
 
 			if (editorCore != null) {
-				foreach (var kvp in theme.TextStyles) {
-					editorCore.registerTextStyle(kvp.Key, kvp.Value.Color, kvp.Value.BackgroundColor, kvp.Value.FontStyle);
-				}
+				editorCore.registerBatchTextStyles(theme.TextStyles);
 			}
 
 			completionPopupController?.ApplyTheme(theme);
@@ -781,6 +779,11 @@ ScrollbarThumbActiveColor = Color.FromArgb(unchecked((int)0xEE6A9AD0)),
 		/// <param name="fontStyle">Font style flags.</param>
 		public void registerTextStyle(uint styleId, int color, int backgroundColor, int fontStyle) =>
 			editorCore.registerTextStyle(styleId, color, backgroundColor, fontStyle);
+
+		/// <summary>Register multiple styles in one batch call.</summary>
+		/// <param name="stylesById">Style definitions keyed by style identifier.</param>
+		public void registerBatchTextStyles(IReadOnlyDictionary<uint, TextStyle> stylesById) =>
+			editorCore.registerBatchTextStyles(stylesById);
 
 		/// <summary>Register style.</summary>
 		/// <param name="styleId">Style identifier.</param>
@@ -1064,9 +1067,7 @@ ScrollbarThumbActiveColor = Color.FromArgb(unchecked((int)0xEE6A9AD0)),
 			completionPopupController.OnConfirmed += ApplyCompletionItem;
 
 			// Register default theme text styles.
-			foreach (var kvp in currentTheme.TextStyles) {
-				editorCore.registerTextStyle(kvp.Key, kvp.Value.Color, kvp.Value.BackgroundColor, kvp.Value.FontStyle);
-			}
+			editorCore.registerBatchTextStyles(currentTheme.TextStyles);
 
 			settings = new EditorSettings(this);
 			settings.SetContentStartPadding(DpToPx(DefaultContentStartPaddingDp));
@@ -1299,7 +1300,7 @@ ScrollbarThumbActiveColor = Color.FromArgb(unchecked((int)0xEE6A9AD0)),
 				});
 				FireGestureEvents(gestureResult, new System.Drawing.PointF(e.X, e.Y));
 				Flush();
-				UpdateEdgeScrollTimer(gestureResult.NeedsEdgeScroll);
+				UpdateAnimationTimer(gestureResult.NeedsAnimation);
 			} else if (e.Button == MouseButtons.Right) {
 				GestureResult gestureResult = editorCore.HandleGestureEvent(new GestureEvent {
 					Type = EventType.MOUSE_RIGHT_DOWN,
@@ -1325,7 +1326,7 @@ ScrollbarThumbActiveColor = Color.FromArgb(unchecked((int)0xEE6A9AD0)),
 				});
 				FireGestureEvents(gestureResult, new System.Drawing.PointF(e.X, e.Y));
 				Flush();
-				UpdateEdgeScrollTimer(gestureResult.NeedsEdgeScroll);
+				UpdateAnimationTimer(gestureResult.NeedsAnimation);
 			}
 			base.OnMouseMove(e);
 		}
@@ -1341,7 +1342,7 @@ ScrollbarThumbActiveColor = Color.FromArgb(unchecked((int)0xEE6A9AD0)),
 					DirectScale = 1
 				});
 				FireGestureEvents(gestureResult, new System.Drawing.PointF(e.X, e.Y));
-				UpdateEdgeScrollTimer(false);
+				UpdateAnimationTimer(gestureResult.NeedsAnimation);
 			}
 			base.OnMouseUp(e);
 		}
@@ -1362,29 +1363,29 @@ ScrollbarThumbActiveColor = Color.FromArgb(unchecked((int)0xEE6A9AD0)),
 			base.OnMouseWheel(e);
 		}
 
-		private void InitEdgeScrollTimer() {
-			edgeScrollTimer = new System.Windows.Forms.Timer();
-			edgeScrollTimer.Interval = EdgeScrollIntervalMs;
-			edgeScrollTimer.Tick += (_, _) => {
-				if (!edgeScrollActive) return;
-				GestureResult result = editorCore.TickEdgeScroll();
+		private void InitAnimationTimer() {
+			animationTimer = new System.Windows.Forms.Timer();
+			animationTimer.Interval = AnimationIntervalMs;
+			animationTimer.Tick += (_, _) => {
+				if (!animationActive) return;
+				GestureResult result = editorCore.TickAnimations();
 				FireGestureEvents(result, System.Drawing.PointF.Empty);
 				Flush();
-				if (!result.NeedsEdgeScroll) {
-					edgeScrollActive = false;
-					edgeScrollTimer.Stop();
+				if (!result.NeedsAnimation) {
+					animationActive = false;
+					animationTimer.Stop();
 				}
 			};
 		}
 
-		private void UpdateEdgeScrollTimer(bool needsEdgeScroll) {
-			if (edgeScrollTimer == null) InitEdgeScrollTimer();
-			if (needsEdgeScroll && !edgeScrollActive) {
-				edgeScrollActive = true;
-				edgeScrollTimer!.Start();
-			} else if (!needsEdgeScroll && edgeScrollActive) {
-				edgeScrollActive = false;
-				edgeScrollTimer!.Stop();
+		private void UpdateAnimationTimer(bool needsAnimation) {
+			if (animationTimer == null) InitAnimationTimer();
+			if (needsAnimation && !animationActive) {
+				animationActive = true;
+				animationTimer!.Start();
+			} else if (!needsAnimation && animationActive) {
+				animationActive = false;
+				animationTimer!.Stop();
 			}
 		}
 
@@ -1645,4 +1646,3 @@ ScrollbarThumbActiveColor = Color.FromArgb(unchecked((int)0xEE6A9AD0)),
 		#endregion
 	}
 }
-

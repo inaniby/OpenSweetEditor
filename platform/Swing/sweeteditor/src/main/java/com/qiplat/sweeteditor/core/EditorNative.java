@@ -6,9 +6,8 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 
 /**
@@ -36,7 +35,7 @@ public final class EditorNative {
     };
     private static final String LOAD_LIBRARY_ERROR =
             "Cannot load native library 'sweeteditor'. " +
-            "Set -Dsweeteditor.lib.path=<dir> or add the library to java.library.path. ";
+                    "Set -Dsweeteditor.lib.path=<dir> or add the library to java.library.path. ";
 
     static {
         LIB = loadLibraryLookup();
@@ -150,7 +149,9 @@ public final class EditorNative {
             this.size = size;
         }
 
-        /** Whether there is valid data */
+        /**
+         * Whether there is valid data
+         */
         boolean hasData() {
             return ptr != null && !ptr.equals(MemorySegment.NULL) && size > 0;
         }
@@ -165,7 +166,9 @@ public final class EditorNative {
             return ptr.asByteBuffer().order(ByteOrder.nativeOrder());
         }
 
-        /** Release memory allocated by the native side */
+        /**
+         * Release memory allocated by the native side
+         */
         void free() {
             if (ptr != null && !ptr.equals(MemorySegment.NULL)) {
                 freeBinaryData(ptr.address());
@@ -277,6 +280,12 @@ public final class EditorNative {
     private static final MethodHandle SET_SHOW_SPLIT_LINE = downcall("editor_set_show_split_line",
             FunctionDescriptor.ofVoid(ValueLayout.JAVA_LONG, ValueLayout.JAVA_INT));
 
+    private static final MethodHandle SET_GUTTER_STICKY = downcall("editor_set_gutter_sticky",
+            FunctionDescriptor.ofVoid(ValueLayout.JAVA_LONG, ValueLayout.JAVA_INT));
+
+    private static final MethodHandle SET_GUTTER_VISIBLE = downcall("editor_set_gutter_visible",
+            FunctionDescriptor.ofVoid(ValueLayout.JAVA_LONG, ValueLayout.JAVA_INT));
+
     private static final MethodHandle SET_CURRENT_LINE_RENDER_MODE = downcall("editor_set_current_line_render_mode",
             FunctionDescriptor.ofVoid(ValueLayout.JAVA_LONG, ValueLayout.JAVA_INT));
 
@@ -284,6 +293,9 @@ public final class EditorNative {
             FunctionDescriptor.of(ValueLayout.ADDRESS, ValueLayout.JAVA_LONG, ValueLayout.ADDRESS));
 
     private static final MethodHandle TICK_EDGE_SCROLL = downcall("editor_tick_edge_scroll",
+            FunctionDescriptor.of(ValueLayout.ADDRESS, ValueLayout.JAVA_LONG, ValueLayout.ADDRESS));
+
+    private static final MethodHandle TICK_ANIMATIONS = downcall("editor_tick_animations",
             FunctionDescriptor.of(ValueLayout.ADDRESS, ValueLayout.JAVA_LONG, ValueLayout.ADDRESS));
 
     private static final MethodHandle HANDLE_GESTURE_EX = downcall("handle_editor_gesture_event_ex",
@@ -372,15 +384,11 @@ public final class EditorNative {
                     ValueLayout.JAVA_INT, ValueLayout.JAVA_INT));
 
 
-
-
-
     private static final MethodHandle CLEAR_GUTTER_ICONS = downcall("editor_clear_gutter_icons",
             FunctionDescriptor.ofVoid(ValueLayout.JAVA_LONG));
 
     private static final MethodHandle SET_LINE_DIAGNOSTICS = downcall("editor_set_line_diagnostics",
             FunctionDescriptor.ofVoid(ValueLayout.JAVA_LONG, ValueLayout.ADDRESS, ValueLayout.JAVA_LONG));
-
 
 
     private static final MethodHandle CLEAR_GUIDES = downcall("editor_clear_guides",
@@ -486,12 +494,8 @@ public final class EditorNative {
             FunctionDescriptor.ofVoid(ValueLayout.JAVA_LONG, ValueLayout.ADDRESS, ValueLayout.JAVA_LONG));
 
 
-
-
-
     private static final MethodHandle CLEAR_DIAGNOSTICS = downcall("editor_clear_diagnostics",
             FunctionDescriptor.ofVoid(ValueLayout.JAVA_LONG));
-
 
 
     private static final MethodHandle SET_MATCHED_BRACKETS = downcall("editor_set_matched_brackets",
@@ -545,10 +549,8 @@ public final class EditorNative {
             FunctionDescriptor.of(ValueLayout.ADDRESS, ValueLayout.JAVA_LONG, ValueLayout.ADDRESS));
 
 
-
     private static final MethodHandle SET_MAX_GUTTER_ICONS = downcall("editor_set_max_gutter_icons",
             FunctionDescriptor.ofVoid(ValueLayout.JAVA_LONG, ValueLayout.JAVA_INT));
-
 
 
     private static final MethodHandle UNFOLD_AT = downcall("editor_unfold_at",
@@ -569,6 +571,7 @@ public final class EditorNative {
     private static final MethodHandle SET_LINE_GUTTER_ICONS = downcall("editor_set_line_gutter_icons", BINARY_PAYLOAD_DESC);
     private static final MethodHandle SET_BATCH_LINE_GUTTER_ICONS = downcall("editor_set_batch_line_gutter_icons", BINARY_PAYLOAD_DESC);
     private static final MethodHandle SET_BATCH_LINE_SPANS = downcall("editor_set_batch_line_spans", BINARY_PAYLOAD_DESC);
+    private static final MethodHandle REGISTER_BATCH_TEXT_STYLES = downcall("editor_register_batch_text_styles", BINARY_PAYLOAD_DESC);
     private static final MethodHandle SET_BATCH_LINE_DIAGNOSTICS = downcall("editor_set_batch_line_diagnostics", BINARY_PAYLOAD_DESC);
     private static final MethodHandle SET_INDENT_GUIDES = downcall("editor_set_indent_guides", BINARY_PAYLOAD_DESC);
     private static final MethodHandle SET_BRACKET_GUIDES = downcall("editor_set_bracket_guides", BINARY_PAYLOAD_DESC);
@@ -581,7 +584,9 @@ public final class EditorNative {
         try {
             MemorySegment utf16 = arena.allocateFrom(text, StandardCharsets.UTF_16LE);
             return (long) CREATE_DOCUMENT.invokeExact(utf16);
-        } catch (Throwable t) { throw new RuntimeException(t); }
+        } catch (Throwable t) {
+            throw new RuntimeException(t);
+        }
     }
 
     public static void freeDocument(long handle) {
@@ -598,7 +603,9 @@ public final class EditorNative {
                 freeU16String(ptr.address());
             }
             return text;
-        } catch (Throwable t) { throw new RuntimeException(t); }
+        } catch (Throwable t) {
+            throw new RuntimeException(t);
+        }
     }
 
     public static int getDocumentLineCount(long documentHandle) {
@@ -613,7 +620,9 @@ public final class EditorNative {
         return invokeValue(() -> (long) CREATE_EDITOR.invokeExact(measurer, optionsSeg, (long) optionsData.length));
     }
 
-    /** Zero-copy overload: pass pre-encoded MemorySegment directly */
+    /**
+     * Zero-copy overload: pass pre-encoded MemorySegment directly
+     */
     public static long createEditor(MemorySegment measurer, MemorySegment optionsSeg, long optionsSize) {
         return invokeValue(() -> (long) CREATE_EDITOR.invokeExact(measurer, optionsSeg, optionsSize));
     }
@@ -686,6 +695,18 @@ public final class EditorNative {
         });
     }
 
+    public static void setGutterSticky(long handle, boolean sticky) {
+        invokeVoid(() -> {
+            SET_GUTTER_STICKY.invokeExact(handle, sticky ? 1 : 0);
+        });
+    }
+
+    public static void setGutterVisible(long handle, boolean visible) {
+        invokeVoid(() -> {
+            SET_GUTTER_VISIBLE.invokeExact(handle, visible ? 1 : 0);
+        });
+    }
+
     public static void setCurrentLineRenderMode(long handle, int mode) {
         invokeVoid(() -> {
             SET_CURRENT_LINE_RENDER_MODE.invokeExact(handle, mode);
@@ -702,10 +723,14 @@ public final class EditorNative {
         return invokeBinaryResult(outSize -> (MemorySegment) TICK_EDGE_SCROLL.invokeExact(handle, outSize));
     }
 
+    public static NativeBinaryResult tickAnimations(long handle) {
+        return invokeBinaryResult(outSize -> (MemorySegment) TICK_ANIMATIONS.invokeExact(handle, outSize));
+    }
+
     // ===================== Gesture/Keyboard Events =====================
 
     public static NativeBinaryResult handleGestureEventEx(long handle, int type, int pointerCount, Arena arena, float[] points,
-                                               int modifiers, float wheelDeltaX, float wheelDeltaY, float directScale) {
+                                                          int modifiers, float wheelDeltaX, float wheelDeltaY, float directScale) {
         return invokeBinaryResult(arena, outSize -> {
             MemorySegment pointsSeg = arena.allocateFrom(ValueLayout.JAVA_FLOAT, points);
             return (MemorySegment) HANDLE_GESTURE_EX.invokeExact(handle,
@@ -727,15 +752,15 @@ public final class EditorNative {
     }
 
     public static NativeBinaryResult replaceText(long handle,
-            int startLine, int startColumn, int endLine, int endColumn,
-            String text, Arena arena) {
+                                                 int startLine, int startColumn, int endLine, int endColumn,
+                                                 String text, Arena arena) {
         return invokeBinaryResult(arena, outSize -> (MemorySegment) REPLACE_TEXT.invokeExact(handle,
                 (long) startLine, (long) startColumn, (long) endLine, (long) endColumn,
                 arena.allocateFrom(text), outSize));
     }
 
     public static NativeBinaryResult deleteText(long handle,
-            int startLine, int startColumn, int endLine, int endColumn) {
+                                                int startLine, int startColumn, int endLine, int endColumn) {
         return invokeBinaryResult(outSize -> (MemorySegment) DELETE_TEXT.invokeExact(handle,
                 (long) startLine, (long) startColumn, (long) endLine, (long) endColumn, outSize));
     }
@@ -808,7 +833,9 @@ public final class EditorNative {
             MemorySegment outColumn = arena.allocate(ValueLayout.JAVA_LONG);
             GET_CURSOR.invokeExact(handle, outLine, outColumn);
             return new int[]{(int) outLine.get(ValueLayout.JAVA_LONG, 0), (int) outColumn.get(ValueLayout.JAVA_LONG, 0)};
-        } catch (Throwable t) { throw new RuntimeException(t); }
+        } catch (Throwable t) {
+            throw new RuntimeException(t);
+        }
     }
 
     public static void selectAll(long handle) {
@@ -828,7 +855,9 @@ public final class EditorNative {
             MemorySegment ptr = (MemorySegment) GET_SELECTED_TEXT.invokeExact(handle);
             if (ptr.equals(MemorySegment.NULL)) return "";
             return ptr.reinterpret(Long.MAX_VALUE).getString(0);
-        } catch (Throwable t) { throw new RuntimeException(t); }
+        } catch (Throwable t) {
+            throw new RuntimeException(t);
+        }
     }
 
     public static int[] getWordRangeAtCursor(long handle, Arena arena) {
@@ -839,10 +868,12 @@ public final class EditorNative {
             MemorySegment outEC = arena.allocate(ValueLayout.JAVA_LONG);
             GET_WORD_RANGE_AT_CURSOR.invokeExact(handle, outSL, outSC, outEL, outEC);
             return new int[]{
-                (int) outSL.get(ValueLayout.JAVA_LONG, 0), (int) outSC.get(ValueLayout.JAVA_LONG, 0),
-                (int) outEL.get(ValueLayout.JAVA_LONG, 0), (int) outEC.get(ValueLayout.JAVA_LONG, 0)
+                    (int) outSL.get(ValueLayout.JAVA_LONG, 0), (int) outSC.get(ValueLayout.JAVA_LONG, 0),
+                    (int) outEL.get(ValueLayout.JAVA_LONG, 0), (int) outEC.get(ValueLayout.JAVA_LONG, 0)
             };
-        } catch (Throwable t) { throw new RuntimeException(t); }
+        } catch (Throwable t) {
+            throw new RuntimeException(t);
+        }
     }
 
     public static String getWordAtCursor(long handle) {
@@ -850,7 +881,9 @@ public final class EditorNative {
             MemorySegment ptr = (MemorySegment) GET_WORD_AT_CURSOR.invokeExact(handle);
             if (ptr.equals(MemorySegment.NULL)) return "";
             return ptr.reinterpret(Long.MAX_VALUE).getString(0);
-        } catch (Throwable t) { throw new RuntimeException(t); }
+        } catch (Throwable t) {
+            throw new RuntimeException(t);
+        }
     }
 
     // ===================== IME =====================
@@ -940,8 +973,11 @@ public final class EditorNative {
         MemorySegment px = arena.allocate(ValueLayout.JAVA_FLOAT);
         MemorySegment py = arena.allocate(ValueLayout.JAVA_FLOAT);
         MemorySegment ph = arena.allocate(ValueLayout.JAVA_FLOAT);
-        try { GET_POSITION_RECT.invokeExact(handle, (long)line, (long)column, px, py, ph); }
-        catch (Throwable t) { throw new RuntimeException(t); }
+        try {
+            GET_POSITION_RECT.invokeExact(handle, (long) line, (long) column, px, py, ph);
+        } catch (Throwable t) {
+            throw new RuntimeException(t);
+        }
         return new float[]{px.get(ValueLayout.JAVA_FLOAT, 0), py.get(ValueLayout.JAVA_FLOAT, 0), ph.get(ValueLayout.JAVA_FLOAT, 0)};
     }
 
@@ -949,8 +985,11 @@ public final class EditorNative {
         MemorySegment px = arena.allocate(ValueLayout.JAVA_FLOAT);
         MemorySegment py = arena.allocate(ValueLayout.JAVA_FLOAT);
         MemorySegment ph = arena.allocate(ValueLayout.JAVA_FLOAT);
-        try { GET_CURSOR_RECT.invokeExact(handle, px, py, ph); }
-        catch (Throwable t) { throw new RuntimeException(t); }
+        try {
+            GET_CURSOR_RECT.invokeExact(handle, px, py, ph);
+        } catch (Throwable t) {
+            throw new RuntimeException(t);
+        }
         return new float[]{px.get(ValueLayout.JAVA_FLOAT, 0), py.get(ValueLayout.JAVA_FLOAT, 0), ph.get(ValueLayout.JAVA_FLOAT, 0)};
     }
 
@@ -1018,13 +1057,27 @@ public final class EditorNative {
         });
     }
 
+    public static void registerBatchTextStyles(long handle, byte[] payload, Arena arena) {
+        invokeVoid(() -> {
+            REGISTER_BATCH_TEXT_STYLES.invokeExact(handle, byteArraySegment(arena, payload), (long) payload.length);
+        });
+    }
+
+    public static void registerBatchTextStyles(long handle, MemorySegment payload, long size) {
+        invokeVoid(() -> {
+            REGISTER_BATCH_TEXT_STYLES.invokeExact(handle, payload, size);
+        });
+    }
+
     public static void setLineSpans(long handle, byte[] payload, Arena arena) {
         invokeVoid(() -> {
             SET_LINE_SPANS.invokeExact(handle, byteArraySegment(arena, payload), (long) payload.length);
         });
     }
 
-    /** Zero-copy overload: pass pre-encoded MemorySegment directly */
+    /**
+     * Zero-copy overload: pass pre-encoded MemorySegment directly
+     */
     public static void setLineSpans(long handle, MemorySegment payload, long size) {
         invokeVoid(() -> {
             SET_LINE_SPANS.invokeExact(handle, payload, size);
@@ -1034,19 +1087,23 @@ public final class EditorNative {
     // ===================== InlayHint / PhantomText =====================
 
 
-
     // ===================== Gutter Icons =====================
 
 
-
     public static void clearGutterIcons(long handle) {
-        try { CLEAR_GUTTER_ICONS.invokeExact(handle); }
-        catch (Throwable t) { throw new RuntimeException(t); }
+        try {
+            CLEAR_GUTTER_ICONS.invokeExact(handle);
+        } catch (Throwable t) {
+            throw new RuntimeException(t);
+        }
     }
 
     public static void setMaxGutterIcons(long handle, int count) {
-        try { SET_MAX_GUTTER_ICONS.invokeExact(handle, count); }
-        catch (Throwable t) { throw new RuntimeException(t); }
+        try {
+            SET_MAX_GUTTER_ICONS.invokeExact(handle, count);
+        } catch (Throwable t) {
+            throw new RuntimeException(t);
+        }
     }
 
     // ===================== Diagnostic Decorations =====================
@@ -1055,10 +1112,14 @@ public final class EditorNative {
         try {
             MemorySegment seg = arena.allocateFrom(ValueLayout.JAVA_BYTE, payload);
             SET_LINE_DIAGNOSTICS.invokeExact(handle, seg, (long) payload.length);
-        } catch (Throwable t) { throw new RuntimeException(t); }
+        } catch (Throwable t) {
+            throw new RuntimeException(t);
+        }
     }
 
-    /** Zero-copy overload: pass pre-encoded MemorySegment directly */
+    /**
+     * Zero-copy overload: pass pre-encoded MemorySegment directly
+     */
     public static void setLineDiagnostics(long handle, MemorySegment payload, long size) {
         invokeVoid(() -> {
             SET_LINE_DIAGNOSTICS.invokeExact(handle, payload, size);
@@ -1066,17 +1127,22 @@ public final class EditorNative {
     }
 
     public static void clearDiagnostics(long handle) {
-        try { CLEAR_DIAGNOSTICS.invokeExact(handle); }
-        catch (Throwable t) { throw new RuntimeException(t); }
+        try {
+            CLEAR_DIAGNOSTICS.invokeExact(handle);
+        } catch (Throwable t) {
+            throw new RuntimeException(t);
+        }
     }
 
     // ===================== Guide =====================
 
 
-
     public static void clearGuides(long handle) {
-        try { CLEAR_GUIDES.invokeExact(handle); }
-        catch (Throwable t) { throw new RuntimeException(t); }
+        try {
+            CLEAR_GUIDES.invokeExact(handle);
+        } catch (Throwable t) {
+            throw new RuntimeException(t);
+        }
     }
 
     // ===================== Bracket Pair Highlight =====================
@@ -1086,17 +1152,25 @@ public final class EditorNative {
             MemorySegment openSeg = arena.allocateFrom(ValueLayout.JAVA_INT, openChars);
             MemorySegment closeSeg = arena.allocateFrom(ValueLayout.JAVA_INT, closeChars);
             SET_BRACKET_PAIRS.invokeExact(handle, openSeg, closeSeg, (long) openChars.length);
-        } catch (Throwable t) { throw new RuntimeException(t); }
+        } catch (Throwable t) {
+            throw new RuntimeException(t);
+        }
     }
 
     public static void setMatchedBrackets(long handle, int openLine, int openCol, int closeLine, int closeCol) {
-        try { SET_MATCHED_BRACKETS.invokeExact(handle, (long) openLine, (long) openCol, (long) closeLine, (long) closeCol); }
-        catch (Throwable t) { throw new RuntimeException(t); }
+        try {
+            SET_MATCHED_BRACKETS.invokeExact(handle, (long) openLine, (long) openCol, (long) closeLine, (long) closeCol);
+        } catch (Throwable t) {
+            throw new RuntimeException(t);
+        }
     }
 
     public static void clearMatchedBrackets(long handle) {
-        try { CLEAR_MATCHED_BRACKETS.invokeExact(handle); }
-        catch (Throwable t) { throw new RuntimeException(t); }
+        try {
+            CLEAR_MATCHED_BRACKETS.invokeExact(handle);
+        } catch (Throwable t) {
+            throw new RuntimeException(t);
+        }
     }
 
     // ===================== Fold =====================
@@ -1105,10 +1179,14 @@ public final class EditorNative {
         try {
             MemorySegment seg = arena.allocateFrom(ValueLayout.JAVA_BYTE, payload);
             SET_FOLD_REGIONS.invokeExact(handle, seg, (long) payload.length);
-        } catch (Throwable t) { throw new RuntimeException(t); }
+        } catch (Throwable t) {
+            throw new RuntimeException(t);
+        }
     }
 
-    /** Zero-copy overload: pass pre-encoded MemorySegment directly */
+    /**
+     * Zero-copy overload: pass pre-encoded MemorySegment directly
+     */
     public static void setFoldRegions(long handle, MemorySegment payload, long size) {
         invokeVoid(() -> {
             SET_FOLD_REGIONS.invokeExact(handle, payload, size);
@@ -1116,60 +1194,93 @@ public final class EditorNative {
     }
 
     public static boolean toggleFold(long handle, int line) {
-        try { return ((int) TOGGLE_FOLD.invokeExact(handle, (long) line)) != 0; }
-        catch (Throwable t) { throw new RuntimeException(t); }
+        try {
+            return ((int) TOGGLE_FOLD.invokeExact(handle, (long) line)) != 0;
+        } catch (Throwable t) {
+            throw new RuntimeException(t);
+        }
     }
 
     public static boolean foldAt(long handle, int line) {
-        try { return ((int) FOLD_AT.invokeExact(handle, (long) line)) != 0; }
-        catch (Throwable t) { throw new RuntimeException(t); }
+        try {
+            return ((int) FOLD_AT.invokeExact(handle, (long) line)) != 0;
+        } catch (Throwable t) {
+            throw new RuntimeException(t);
+        }
     }
 
     public static boolean unfoldAt(long handle, int line) {
-        try { return ((int) UNFOLD_AT.invokeExact(handle, (long) line)) != 0; }
-        catch (Throwable t) { throw new RuntimeException(t); }
+        try {
+            return ((int) UNFOLD_AT.invokeExact(handle, (long) line)) != 0;
+        } catch (Throwable t) {
+            throw new RuntimeException(t);
+        }
     }
 
     public static void foldAll(long handle) {
-        try { FOLD_ALL.invokeExact(handle); }
-        catch (Throwable t) { throw new RuntimeException(t); }
+        try {
+            FOLD_ALL.invokeExact(handle);
+        } catch (Throwable t) {
+            throw new RuntimeException(t);
+        }
     }
 
     public static void unfoldAll(long handle) {
-        try { UNFOLD_ALL.invokeExact(handle); }
-        catch (Throwable t) { throw new RuntimeException(t); }
+        try {
+            UNFOLD_ALL.invokeExact(handle);
+        } catch (Throwable t) {
+            throw new RuntimeException(t);
+        }
     }
 
     public static boolean isLineVisible(long handle, int line) {
-        try { return ((int) IS_LINE_VISIBLE.invokeExact(handle, (long) line)) != 0; }
-        catch (Throwable t) { throw new RuntimeException(t); }
+        try {
+            return ((int) IS_LINE_VISIBLE.invokeExact(handle, (long) line)) != 0;
+        } catch (Throwable t) {
+            throw new RuntimeException(t);
+        }
     }
 
     // ===================== Clear =====================
 
     public static void clearHighlights(long handle) {
-        try { CLEAR_HIGHLIGHTS.invokeExact(handle); }
-        catch (Throwable t) { throw new RuntimeException(t); }
+        try {
+            CLEAR_HIGHLIGHTS.invokeExact(handle);
+        } catch (Throwable t) {
+            throw new RuntimeException(t);
+        }
     }
 
     public static void clearHighlightsLayer(long handle, int layer) {
-        try { CLEAR_HIGHLIGHTS_LAYER.invokeExact(handle, (byte) layer); }
-        catch (Throwable t) { throw new RuntimeException(t); }
+        try {
+            CLEAR_HIGHLIGHTS_LAYER.invokeExact(handle, (byte) layer);
+        } catch (Throwable t) {
+            throw new RuntimeException(t);
+        }
     }
 
     public static void clearInlayHints(long handle) {
-        try { CLEAR_INLAY_HINTS.invokeExact(handle); }
-        catch (Throwable t) { throw new RuntimeException(t); }
+        try {
+            CLEAR_INLAY_HINTS.invokeExact(handle);
+        } catch (Throwable t) {
+            throw new RuntimeException(t);
+        }
     }
 
     public static void clearPhantomTexts(long handle) {
-        try { CLEAR_PHANTOM_TEXTS.invokeExact(handle); }
-        catch (Throwable t) { throw new RuntimeException(t); }
+        try {
+            CLEAR_PHANTOM_TEXTS.invokeExact(handle);
+        } catch (Throwable t) {
+            throw new RuntimeException(t);
+        }
     }
 
     public static void clearAllDecorations(long handle) {
-        try { CLEAR_ALL_DECORATIONS.invokeExact(handle); }
-        catch (Throwable t) { throw new RuntimeException(t); }
+        try {
+            CLEAR_ALL_DECORATIONS.invokeExact(handle);
+        } catch (Throwable t) {
+            throw new RuntimeException(t);
+        }
     }
 
     // ===================== Binary Payload Methods =====================
@@ -1178,10 +1289,14 @@ public final class EditorNative {
         try {
             MemorySegment seg = arena.allocateFrom(ValueLayout.JAVA_BYTE, payload);
             SET_LINE_INLAY_HINTS.invokeExact(handle, seg, (long) payload.length);
-        } catch (Throwable t) { throw new RuntimeException(t); }
+        } catch (Throwable t) {
+            throw new RuntimeException(t);
+        }
     }
 
-/** Zero-copy overload: pass pre-encoded MemorySegment directly */
+    /**
+     * Zero-copy overload: pass pre-encoded MemorySegment directly
+     */
     public static void setLineInlayHints(long handle, MemorySegment payload, long size) {
         invokeVoid(() -> {
             SET_LINE_INLAY_HINTS.invokeExact(handle, payload, size);
@@ -1192,10 +1307,14 @@ public final class EditorNative {
         try {
             MemorySegment seg = arena.allocateFrom(ValueLayout.JAVA_BYTE, payload);
             SET_BATCH_LINE_INLAY_HINTS.invokeExact(handle, seg, (long) payload.length);
-        } catch (Throwable t) { throw new RuntimeException(t); }
+        } catch (Throwable t) {
+            throw new RuntimeException(t);
+        }
     }
 
-/** Zero-copy overload: pass pre-encoded MemorySegment directly */
+    /**
+     * Zero-copy overload: pass pre-encoded MemorySegment directly
+     */
     public static void setBatchLineInlayHints(long handle, MemorySegment payload, long size) {
         invokeVoid(() -> {
             SET_BATCH_LINE_INLAY_HINTS.invokeExact(handle, payload, size);
@@ -1206,10 +1325,14 @@ public final class EditorNative {
         try {
             MemorySegment seg = arena.allocateFrom(ValueLayout.JAVA_BYTE, payload);
             SET_LINE_PHANTOM_TEXTS.invokeExact(handle, seg, (long) payload.length);
-        } catch (Throwable t) { throw new RuntimeException(t); }
+        } catch (Throwable t) {
+            throw new RuntimeException(t);
+        }
     }
 
-/** Zero-copy overload: pass pre-encoded MemorySegment directly */
+    /**
+     * Zero-copy overload: pass pre-encoded MemorySegment directly
+     */
     public static void setLinePhantomTexts(long handle, MemorySegment payload, long size) {
         invokeVoid(() -> {
             SET_LINE_PHANTOM_TEXTS.invokeExact(handle, payload, size);
@@ -1220,10 +1343,14 @@ public final class EditorNative {
         try {
             MemorySegment seg = arena.allocateFrom(ValueLayout.JAVA_BYTE, payload);
             SET_BATCH_LINE_PHANTOM_TEXTS.invokeExact(handle, seg, (long) payload.length);
-        } catch (Throwable t) { throw new RuntimeException(t); }
+        } catch (Throwable t) {
+            throw new RuntimeException(t);
+        }
     }
 
-/** Zero-copy overload: pass pre-encoded MemorySegment directly */
+    /**
+     * Zero-copy overload: pass pre-encoded MemorySegment directly
+     */
     public static void setBatchLinePhantomTexts(long handle, MemorySegment payload, long size) {
         invokeVoid(() -> {
             SET_BATCH_LINE_PHANTOM_TEXTS.invokeExact(handle, payload, size);
@@ -1234,10 +1361,14 @@ public final class EditorNative {
         try {
             MemorySegment seg = arena.allocateFrom(ValueLayout.JAVA_BYTE, payload);
             SET_LINE_GUTTER_ICONS.invokeExact(handle, seg, (long) payload.length);
-        } catch (Throwable t) { throw new RuntimeException(t); }
+        } catch (Throwable t) {
+            throw new RuntimeException(t);
+        }
     }
 
-/** Zero-copy overload: pass pre-encoded MemorySegment directly */
+    /**
+     * Zero-copy overload: pass pre-encoded MemorySegment directly
+     */
     public static void setLineGutterIcons(long handle, MemorySegment payload, long size) {
         invokeVoid(() -> {
             SET_LINE_GUTTER_ICONS.invokeExact(handle, payload, size);
@@ -1248,10 +1379,14 @@ public final class EditorNative {
         try {
             MemorySegment seg = arena.allocateFrom(ValueLayout.JAVA_BYTE, payload);
             SET_BATCH_LINE_GUTTER_ICONS.invokeExact(handle, seg, (long) payload.length);
-        } catch (Throwable t) { throw new RuntimeException(t); }
+        } catch (Throwable t) {
+            throw new RuntimeException(t);
+        }
     }
 
-/** Zero-copy overload: pass pre-encoded MemorySegment directly */
+    /**
+     * Zero-copy overload: pass pre-encoded MemorySegment directly
+     */
     public static void setBatchLineGutterIcons(long handle, MemorySegment payload, long size) {
         invokeVoid(() -> {
             SET_BATCH_LINE_GUTTER_ICONS.invokeExact(handle, payload, size);
@@ -1262,10 +1397,14 @@ public final class EditorNative {
         try {
             MemorySegment seg = arena.allocateFrom(ValueLayout.JAVA_BYTE, payload);
             SET_BATCH_LINE_SPANS.invokeExact(handle, seg, (long) payload.length);
-        } catch (Throwable t) { throw new RuntimeException(t); }
+        } catch (Throwable t) {
+            throw new RuntimeException(t);
+        }
     }
 
-/** Zero-copy overload: pass pre-encoded MemorySegment directly */
+    /**
+     * Zero-copy overload: pass pre-encoded MemorySegment directly
+     */
     public static void setBatchLineSpans(long handle, MemorySegment payload, long size) {
         invokeVoid(() -> {
             SET_BATCH_LINE_SPANS.invokeExact(handle, payload, size);
@@ -1276,10 +1415,14 @@ public final class EditorNative {
         try {
             MemorySegment seg = arena.allocateFrom(ValueLayout.JAVA_BYTE, payload);
             SET_BATCH_LINE_DIAGNOSTICS.invokeExact(handle, seg, (long) payload.length);
-        } catch (Throwable t) { throw new RuntimeException(t); }
+        } catch (Throwable t) {
+            throw new RuntimeException(t);
+        }
     }
 
-/** Zero-copy overload: pass pre-encoded MemorySegment directly */
+    /**
+     * Zero-copy overload: pass pre-encoded MemorySegment directly
+     */
     public static void setBatchLineDiagnostics(long handle, MemorySegment payload, long size) {
         invokeVoid(() -> {
             SET_BATCH_LINE_DIAGNOSTICS.invokeExact(handle, payload, size);
@@ -1290,10 +1433,14 @@ public final class EditorNative {
         try {
             MemorySegment seg = arena.allocateFrom(ValueLayout.JAVA_BYTE, payload);
             SET_INDENT_GUIDES.invokeExact(handle, seg, (long) payload.length);
-        } catch (Throwable t) { throw new RuntimeException(t); }
+        } catch (Throwable t) {
+            throw new RuntimeException(t);
+        }
     }
 
-/** Zero-copy overload: pass pre-encoded MemorySegment directly */
+    /**
+     * Zero-copy overload: pass pre-encoded MemorySegment directly
+     */
     public static void setIndentGuides(long handle, MemorySegment payload, long size) {
         invokeVoid(() -> {
             SET_INDENT_GUIDES.invokeExact(handle, payload, size);
@@ -1304,10 +1451,14 @@ public final class EditorNative {
         try {
             MemorySegment seg = arena.allocateFrom(ValueLayout.JAVA_BYTE, payload);
             SET_BRACKET_GUIDES.invokeExact(handle, seg, (long) payload.length);
-        } catch (Throwable t) { throw new RuntimeException(t); }
+        } catch (Throwable t) {
+            throw new RuntimeException(t);
+        }
     }
 
-/** Zero-copy overload: pass pre-encoded MemorySegment directly */
+    /**
+     * Zero-copy overload: pass pre-encoded MemorySegment directly
+     */
     public static void setBracketGuides(long handle, MemorySegment payload, long size) {
         invokeVoid(() -> {
             SET_BRACKET_GUIDES.invokeExact(handle, payload, size);
@@ -1318,10 +1469,14 @@ public final class EditorNative {
         try {
             MemorySegment seg = arena.allocateFrom(ValueLayout.JAVA_BYTE, payload);
             SET_FLOW_GUIDES.invokeExact(handle, seg, (long) payload.length);
-        } catch (Throwable t) { throw new RuntimeException(t); }
+        } catch (Throwable t) {
+            throw new RuntimeException(t);
+        }
     }
 
-/** Zero-copy overload: pass pre-encoded MemorySegment directly */
+    /**
+     * Zero-copy overload: pass pre-encoded MemorySegment directly
+     */
     public static void setFlowGuides(long handle, MemorySegment payload, long size) {
         invokeVoid(() -> {
             SET_FLOW_GUIDES.invokeExact(handle, payload, size);
@@ -1332,10 +1487,14 @@ public final class EditorNative {
         try {
             MemorySegment seg = arena.allocateFrom(ValueLayout.JAVA_BYTE, payload);
             SET_SEPARATOR_GUIDES.invokeExact(handle, seg, (long) payload.length);
-        } catch (Throwable t) { throw new RuntimeException(t); }
+        } catch (Throwable t) {
+            throw new RuntimeException(t);
+        }
     }
 
-/** Zero-copy overload: pass pre-encoded MemorySegment directly */
+    /**
+     * Zero-copy overload: pass pre-encoded MemorySegment directly
+     */
     public static void setSeparatorGuides(long handle, MemorySegment payload, long size) {
         invokeVoid(() -> {
             SET_SEPARATOR_GUIDES.invokeExact(handle, payload, size);
@@ -1356,7 +1515,9 @@ public final class EditorNative {
         });
     }
 
-    /** Read the null-terminated UTF-16LE string returned by C++ */
+    /**
+     * Read the null-terminated UTF-16LE string returned by C++
+     */
     public static String readUtf16String(MemorySegment ptr) {
         if (ptr.equals(MemorySegment.NULL)) return null;
         // Reinterpret to a large region to scan for null terminator
@@ -1372,17 +1533,21 @@ public final class EditorNative {
         return new String(bytes, StandardCharsets.UTF_16LE);
     }
 
-    /** Create upcall stub */
+    /**
+     * Create upcall stub
+     */
     public static MemorySegment createUpcallStub(Arena arena, Object target, Class<?> ownerType,
-                                                  String methodName, MethodType methodType, FunctionDescriptor desc) {
+                                                 String methodName, MethodType methodType, FunctionDescriptor desc) {
         try {
             MethodHandle mh = MethodHandles.publicLookup()
                     .findVirtual(ownerType, methodName, methodType)
                     .bindTo(target);
             return LINKER.upcallStub(mh, desc, arena);
-        } catch (Throwable t) { throw new RuntimeException(t); }
+        } catch (Throwable t) {
+            throw new RuntimeException(t);
+        }
     }
 
-    private EditorNative() {}
+    private EditorNative() {
+    }
 }
-

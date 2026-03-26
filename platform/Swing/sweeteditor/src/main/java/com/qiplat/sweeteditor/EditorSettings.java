@@ -21,6 +21,7 @@ public class EditorSettings {
     private float mLineSpacingMult = 1.0f;
     private float mContentStartPadding = 0f;
     private boolean mShowSplitLine = true;
+    private boolean mGutterSticky = true;
     private CurrentLineRenderMode mCurrentLineRenderMode = CurrentLineRenderMode.BACKGROUND;
     private AutoIndentMode mAutoIndentMode = AutoIndentMode.NONE;
     private boolean mReadOnly = false;
@@ -95,6 +96,16 @@ public class EditorSettings {
 
     public boolean isShowSplitLine() {
         return mShowSplitLine;
+    }
+
+    public void setGutterSticky(boolean sticky) {
+        mGutterSticky = sticky;
+        mEditor.getEditorCore().setGutterSticky(sticky);
+        mEditor.flush();
+    }
+
+    public boolean isGutterSticky() {
+        return mGutterSticky;
     }
 
     public void setCurrentLineRenderMode(CurrentLineRenderMode mode) {

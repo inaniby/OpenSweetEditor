@@ -5,13 +5,13 @@
 using namespace NS_SWEETEDITOR;
 
 TEST_CASE("EditorCore composition update is transient and cancel restores original text") {
-  EditorConfig config;
-  config.enable_composition = true;
-  EditorCore editor(config, makePtr<FixedWidthTextMeasurer>());
+  EditorOptions options;
+  EditorCore editor(makePtr<FixedWidthTextMeasurer>(), options);
 
   Ptr<Document> document = makePtr<LineArrayDocument>("ab");
   editor.loadDocument(document);
   editor.setViewport({800, 600});
+  editor.setCompositionEnabled(true);
   editor.setCursorPosition({0, 2});
 
   editor.compositionStart();
@@ -31,13 +31,13 @@ TEST_CASE("EditorCore composition update is transient and cancel restores origin
 }
 
 TEST_CASE("EditorCore composition end commits final text once and supports undo") {
-  EditorConfig config;
-  config.enable_composition = true;
-  EditorCore editor(config, makePtr<FixedWidthTextMeasurer>());
+  EditorOptions options;
+  EditorCore editor(makePtr<FixedWidthTextMeasurer>(), options);
 
   Ptr<Document> document = makePtr<LineArrayDocument>("ab");
   editor.loadDocument(document);
   editor.setViewport({800, 600});
+  editor.setCompositionEnabled(true);
   editor.setCursorPosition({0, 2});
 
   editor.compositionStart();
@@ -59,13 +59,13 @@ TEST_CASE("EditorCore composition end commits final text once and supports undo"
 }
 
 TEST_CASE("EditorCore composition disabled mode commits only on compositionEnd") {
-  EditorConfig config;
-  config.enable_composition = false;
-  EditorCore editor(config, makePtr<FixedWidthTextMeasurer>());
+  EditorOptions options;
+  EditorCore editor(makePtr<FixedWidthTextMeasurer>(), options);
 
   Ptr<Document> document = makePtr<LineArrayDocument>("ab");
   editor.loadDocument(document);
   editor.setViewport({800, 600});
+  editor.setCompositionEnabled(false);
   editor.setCursorPosition({0, 2});
 
   editor.compositionUpdate("q");

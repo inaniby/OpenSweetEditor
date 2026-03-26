@@ -408,26 +408,26 @@ namespace SweetEditor {
 		}
 
 		private static Color KindColor(int kind) => kind switch {
-			CompletionItem.KIND_KEYWORD   => Color.FromArgb(0xC6, 0x78, 0xDD),
-			CompletionItem.KIND_FUNCTION  => Color.FromArgb(0x61, 0xAF, 0xEF),
-			CompletionItem.KIND_VARIABLE  => Color.FromArgb(0xE5, 0xC0, 0x7B),
-			CompletionItem.KIND_CLASS     => Color.FromArgb(0xE0, 0x6C, 0x75),
+			CompletionItem.KIND_KEYWORD => Color.FromArgb(0xC6, 0x78, 0xDD),
+			CompletionItem.KIND_FUNCTION => Color.FromArgb(0x61, 0xAF, 0xEF),
+			CompletionItem.KIND_VARIABLE => Color.FromArgb(0xE5, 0xC0, 0x7B),
+			CompletionItem.KIND_CLASS => Color.FromArgb(0xE0, 0x6C, 0x75),
 			CompletionItem.KIND_INTERFACE => Color.FromArgb(0x56, 0xB6, 0xC2),
-			CompletionItem.KIND_MODULE    => Color.FromArgb(0xD1, 0x9A, 0x66),
-			CompletionItem.KIND_PROPERTY  => Color.FromArgb(0x98, 0xC3, 0x79),
-			CompletionItem.KIND_SNIPPET   => Color.FromArgb(0xBE, 0x50, 0x46),
+			CompletionItem.KIND_MODULE => Color.FromArgb(0xD1, 0x9A, 0x66),
+			CompletionItem.KIND_PROPERTY => Color.FromArgb(0x98, 0xC3, 0x79),
+			CompletionItem.KIND_SNIPPET => Color.FromArgb(0xBE, 0x50, 0x46),
 			_ => Color.FromArgb(0x7A, 0x84, 0x94)
 		};
 
 		private static string KindLetter(int kind) => kind switch {
-			CompletionItem.KIND_KEYWORD   => "K",
-			CompletionItem.KIND_FUNCTION  => "F",
-			CompletionItem.KIND_VARIABLE  => "V",
-			CompletionItem.KIND_CLASS     => "C",
+			CompletionItem.KIND_KEYWORD => "K",
+			CompletionItem.KIND_FUNCTION => "F",
+			CompletionItem.KIND_VARIABLE => "V",
+			CompletionItem.KIND_CLASS => "C",
 			CompletionItem.KIND_INTERFACE => "I",
-			CompletionItem.KIND_MODULE    => "M",
-			CompletionItem.KIND_PROPERTY  => "P",
-			CompletionItem.KIND_SNIPPET   => "S",
+			CompletionItem.KIND_MODULE => "M",
+			CompletionItem.KIND_PROPERTY => "P",
+			CompletionItem.KIND_SNIPPET => "S",
 			_ => "T"
 		};
 

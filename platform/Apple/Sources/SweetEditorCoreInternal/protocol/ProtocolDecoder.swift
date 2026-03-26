@@ -503,7 +503,7 @@ extension SweetEditorCore {
     }
 
     fileprivate func defaultScrollbarModel() -> ScrollbarModel {
-        ScrollbarModel(visible: false, alpha: 0, track: defaultScrollbarRect(), thumb: defaultScrollbarRect())
+        ScrollbarModel(visible: false, alpha: 0, thumb_active: false, track: defaultScrollbarRect(), thumb: defaultScrollbarRect())
     }
 
     fileprivate func readScrollbarRect(_ reader: inout BinaryReader) -> ScrollbarRect? {
@@ -518,11 +518,12 @@ extension SweetEditorCore {
     fileprivate func readScrollbarModel(_ reader: inout BinaryReader) -> ScrollbarModel? {
         guard let visible = reader.readInt32(),
               let alpha = reader.readFloat(),
+              let thumbActive = reader.readInt32(),
               let track = readScrollbarRect(&reader),
               let thumb = readScrollbarRect(&reader) else {
             return nil
         }
-        return ScrollbarModel(visible: visible != 0, alpha: alpha, track: track, thumb: thumb)
+        return ScrollbarModel(visible: visible != 0, alpha: alpha, thumb_active: thumbActive != 0, track: track, thumb: thumb)
     }
 
     fileprivate func readEditorRenderModel(_ data: Data) -> EditorRenderModel? {
@@ -621,7 +622,7 @@ extension SweetEditorCore {
 
         var verticalScrollbar = defaultScrollbarModel()
         var horizontalScrollbar = defaultScrollbarModel()
-        if reader.data.count - reader.offset >= 80 {
+        if reader.data.count - reader.offset >= 88 {
             guard let vertical = readScrollbarModel(&reader),
                   let horizontal = readScrollbarModel(&reader) else {
                 return nil

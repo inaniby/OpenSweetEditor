@@ -503,7 +503,7 @@ class IOSEditorView: UIView, UIKeyInput, UITextInputTraits, UIPointerInteraction
     func applyTheme(_ theme: EditorTheme) {
         let bgColor = EditorRenderer.applyTheme(theme, core: editorCore)
         backgroundColor = UIColor(cgColor: bgColor)
-        rehighlightAndRedraw()
+        rebuildAndRedraw()
     }
 
     func applyEditorSettings(_ settings: EditorSettings) {

@@ -27,4 +27,6 @@ public class EditorRenderModel {
     @SerializedName("bracket_highlight_rects") public java.util.List<BracketHighlightRect> bracketHighlightRects;
     @SerializedName("vertical_scrollbar") public ScrollbarModel verticalScrollbar;
     @SerializedName("horizontal_scrollbar") public ScrollbarModel horizontalScrollbar;
+    @SerializedName("gutter_sticky") public boolean gutterSticky = true;
+    @SerializedName("gutter_visible") public boolean gutterVisible = true;
 }

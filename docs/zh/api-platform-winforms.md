@@ -5,7 +5,10 @@
 - 控件层：`platform/WinForms/SweetEditor/EditorControl.cs`
 - 桥接层：`platform/WinForms/SweetEditor/EditorCore.cs`
 - 协议解码：`platform/WinForms/SweetEditor/EditorProtocol.cs`
-- 扩展/Provider：`platform/WinForms/SweetEditor/EditorExtension.cs`
+- 扩展/Provider：
+  - `platform/WinForms/SweetEditor/EditorCompletion.cs`
+  - `platform/WinForms/SweetEditor/EditorDecoration.cs`
+  - `platform/WinForms/SweetEditor/EditorNewLine.cs`
 - 性能调试：`platform/WinForms/SweetEditor/Perf.cs`
 - Demo：`platform/WinForms/Demo/Form1.cs`
 
@@ -16,6 +19,68 @@
 - 当前桥接协议为二进制 payload。
 - `EditorControl` 负责输入、绘制、事件发布、Provider 管理。
 - `Document` 创建 / 行文本查询走 UTF-16 边界；渲染模型与编辑结果里的文本字段当前按 UTF-8 解码。
+
+## 快速开始
+
+### 环境要求（按当前仓库配置）
+
+- .NET SDK：`8.0+`
+- 运行平台：Windows x64
+
+### 在仓库内运行 WinForms Demo
+
+```powershell
+cd platform/WinForms
+dotnet build .\WinForms.sln -c Release
+dotnet run --project .\Demo\Demo.csproj -c Release
+```
+
+### 在现有 WinForms 项目中通过 NuGet 接入
+
+推荐直接使用 NuGet 包：
+
+```powershell
+dotnet add package SweetEditor --version 1.0.3
+```
+
+或在项目文件中添加：
+
+```xml
+<ItemGroup>
+  <PackageReference Include="SweetEditor" Version="1.0.3" />
+</ItemGroup>
+```
+
+> 版本请以最新发布为准，当前文档示例为 `1.0.3`。
+
+### 最小集成示例
+
+```csharp
+using System.Windows.Forms;
+using SweetEditor;
+
+public sealed class MainForm : Form
+{
+    public MainForm()
+    {
+        var editor = new EditorControl
+        {
+            Dock = DockStyle.Fill
+        };
+        Controls.Add(editor);
+
+        editor.ApplyTheme(EditorTheme.Dark());
+        editor.LoadDocument(new Document("Hello, SweetEditor!"));
+        editor.Settings.SetWrapMode(WrapMode.WORD_BREAK);
+    }
+}
+```
+
+### 说明
+
+- NuGet 包会携带 native 运行时：
+  `runtimes/win-x64/native/sweeteditor.dll`
+- 不需要手动 `DllImport` 或额外拷贝 native 文件到应用目录（按标准 NuGet 还原即可）。
 
 ## 公开控件层：`EditorControl`
 

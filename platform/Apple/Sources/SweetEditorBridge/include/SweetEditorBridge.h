@@ -173,6 +173,7 @@ int editor_can_redo(intptr_t editor_handle);
 // ===================== Style / Highlight API =====================
 
 void editor_register_text_style(intptr_t editor_handle, uint32_t style_id, int32_t color, int32_t background_color, int32_t font_style);
+void editor_register_batch_text_styles(intptr_t editor_handle, const uint8_t* data, size_t size);
 void editor_set_line_spans(intptr_t editor_handle, const uint8_t* data, size_t size);
 void editor_set_batch_line_spans(intptr_t editor_handle, const uint8_t* data, size_t size);
 void editor_clear_line_spans(intptr_t editor_handle, size_t line, uint8_t layer);

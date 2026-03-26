@@ -249,6 +249,13 @@ public:
     return wrapBinaryPayload(env, payload, out_size);
   }
 
+  static jobject tickAnimations(JNIEnv* env, jclass clazz, jlong handle) {
+    if (handle == 0) return nullptr;
+    size_t out_size = 0;
+    const uint8_t* payload = editor_tick_animations(static_cast<intptr_t>(handle), &out_size);
+    return wrapBinaryPayload(env, payload, out_size);
+  }
+
   static jobject buildRenderModel(JNIEnv* env, jclass clazz, jlong handle) {
     size_t out_size = 0;
     return wrapBinaryPayload(env, build_editor_render_model(static_cast<intptr_t>(handle), &out_size), out_size);
@@ -461,6 +468,14 @@ public:
                                static_cast<int32_t>(color),
                                static_cast<int32_t>(backgroundColor),
                                static_cast<int32_t>(fontStyle));
+  }
+
+  static void registerBatchTextStyles(JNIEnv* env, jclass clazz, jlong handle, jobject data, jint size) {
+    if (handle == 0 || data == nullptr || size <= 0) return;
+    void* ptr = env->GetDirectBufferAddress(data);
+    jlong capacity = env->GetDirectBufferCapacity(data);
+    if (ptr == nullptr || capacity < 0 || static_cast<jlong>(size) > capacity) return;
+    editor_register_batch_text_styles(static_cast<intptr_t>(handle), reinterpret_cast<const uint8_t*>(ptr), static_cast<size_t>(size));
   }
 
   static void setLineSpans(JNIEnv* env, jclass clazz, jlong handle, jobject data, jint size) {
@@ -682,6 +697,14 @@ public:
     editor_set_show_split_line(static_cast<intptr_t>(handle), show == JNI_TRUE ? 1 : 0);
   }
 
+  static void setGutterSticky(jlong handle, jboolean sticky) {
+    editor_set_gutter_sticky(static_cast<intptr_t>(handle), sticky == JNI_TRUE ? 1 : 0);
+  }
+
+  static void setGutterVisible(jlong handle, jboolean visible) {
+    editor_set_gutter_visible(static_cast<intptr_t>(handle), visible == JNI_TRUE ? 1 : 0);
+  }
+
   static void setCurrentLineRenderMode(jlong handle, jint mode) {
     editor_set_current_line_render_mode(static_cast<intptr_t>(handle), static_cast<int>(mode));
   }
@@ -836,6 +859,7 @@ public:
       {"nativeHandleGestureEvent", "(JII[F)Ljava/nio/ByteBuffer;", (void*) handleGestureEvent},
       {"nativeTickEdgeScroll", "(J)Ljava/nio/ByteBuffer;", (void*) tickEdgeScroll},
       {"nativeTickFling", "(J)Ljava/nio/ByteBuffer;", (void*) tickFling},
+      {"nativeTickAnimations", "(J)Ljava/nio/ByteBuffer;", (void*) tickAnimations},
       {"nativeOnFontMetricsChanged", "(J)V", (void*) onFontMetricsChanged},
       {"nativeBuildRenderModel", "(J)Ljava/nio/ByteBuffer;", (void*) buildRenderModel},
       {"nativeHandleKeyEvent", "(JILjava/lang/String;I)Ljava/nio/ByteBuffer;", (void*) handleKeyEvent},
@@ -866,6 +890,7 @@ public:
       {"nativeGetPositionRect", "(JII)[F", (void*) getPositionRect},
       {"nativeGetCursorRect", "(J)[F", (void*) getCursorRect},
       {"nativeRegisterTextStyle", "(JIIII)V", (void*) registerTextStyle},
+      {"nativeRegisterBatchTextStyles", "(JLjava/nio/ByteBuffer;I)V", (void*) registerBatchTextStyles},
       {"nativeSetLineSpans", "(JLjava/nio/ByteBuffer;I)V", (void*) setLineSpans},
       {"nativeSetLineInlayHints", "(JLjava/nio/ByteBuffer;I)V", (void*) setLineInlayHints},
       {"nativeSetLinePhantomTexts", "(JLjava/nio/ByteBuffer;I)V", (void*) setLinePhantomTexts},
@@ -906,6 +931,8 @@ public:
       {"nativeSetLineSpacing", "(JFF)V", (void*) setLineSpacing},
       {"nativeSetContentStartPadding", "(JF)V", (void*) setContentStartPadding},
       {"nativeSetShowSplitLine", "(JZ)V", (void*) setShowSplitLine},
+      {"nativeSetGutterSticky", "(JZ)V", (void*) setGutterSticky},
+      {"nativeSetGutterVisible", "(JZ)V", (void*) setGutterVisible},
       {"nativeSetCurrentLineRenderMode", "(JI)V", (void*) setCurrentLineRenderMode},
       {"nativeUndo", "(J)Ljava/nio/ByteBuffer;", (void*) editorUndo},
       {"nativeRedo", "(J)Ljava/nio/ByteBuffer;", (void*) editorRedo},
@@ -938,4 +965,3 @@ public:
 };
 
 #endif //SWEETEDITOR_JEDITOR_HPP
-

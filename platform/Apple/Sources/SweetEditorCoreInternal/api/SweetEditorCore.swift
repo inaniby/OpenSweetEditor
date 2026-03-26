@@ -266,6 +266,21 @@ class SweetEditorCore {
             return packBatchLineSpans(layer: layer, spansByLine: tuples)
         }
 
+        func packBatchTextStyles(_ stylesById: [UInt32: (color: Int32, backgroundColor: Int32, fontStyle: Int32)]) -> Data {
+            let styleIds = stylesById.keys.sorted()
+            var payload = Data()
+            payload.reserveCapacity(4 + styleIds.count * 16)
+            appendU32(UInt32(styleIds.count), to: &payload)
+            for styleId in styleIds {
+                let style = stylesById[styleId] ?? (0, 0, 0)
+                appendU32(styleId, to: &payload)
+                appendI32(style.color, to: &payload)
+                appendI32(style.backgroundColor, to: &payload)
+                appendI32(style.fontStyle, to: &payload)
+            }
+            return payload
+        }
+
         func packLineInlayHints(line: Int, hints: [InlayHintPayload]) -> Data {
             var payload = Data()
             payload.reserveCapacity(8 + hints.count * 24)
@@ -1260,6 +1275,16 @@ class SweetEditorCore {
     func registerStyle(styleId: UInt32, color: Int32, backgroundColor: Int32, fontStyle: Int32) {
         performCoreCall {
             editor_register_text_style(handle, styleId, color, backgroundColor, fontStyle)
+        }
+    }
+
+    func registerBatchStyles(_ stylesById: [UInt32: (color: Int32, backgroundColor: Int32, fontStyle: Int32)]) {
+        if stylesById.isEmpty { return }
+        let payload = protocolEncoder.packBatchTextStyles(stylesById)
+        performCoreCall {
+            withPayload(payload) { ptr, size in
+                editor_register_batch_text_styles(handle, ptr, size)
+            }
         }
     }
 

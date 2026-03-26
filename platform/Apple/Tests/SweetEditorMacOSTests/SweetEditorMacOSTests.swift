@@ -73,6 +73,30 @@ final class SweetEditorMacOSTests: XCTestCase {
         XCTAssertFalse(containsStyleColor(markerColor, in: after))
     }
 
+    func testRegisterBatchStylesUpdatesRenderedRunColor() {
+        let core = makeCoreWithSingleLineDocument("abc")
+        let styleId: UInt32 = 101
+        let originalColor = Int32(bitPattern: 0xFF00FF00)
+        let updatedColor = Int32(bitPattern: 0xFFFF0000)
+
+        core.registerStyle(styleId: styleId, color: originalColor, fontStyle: 0)
+        core.setLineSpans(
+            line: 0,
+            layer: 0,
+            spans: [SweetEditorCore.StyleSpan(column: 0, length: 3, styleId: styleId)]
+        )
+
+        let before = core.buildRenderModel()
+        XCTAssertTrue(containsStyleColor(originalColor, in: before))
+
+        core.registerBatchStyles([
+            styleId: (color: updatedColor, backgroundColor: 0, fontStyle: 0)
+        ])
+
+        let after = core.buildRenderModel()
+        XCTAssertTrue(containsStyleColor(updatedColor, in: after))
+    }
+
     func testSetLineDiagnosticsWithEmptyArrayClearsPreviousLineDiagnostics() {
         let core = makeCoreWithSingleLineDocument("abc")
 
@@ -104,12 +128,14 @@ final class SweetEditorMacOSTests: XCTestCase {
             verticalScrollbar: ScrollbarModel(
                 visible: true,
                 alpha: 0.5,
+                thumb_active: false,
                 track: ScrollbarRect(origin: PointData(x: 108, y: 0), width: 12, height: 108),
                 thumb: ScrollbarRect(origin: PointData(x: 108, y: 16), width: 12, height: 32)
             ),
             horizontalScrollbar: ScrollbarModel(
                 visible: true,
                 alpha: 0.35,
+                thumb_active: false,
                 track: ScrollbarRect(origin: PointData(x: 0, y: 108), width: 108, height: 12),
                 thumb: ScrollbarRect(origin: PointData(x: 20, y: 108), width: 36, height: 12)
             )
@@ -128,6 +154,41 @@ final class SweetEditorMacOSTests: XCTestCase {
         XCTAssertNotEqual(pixelARGB(context: context, x: 114, y: 24), pixelARGB(context: context, x: 4, y: 4))
         XCTAssertNotEqual(pixelARGB(context: context, x: 28, y: 114), pixelARGB(context: context, x: 4, y: 4))
         XCTAssertNotEqual(pixelARGB(context: context, x: 108, y: 24), pixelARGB(context: context, x: 114, y: 24))
+    }
+
+    func testMacScrollbarPolicyDrawsVisibleVerticalThumbForDefaultTheme() {
+        let core = SweetEditorCore(fontSize: 14.0, fontName: "Menlo")
+        let context = makeBitmapContext(width: 120, height: 120)
+        let model = makeRenderModel(
+            viewportWidth: 120,
+            viewportHeight: 120,
+            verticalScrollbar: ScrollbarModel(
+                visible: true,
+                alpha: 1.0,
+                thumb_active: false,
+                track: ScrollbarRect(origin: PointData(x: 108, y: 0), width: 12, height: 108),
+                thumb: ScrollbarRect(origin: PointData(x: 108, y: 16), width: 12, height: 32)
+            ),
+            horizontalScrollbar: ScrollbarModel(
+                visible: false,
+                alpha: 0,
+                thumb_active: false,
+                track: ScrollbarRect(origin: PointData(x: 0, y: 0), width: 0, height: 0),
+                thumb: ScrollbarRect(origin: PointData(x: 0, y: 0), width: 0, height: 0)
+            )
+        )
+
+        _ = EditorRenderer.draw(
+            context: context,
+            model: model,
+            core: core,
+            viewHeight: 120,
+            iconProvider: nil,
+            isCursorBlinkVisible: false,
+            scrollbarStyle: MacOSScrollbarPolicy().visualStyle(for: EditorRenderer.theme)
+        )
+
+        XCTAssertNotEqual(pixelARGB(context: context, x: 114, y: 24), pixelARGB(context: context, x: 4, y: 4))
     }
 
     func testCoreScrollbarConfigCanDisableScrollbars() {
@@ -164,6 +225,33 @@ final class SweetEditorMacOSTests: XCTestCase {
         XCTAssertEqual(Double(metrics.scrollY), 0.0, accuracy: 0.001)
         XCTAssertFalse(metrics.canScrollX)
         XCTAssertFalse(metrics.canScrollY)
+    }
+
+    func testBuildRenderModelDecodesVerticalScrollbarGeometry() {
+        let core = SweetEditorCore(fontSize: 14.0, fontName: "Menlo")
+        core.setViewport(width: 500, height: 300)
+        core.setDocument(SweetDocument(text: Array(repeating: "long long line for scrolling", count: 200).joined(separator: "\n")))
+        core.setScrollbarConfig(
+            SweetEditorCore.ScrollbarConfig(
+                thickness: 8.0,
+                minThumb: 24.0,
+                thumbHitPadding: 0.0,
+                mode: .ALWAYS,
+                thumbDraggable: true,
+                trackTapMode: .JUMP,
+                fadeDelayMs: 700,
+                fadeDurationMs: 300
+            )
+        )
+
+        let model = core.buildRenderModel()
+
+        XCTAssertTrue(model?.vertical_scrollbar.visible ?? false)
+        XCTAssertGreaterThan(Double(model?.vertical_scrollbar.track.width ?? 0), 0.0)
+        XCTAssertGreaterThan(Double(model?.vertical_scrollbar.track.height ?? 0), 0.0)
+        XCTAssertGreaterThan(Double(model?.vertical_scrollbar.thumb.width ?? 0), 0.0)
+        XCTAssertGreaterThan(Double(model?.vertical_scrollbar.thumb.height ?? 0), 0.0)
+        XCTAssertGreaterThan(Double(model?.vertical_scrollbar.track.origin.x ?? 0), 0.0)
     }
 
     func testDefaultScrollbarConfigMatchesTransientParity() {
@@ -248,20 +336,6 @@ final class SweetEditorMacOSTests: XCTestCase {
         XCTAssertNotNil(view.onGutterIconClick)
     }
 
-    func testMacViewInstallsMouseMovedTrackingForScrollbarHoverReveal() {
-        let view = SweetEditorViewMacOS(frame: NSRect(x: 0, y: 0, width: 320, height: 160))
-
-        view.updateTrackingAreas()
-
-        XCTAssertTrue(
-            view.trackingAreas.contains {
-                $0.options.contains(.mouseMoved)
-                    && $0.options.contains(.activeInKeyWindow)
-                    && $0.options.contains(.inVisibleRect)
-            }
-        )
-    }
-
     func testMacViewHoverRevealIsEnabledByDefault() {
         let view = SweetEditorViewMacOS(frame: NSRect(x: 0, y: 0, width: 320, height: 160))
 
@@ -269,7 +343,7 @@ final class SweetEditorMacOSTests: XCTestCase {
     }
 
     func testMacOSScrollbarPolicyProvidesVisualStyle() {
-        let style = MacOSScrollbarPolicy().visualStyle(for: EditorRenderer.theme)
+        let style = MacOSScrollbarPolicy(scrollerStyle: .overlay).visualStyle(for: EditorRenderer.theme)
 
         XCTAssertEqual(style.verticalInset, 2.0, accuracy: 0.001)
         XCTAssertEqual(style.horizontalInset, 2.0, accuracy: 0.001)
@@ -333,12 +407,14 @@ final class SweetEditorMacOSTests: XCTestCase {
             verticalScrollbar: ScrollbarModel(
                 visible: true,
                 alpha: 1.0,
+                thumb_active: false,
                 track: ScrollbarRect(origin: PointData(x: 108, y: 0), width: 12, height: 108),
                 thumb: ScrollbarRect(origin: PointData(x: 108, y: 16), width: 12, height: 32)
             ),
             horizontalScrollbar: ScrollbarModel(
                 visible: false,
                 alpha: 0,
+                thumb_active: false,
                 track: ScrollbarRect(origin: PointData(x: 0, y: 0), width: 0, height: 0),
                 thumb: ScrollbarRect(origin: PointData(x: 0, y: 0), width: 0, height: 0)
             )
@@ -349,12 +425,14 @@ final class SweetEditorMacOSTests: XCTestCase {
             verticalScrollbar: ScrollbarModel(
                 visible: false,
                 alpha: 0,
+                thumb_active: false,
                 track: ScrollbarRect(origin: PointData(x: 0, y: 0), width: 0, height: 0),
                 thumb: ScrollbarRect(origin: PointData(x: 0, y: 0), width: 0, height: 0)
             ),
             horizontalScrollbar: ScrollbarModel(
                 visible: false,
                 alpha: 0,
+                thumb_active: false,
                 track: ScrollbarRect(origin: PointData(x: 0, y: 0), width: 0, height: 0),
                 thumb: ScrollbarRect(origin: PointData(x: 0, y: 0), width: 0, height: 0)
             )

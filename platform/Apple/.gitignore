@@ -24,6 +24,7 @@ DerivedData/
 Pods/
 .build/
 .swiftpm/
+.swift-module-cache/
 .localhome/
 binaries/SweetNativeCore.xcframework/
 

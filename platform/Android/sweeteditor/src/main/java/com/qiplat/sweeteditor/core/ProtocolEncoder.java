@@ -14,6 +14,7 @@ import com.qiplat.sweeteditor.core.adornment.IndentGuide;
 import com.qiplat.sweeteditor.core.adornment.SeparatorGuide;
 import com.qiplat.sweeteditor.core.adornment.InlayHint;
 import com.qiplat.sweeteditor.core.adornment.InlayType;
+import com.qiplat.sweeteditor.core.adornment.TextStyle;
 import com.qiplat.sweeteditor.core.snippet.LinkedEditingModel;
 import com.qiplat.sweeteditor.core.snippet.TabStopGroup;
 import com.qiplat.sweeteditor.core.foundation.TextPosition;
@@ -25,6 +26,8 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 public final class ProtocolEncoder {
     private ProtocolEncoder() {
@@ -62,6 +65,32 @@ public final class ProtocolEncoder {
             payload.putInt(columns[i]);
             payload.putInt(lengths[i]);
             payload.putInt(styleIds[i]);
+        }
+        payload.flip();
+        return payload;
+    }
+
+    /**
+     * Batch encode text style registrations.
+     * <p>
+     * Format (LE): u32 entry_count,
+     * [u32 style_id, i32 color, i32 background_color, i32 font_style] x entry_count
+     *
+     * @param stylesById style ID -> text style mapping
+     * @return packed ByteBuffer, returns null if input is null or empty
+     */
+    @Nullable
+    public static ByteBuffer packBatchTextStyles(@Nullable Map<Integer, TextStyle> stylesById) {
+        if (stylesById == null || stylesById.isEmpty()) return null;
+        ByteBuffer payload = ByteBuffer.allocateDirect(4 + stylesById.size() * 16)
+                .order(ByteOrder.LITTLE_ENDIAN);
+        payload.putInt(stylesById.size());
+        for (Map.Entry<Integer, TextStyle> entry : new TreeMap<>(stylesById).entrySet()) {
+            TextStyle style = entry.getValue();
+            payload.putInt(entry.getKey());
+            payload.putInt(style.color);
+            payload.putInt(style.backgroundColor);
+            payload.putInt(style.fontStyle);
         }
         payload.flip();
         return payload;

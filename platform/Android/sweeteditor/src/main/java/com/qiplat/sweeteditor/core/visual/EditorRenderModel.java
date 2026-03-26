@@ -99,4 +99,12 @@ public class EditorRenderModel {
     /** Horizontal scrollbar render model. */
     @SerializedName("horizontal_scrollbar")
     public ScrollbarModel horizontalScrollbar;
+
+    /** Whether gutter stays fixed during horizontal scroll. */
+    @SerializedName("gutter_sticky")
+    public boolean gutterSticky = true;
+
+    /** Whether gutter area is visible. */
+    @SerializedName("gutter_visible")
+    public boolean gutterVisible = true;
 }

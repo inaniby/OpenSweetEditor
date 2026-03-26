@@ -264,12 +264,12 @@ namespace SweetEditor {
 		public long DoubleTapTimeout { get; set; } = 300;
 		/// <summary>Long press time threshold in ms (default 500)</summary>
 		public long LongPressMs { get; set; } = 500;
-		/// <summary>Fling friction coefficient, higher = faster deceleration (default 3.5)</summary>
-		public float FlingFriction { get; set; } = 3.5f;
-		/// <summary>Minimum fling velocity threshold in px/s (default 50)</summary>
-		public float FlingMinVelocity { get; set; } = 50f;
-		/// <summary>Maximum fling velocity cap in px/s (default 8000)</summary>
-		public float FlingMaxVelocity { get; set; } = 8000f;
+		/// <summary>Fling friction coefficient, higher = faster deceleration (default 2.0)</summary>
+		public float FlingFriction { get; set; } = 2.0f;
+		/// <summary>Minimum fling velocity threshold in px/s (default 30)</summary>
+		public float FlingMinVelocity { get; set; } = 30f;
+		/// <summary>Maximum fling velocity cap in px/s (default 12000)</summary>
+		public float FlingMaxVelocity { get; set; } = 12000f;
 		/// <summary>Max undo stack size, 0 = unlimited (default 512)</summary>
 		public ulong MaxUndoStackSize { get; set; } = 512;
 	}
@@ -583,6 +583,14 @@ namespace SweetEditor {
 		/// <summary>Whether the platform should start/continue an edge-scroll timer.</summary>
 		[JsonPropertyName("needs_edge_scroll")]
 		public bool NeedsEdgeScroll { get; set; }
+
+		/// <summary>Whether the platform should start/continue a fling animation callback.</summary>
+		[JsonPropertyName("needs_fling")]
+		public bool NeedsFling { get; set; }
+
+		/// <summary>Whether any animation is still active; platform can use a single callback.</summary>
+		[JsonPropertyName("needs_animation")]
+		public bool NeedsAnimation { get; set; }
 
 		/// <summary>Creates the default gesture result.</summary>
 		public GestureResult() {
@@ -1097,18 +1105,18 @@ namespace SweetEditor {
 		/// <summary>Current line render mode.</summary>
 		[JsonPropertyName("current_line_render_mode")]
 		public CurrentLineRenderMode CurrentLineRenderMode { get; set; }
-			/// <summary>Visually rendered text rows (visible area only).</summary>
-			[JsonPropertyName("lines")]
-			public List<VisualLine> VisualLines { get; set; }
-			/// <summary>Gutter icon render list (fully resolved geometry, visible area only).</summary>
-			[JsonPropertyName("gutter_icons")]
-			public List<GutterIconRenderItem> GutterIcons { get; set; }
-			/// <summary>Fold marker render list (fully resolved geometry, visible area only).</summary>
-			[JsonPropertyName("fold_markers")]
-			public List<FoldMarkerRenderItem> FoldMarkers { get; set; }
-			/// <summary>Caret</summary>
-			[JsonPropertyName("cursor")]
-			public Cursor Cursor { get; set; }
+		/// <summary>Visually rendered text rows (visible area only).</summary>
+		[JsonPropertyName("lines")]
+		public List<VisualLine> VisualLines { get; set; }
+		/// <summary>Gutter icon render list (fully resolved geometry, visible area only).</summary>
+		[JsonPropertyName("gutter_icons")]
+		public List<GutterIconRenderItem> GutterIcons { get; set; }
+		/// <summary>Fold marker render list (fully resolved geometry, visible area only).</summary>
+		[JsonPropertyName("fold_markers")]
+		public List<FoldMarkerRenderItem> FoldMarkers { get; set; }
+		/// <summary>Caret</summary>
+		[JsonPropertyName("cursor")]
+		public Cursor Cursor { get; set; }
 		/// <summary>Selection highlight rectangles</summary>
 		[JsonPropertyName("selection_rects")]
 		public List<SelectionRect> SelectionRects { get; set; }
@@ -1142,6 +1150,12 @@ namespace SweetEditor {
 		/// <summary>Horizontal scrollbar render model.</summary>
 		[JsonPropertyName("horizontal_scrollbar")]
 		public ScrollbarModel HorizontalScrollbar { get; set; }
+		/// <summary>Whether gutter stays fixed during horizontal scroll.</summary>
+		[JsonPropertyName("gutter_sticky")]
+		public bool GutterSticky { get; set; }
+		/// <summary>Whether gutter area is visible.</summary>
+		[JsonPropertyName("gutter_visible")]
+		public bool GutterVisible { get; set; }
 	}
 
 	/// <summary>
@@ -1336,6 +1350,12 @@ namespace SweetEditor {
 		[DllImport(LibraryName, EntryPoint = "editor_set_show_split_line", CallingConvention = CallingConvention.Cdecl)]
 		internal static extern void SetShowSplitLine(IntPtr handle, int show);
 
+		[DllImport(LibraryName, EntryPoint = "editor_set_gutter_sticky", CallingConvention = CallingConvention.Cdecl)]
+		internal static extern void SetGutterSticky(IntPtr handle, int sticky);
+
+		[DllImport(LibraryName, EntryPoint = "editor_set_gutter_visible", CallingConvention = CallingConvention.Cdecl)]
+		internal static extern void SetGutterVisible(IntPtr handle, int visible);
+
 		[DllImport(LibraryName, EntryPoint = "editor_set_current_line_render_mode", CallingConvention = CallingConvention.Cdecl)]
 		internal static extern void SetCurrentLineRenderMode(IntPtr handle, int mode);
 
@@ -1348,6 +1368,9 @@ namespace SweetEditor {
 
 		[DllImport(LibraryName, EntryPoint = "editor_tick_edge_scroll", CallingConvention = CallingConvention.Cdecl)]
 		internal static extern IntPtr TickEdgeScroll(IntPtr handle, out UIntPtr outSize);
+
+		[DllImport(LibraryName, EntryPoint = "editor_tick_animations", CallingConvention = CallingConvention.Cdecl)]
+		internal static extern IntPtr TickAnimations(IntPtr handle, out UIntPtr outSize);
 
 		[DllImport(LibraryName, EntryPoint = "handle_editor_key_event", CallingConvention = CallingConvention.Cdecl)]
 		internal static extern IntPtr HandleKeyEvent(IntPtr handle, ushort keyCode, [MarshalAs(UnmanagedType.LPUTF8Str)] string? text, byte modifiers, out UIntPtr outSize);
@@ -1507,6 +1530,9 @@ namespace SweetEditor {
 
 		[DllImport(LibraryName, EntryPoint = "editor_register_text_style", CallingConvention = CallingConvention.Cdecl)]
 		internal static extern void registerTextStyle(IntPtr handle, uint styleId, int color, int backgroundColor, int fontStyle);
+
+		[DllImport(LibraryName, EntryPoint = "editor_register_batch_text_styles", CallingConvention = CallingConvention.Cdecl)]
+		internal static extern void registerBatchTextStyles(IntPtr handle, byte[] data, nuint size);
 
 		[DllImport(LibraryName, EntryPoint = "editor_set_line_spans", CallingConvention = CallingConvention.Cdecl)]
 		internal static extern void SetLineSpans(IntPtr handle, byte[] data, nuint size);
@@ -1790,6 +1816,18 @@ namespace SweetEditor {
 			NativeMethods.SetShowSplitLine(nativeHandle, show ? 1 : 0);
 		}
 
+		/// <summary>Sets whether gutter stays fixed during horizontal scroll.</summary>
+		/// <param name="sticky">true=gutter fixed (desktop style), false=gutter scrolls with content (mobile style).</param>
+		public void SetGutterSticky(bool sticky) {
+			NativeMethods.SetGutterSticky(nativeHandle, sticky ? 1 : 0);
+		}
+
+		/// <summary>Sets whether gutter area is visible.</summary>
+		/// <param name="visible">true=show gutter, false=hide entire gutter.</param>
+		public void SetGutterVisible(bool visible) {
+			NativeMethods.SetGutterVisible(nativeHandle, visible ? 1 : 0);
+		}
+
 		/// <summary>Sets current line render mode.</summary>
 		/// <param name="mode">BACKGROUND(fill), BORDER(stroke), or NONE(disabled).</param>
 		public void SetCurrentLineRenderMode(CurrentLineRenderMode mode) {
@@ -1828,6 +1866,12 @@ namespace SweetEditor {
 		/// <summary>Advances edge-scroll by one tick and returns an updated gesture result.</summary>
 		public GestureResult TickEdgeScroll() {
 			IntPtr payloadPtr = NativeMethods.TickEdgeScroll(nativeHandle, out UIntPtr payloadSize);
+			return ProtocolDecoder.ParseGestureResult(payloadPtr, payloadSize);
+		}
+
+		/// <summary>Unified animation tick: advances all active animations (edge-scroll, fling).</summary>
+		public GestureResult TickAnimations() {
+			IntPtr payloadPtr = NativeMethods.TickAnimations(nativeHandle, out UIntPtr payloadSize);
 			return ProtocolDecoder.ParseGestureResult(payloadPtr, payloadSize);
 		}
 
@@ -2257,6 +2301,21 @@ namespace SweetEditor {
 			NativeMethods.registerTextStyle(nativeHandle, styleId, color, 0, fontStyle);
 		}
 
+		/// <summary>Registers multiple highlight styles in one native call.</summary>
+		/// <param name="stylesById">Style definitions keyed by style ID.</param>
+		public void registerBatchTextStyles(IReadOnlyDictionary<uint, TextStyle> stylesById) {
+			if (stylesById == null || stylesById.Count == 0) {
+				return;
+			}
+
+			byte[] payload = ProtocolEncoder.PackBatchTextStyles(stylesById);
+			if (payload.Length == 0) {
+				return;
+			}
+
+			NativeMethods.registerBatchTextStyles(nativeHandle, payload, (nuint)payload.Length);
+		}
+
 		/// <summary>Sets highlight spans for the specified line (model overload).</summary>
 		public void SetLineSpans(int line, int layer, IList<StyleSpan> spans) {
 			if (spans == null) return;
@@ -2620,4 +2679,3 @@ namespace SweetEditor {
 
 	}
 }
-

@@ -12,9 +12,10 @@ struct EditorRenderer {
     static func applyTheme(_ newTheme: EditorTheme, core: SweetEditorCore? = nil) -> CGColor {
         theme = newTheme
         if let core = core {
-            for (styleId, styleDef) in newTheme.syntaxStyles {
-                core.registerStyle(styleId: styleId, color: styleDef.color, fontStyle: styleDef.fontStyle)
+            let stylesById = newTheme.syntaxStyles.mapValues { styleDef in
+                (color: styleDef.color, backgroundColor: Int32(0), fontStyle: styleDef.fontStyle)
             }
+            core.registerBatchStyles(stylesById)
         }
         return theme.backgroundColor
     }

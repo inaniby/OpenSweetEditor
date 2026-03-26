@@ -40,11 +40,16 @@ public final class DecorationProviderManager {
 
     private final Runnable refreshRunnable = this::doRefresh;
     private final Runnable applyRunnable = this::applyMerged;
+    private volatile boolean pendingScrollRefresh;
     private final Runnable scrollRefreshRunnable = () -> {
         scrollRefreshScheduled = false;
         mainHandler.removeCallbacks(refreshRunnable);
         doRefresh();
         lastScrollRefreshUptimeMs = SystemClock.uptimeMillis();
+        if (pendingScrollRefresh) {
+            pendingScrollRefresh = false;
+            scheduleScrollRefresh();
+        }
     };
 
     private final List<EditorCore.TextChange> pendingTextChanges = new ArrayList<>();
@@ -108,6 +113,7 @@ public final class DecorationProviderManager {
                 ? 0L
                 : (minInterval - elapsed);
         if (scrollRefreshScheduled) {
+            pendingScrollRefresh = true;
             return;
         }
         scrollRefreshScheduled = true;

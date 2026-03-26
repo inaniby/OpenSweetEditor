@@ -13,10 +13,18 @@
 		<Authors>Scave</Authors>
 		<Company>Mobile-IPE</Company>
 		<Product>QiStudio</Product>
+		<Version>1.0.3</Version>
+		<Description>Cross-platform code editor core for WinForms, powered by SweetEditor C++.</Description>
+		<PackageProjectUrl>https://github.com/FinalScave/OpenSweetEditor</PackageProjectUrl>
+		<RepositoryUrl>https://github.com/FinalScave/OpenSweetEditor.git</RepositoryUrl>
+		<RepositoryType>git</RepositoryType>
+		<PackageTags>editor;code-editor;winforms;syntax-highlighting;cpp;ide-editor</PackageTags>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
 	</PropertyGroup>
 	
 	<ItemGroup>
-		<Content Include="..\..\..\cmake-build-debug-visual-studio\bin\sweeteditor.dll" Pack="true" PackagePath="runtimes\win-x64\native\">
+		<None Include="README.md" Pack="true" PackagePath="\" />
+		<Content Include="..\..\..\cmake-build-release-visual-studio\bin\sweeteditor.dll" Pack="true" PackagePath="runtimes\win-x64\native\">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Content>
 	</ItemGroup>

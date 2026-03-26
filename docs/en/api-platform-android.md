@@ -14,6 +14,93 @@ This document maps to the current Android implementation:
 - `buildRenderModel()`, gesture result, key result, text edit result, and scroll metrics still return by binary protocol, then `ProtocolDecoder` decodes them.
 - `SweetEditor` exposes semantic enum APIs (`WrapMode`/`FoldArrowMode`/`AutoIndentMode`, etc.).
 
+## Quick Start
+
+### Environment Requirements (current repo configuration)
+
+- Android Gradle Plugin: `8.1.3`
+- Gradle Wrapper: `8.5`
+- `compileSdk 34` / `minSdk 21`
+- NDK: `28.2.13676358`
+
+### Run the Demo in this repository
+
+```bash
+cd platform/Android
+./gradlew :app:assembleDebug
+```
+
+On Windows PowerShell:
+
+```powershell
+cd platform/Android
+.\gradlew.bat :app:assembleDebug
+```
+
+### Integrate into an existing Android app
+
+Recommended: use the Maven Central artifact directly:
+
+```gradle
+repositories {
+    mavenCentral()
+    google()
+}
+
+dependencies {
+    implementation("com.qiplat:sweeteditor:1.0.3")
+}
+```
+> The dependency version should follow the latest release, which is currently 1.0.3.
+  
+If you need local source-module integration (for local debugging):
+
+1. Include the module in `settings.gradle`:
+
+```gradle
+include(":sweeteditor")
+```
+
+2. Add the local module dependency in your app module:
+
+```gradle
+dependencies {
+    implementation(project(":sweeteditor"))
+}
+```
+
+- If you copy `sweeteditor` to a different directory depth, update
+   `externalNativeBuild.cmake.path` in `platform/Android/sweeteditor/build.gradle`
+   (current value: `../../../CMakeLists.txt`).
+
+### Minimal Integration Example
+
+Layout (XML):
+
+```xml
+<com.qiplat.sweeteditor.SweetEditor
+    android:id="@+id/editor"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent" />
+```
+
+Initialization (Java):
+
+```java
+import com.qiplat.sweeteditor.EditorTheme;
+import com.qiplat.sweeteditor.SweetEditor;
+import com.qiplat.sweeteditor.core.Document;
+
+SweetEditor editor = findViewById(R.id.editor);
+editor.applyTheme(EditorTheme.dark());
+editor.loadDocument(new Document("Hello, SweetEditor!"));
+```
+
+### Notes
+
+- No manual `System.loadLibrary("sweeteditor")` call is needed; `EditorCore` handles it in a static block.
+- Default ABI filters are `arm64-v8a` and `x86_64`; add more ABIs in `ndk.abiFilters` inside `sweeteditor/build.gradle` if needed.
+
 ## Public Control Layer: `SweetEditor`
 
 ### Constructors
@@ -121,6 +208,31 @@ public void flush()
 
 `flush()` applies pending updates (decoration / layout / scroll / selection) and triggers redraw. For batched decoration updates, call `flush()` once at the end.
 
+### Completion Trigger Rules
+
+| Entry | Invocation | TriggerKind | Notes |
+| --- | --- | --- | --- |
+| Manual call | `triggerCompletion()` | `INVOKED` | Requests completion directly |
+| Shortcut | `Ctrl + Space` | `INVOKED` | Ultimately calls `triggerCompletion()` |
+| Auto trigger entry | `dispatchTextChanged` | See table below | Evaluated with short-circuit priority |
+
+Auto-trigger priority (short-circuit order; stop at first match):
+
+| Order | Condition | TriggerKind | Extra info |
+| --- | --- | --- | --- |
+| 1 | `isInLinkedEditing()==true` | No trigger | Skip auto completion in linked-editing mode |
+| 2 | Primary change is a single character and matches any provider trigger character | `CHARACTER` | Propagates `triggerCharacter` |
+| 3 | Primary change is a single character and completion panel is already visible | `RETRIGGER` | Re-trigger while panel is visible |
+| 4 | Primary change is a single character and char is alphanumeric or `_` | `INVOKED` | Normal typing trigger |
+| 5 | Primary change is not a single character and completion panel is already visible | `RETRIGGER` | Re-trigger only when panel is visible |
+
+| Rule type | Condition | Behavior |
+| --- | --- | --- |
+| Debounce | `INVOKED` | 0ms (immediate) |
+| Debounce | `CHARACTER` / `RETRIGGER` | 50ms |
+| Keyboard interaction | `Up/Down` / `Enter` / `Escape` | Navigate / confirm / close |
+| Gesture interaction | `TAP` or `SCROLL` | Dismiss current completion panel |
+
 ### Performance Debug
 
 ```java
@@ -128,7 +240,34 @@ public void setPerfOverlayEnabled(boolean enabled)
 public boolean isPerfOverlayEnabled()
 ```
 
-When enabled, the top-right corner shows live stats such as FPS, build/draw/total cost, measure stats, and last input event cost. Default is off; use only for debugging.
+When `setPerfOverlayEnabled(true)` is enabled, a real-time performance panel appears at the **top-left** of the editor area (off by default; debug use only).
+
+> Implementation detail note (current v1.0.3): field names, thresholds, and step labels below are for debugging display and are not a stable API contract. For upgrades, follow source code and release notes.
+
+Panel fields (current implementation):
+
+| Field label | Meaning |
+| --- | --- |
+| `FPS` | Real-time frames per second |
+| `Frame: total/build/draw` | Per-frame total time, build time, and draw time |
+| `Step: ...` | Step-level render timings |
+| `measure{...}` | text/inlay/icon measurement statistics |
+| `Input[tag]: ...` | Most recent input-path timing |
+
+Visual thresholds (current implementation):
+
+| Dimension | Condition | Panel marker |
+| --- | --- | --- |
+| Slow frame | `total > 16.6ms` | Append `SLOW` on `Frame` row |
+| Slow render step | Single step `>= 2ms` | Append `!` on that step |
+| Slow input path | Input cost `> 3ms` | Append `SLOW` on `Input` row |
+
+Logging thresholds (current implementation):
+
+| Log category | Condition | Output notes |
+| --- | --- | --- |
+| `[PERF][SLOW]` input log | Slow input path `>= 3ms` | Logs slow input paths |
+| `[PERF][Build]` log | build `>= 8ms` or measurement stats hit threshold | Periodic output, checked every 60 frames by default |
 
 ### Styles / Decorations / Folding / Linked Editing
 

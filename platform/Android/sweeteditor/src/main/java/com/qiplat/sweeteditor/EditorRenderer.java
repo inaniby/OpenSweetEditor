@@ -32,6 +32,7 @@ final class EditorRenderer {
     private static final float HANDLE_LINE_WIDTH = 1.5f;
     private static final float HANDLE_DROP_RADIUS = 10.0f;
     private static final float HANDLE_CENTER_DIST = 24.0f;
+    private static final int DEFAULT_TEXT_SIZE = 28;
 
     private EditorTheme mTheme;
     private final float mDensity;
@@ -83,7 +84,7 @@ final class EditorRenderer {
 
         mTextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         mTextPaint.setColor(theme.textColor);
-        mTextPaint.setTextSize(36);
+        mTextPaint.setTextSize(DEFAULT_TEXT_SIZE);
 
         mTextTypefaces[Typeface.NORMAL] = Typeface.create(Typeface.MONOSPACE, Typeface.NORMAL);
         mTextTypefaces[Typeface.BOLD] = Typeface.create(Typeface.MONOSPACE, Typeface.BOLD);
@@ -97,7 +98,7 @@ final class EditorRenderer {
         mInlayHintTypefaces[Typeface.ITALIC] = Typeface.create(Typeface.SANS_SERIF, Typeface.ITALIC);
         mInlayHintTypefaces[Typeface.BOLD_ITALIC] = Typeface.create(Typeface.SANS_SERIF, Typeface.BOLD_ITALIC);
         mInlayHintPaint.setTypeface(mInlayHintTypefaces[Typeface.NORMAL]);
-        mInlayHintPaint.setTextSize(36 * 0.9f);
+        mInlayHintPaint.setTextSize(DEFAULT_TEXT_SIZE * 0.9f);
         mInlayHintPaint.setColor(theme.inlayHintTextColor);
 
         mInlayHintBgPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -117,7 +118,7 @@ final class EditorRenderer {
 
         mLineNumberPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         mLineNumberPaint.setColor(theme.lineNumberColor);
-        mLineNumberPaint.setTextSize(30);
+        mLineNumberPaint.setTextSize(DEFAULT_TEXT_SIZE * 0.8f);
 
         mCurrentLinePaint = new Paint();
         mCurrentLinePaint.setColor(theme.currentLineColor);
@@ -534,6 +535,7 @@ final class EditorRenderer {
     }
 
     private void drawLineNumbers(Canvas canvas, EditorRenderModel model) {
+        if (!model.gutterVisible) return;
         if (model.lines == null) return;
         List<GutterIconRenderItem> gutterIcons = model.gutterIcons;
         List<FoldMarkerRenderItem> foldMarkers = model.foldMarkers;

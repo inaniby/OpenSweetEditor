@@ -315,6 +315,9 @@ static const uint8_t* editorRenderModelToBinary(const EditorRenderModel& model, 
   appendScrollbarModel(buffer, model.vertical_scrollbar);
   appendScrollbarModel(buffer, model.horizontal_scrollbar);
 
+  appendBool(buffer, model.gutter_sticky);
+  appendBool(buffer, model.gutter_visible);
+
   return allocBinaryPayload(buffer.data(), buffer.size(), out_size);
 }
 
@@ -393,6 +396,8 @@ static const uint8_t* gestureResultToBinary(const GestureResult& result, size_t*
   appendI32(buffer, static_cast<int32_t>(result.hit_target.color_value));
   appendI32(buffer, result.needs_edge_scroll ? 1 : 0);
   appendI32(buffer, result.needs_fling ? 1 : 0);
+  appendI32(buffer, result.needs_animation ? 1 : 0);
+  appendI32(buffer, result.is_handle_drag ? 1 : 0);
   return allocBinaryPayload(buffer.data(), buffer.size(), out_size);
 }
 
@@ -650,6 +655,22 @@ void editor_set_current_line_render_mode(intptr_t editor_handle, int mode) {
   editor_core->setCurrentLineRenderMode(static_cast<CurrentLineRenderMode>(mode));
 }
 
+void editor_set_gutter_sticky(intptr_t editor_handle, int sticky) {
+  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  if (editor_core == nullptr) {
+    return;
+  }
+  editor_core->setGutterSticky(sticky != 0);
+}
+
+void editor_set_gutter_visible(intptr_t editor_handle, int visible) {
+  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  if (editor_core == nullptr) {
+    return;
+  }
+  editor_core->setGutterVisible(visible != 0);
+}
+
 #pragma endregion
 
 #pragma region Rendering
@@ -734,6 +755,18 @@ const uint8_t* editor_tick_fling(intptr_t editor_handle, size_t* out_size) {
     return nullptr;
   }
   GestureResult result = editor_core->tickFling();
+  return gestureResultToBinary(result, out_size);
+}
+
+const uint8_t* editor_tick_animations(intptr_t editor_handle, size_t* out_size) {
+  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  if (editor_core == nullptr) {
+    if (out_size != nullptr) {
+      *out_size = 0;
+    }
+    return nullptr;
+  }
+  GestureResult result = editor_core->tickAnimations();
   return gestureResultToBinary(result, out_size);
 }
 
@@ -1362,6 +1395,30 @@ void editor_set_batch_line_spans(intptr_t editor_handle, const uint8_t* data, si
     entries.emplace_back(static_cast<size_t>(line), std::move(spans));
   }
   editor_core->setBatchLineSpans(static_cast<SpanLayer>(layer), std::move(entries));
+}
+
+void editor_register_batch_text_styles(intptr_t editor_handle, const uint8_t* data, size_t size) {
+  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  if (editor_core == nullptr || data == nullptr) return;
+
+  ByteCursor cursor(data, size);
+  uint32_t entry_count = 0;
+  if (!cursor.readU32(entry_count)) return;
+
+  Vector<std::pair<uint32_t, TextStyle>> entries;
+  entries.reserve(entry_count);
+  for (uint32_t i = 0; i < entry_count; ++i) {
+    uint32_t style_id = 0;
+    int32_t color = 0;
+    int32_t background_color = 0;
+    int32_t font_style = 0;
+    if (!cursor.readU32(style_id) || !cursor.readI32(color) || !cursor.readI32(background_color) || !cursor.readI32(font_style)) {
+      return;
+    }
+    entries.emplace_back(style_id, TextStyle{color, background_color, font_style});
+  }
+
+  editor_core->registerBatchTextStyles(std::move(entries));
 }
 
 void editor_clear_line_spans(intptr_t editor_handle, size_t line, uint8_t layer) {
@@ -2123,4 +2180,3 @@ void init_unhandled_exception_handler() {
 #pragma endregion
 
 }
-
