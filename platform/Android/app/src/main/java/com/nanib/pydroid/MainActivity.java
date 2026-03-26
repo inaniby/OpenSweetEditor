@@ -148,7 +148,7 @@ public class MainActivity extends AppCompatActivity {
 
         EditorSettings settings = mEditor.getSettings();
         settings.setTypeface(Typeface.create(Typeface.MONOSPACE, Typeface.NORMAL));
-        settings.setEditorTextSize(36f);
+        settings.setEditorTextSize(28f);
         settings.setFoldArrowMode(FoldArrowMode.AUTO);
         settings.setMaxGutterIcons(1);
         settings.setCurrentLineRenderMode(CurrentLineRenderMode.BORDER);
@@ -437,6 +437,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void scheduleSuggestionIfAtLineEnd(@NonNull CursorChangedEvent event) {
+        if (mEditor.hasSelection()) {
+            return;
+        }
         cancelPendingSuggestion();
         Document doc = mEditor.getDocument();
         if (doc == null) {
