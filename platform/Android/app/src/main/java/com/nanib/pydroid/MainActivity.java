@@ -49,7 +49,9 @@ import com.qiplat.sweeteditor.core.foundation.WrapMode;
 import com.qiplat.sweeteditor.event.CursorChangedEvent;
 import com.qiplat.sweeteditor.event.GutterIconClickEvent;
 import com.qiplat.sweeteditor.event.InlayHintClickEvent;
+import com.qiplat.sweeteditor.event.SelectionMenuItemClickEvent;
 import com.qiplat.sweeteditor.event.TextChangedEvent;
+import com.qiplat.sweeteditor.selection.SelectionMenuItem;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -86,6 +88,7 @@ public class MainActivity extends AppCompatActivity {
     private static final String CONSOLE_REPL_ENTER_ALT = "python -i";
     private static final String CONSOLE_REPL_EXIT = ":exit";
     private static final String CONSOLE_REPL_RESET = ":reset";
+    private static final String ACTION_RUN_SELECTION = "run_selection";
     private SweetEditor mEditor;
     private TextView mStatusBar;
     private View mRootContainer;
@@ -173,6 +176,7 @@ public class MainActivity extends AppCompatActivity {
         mDemoCompletionProvider = new DemoCompletionProvider(mEditor);
         mDemoCompletionProvider.setPythonEnvironment(mPythonEnvironment);
         mEditor.addCompletionProvider(mDemoCompletionProvider);
+        mEditor.setSelectionMenuItemProvider(this::provideSelectionMenuItems);
 
         mEditor.setEditorIconProvider(iconId -> {
             if (iconId == DemoDecorationProvider.ICON_TYPE) {
@@ -428,6 +432,7 @@ public class MainActivity extends AppCompatActivity {
                 Toast.makeText(this, "Click icon at line: " + e.line, Toast.LENGTH_SHORT).show());
 
         mEditor.subscribe(CursorChangedEvent.class, this::scheduleSuggestionIfAtLineEnd);
+        mEditor.subscribe(SelectionMenuItemClickEvent.class, this::onSelectionMenuItemClicked);
 
         mEditor.setInlineSuggestionListener(new com.qiplat.sweeteditor.copilot.InlineSuggestionListener() {
             @Override
@@ -592,6 +597,66 @@ public class MainActivity extends AppCompatActivity {
             return ((DemoFileMetadata) metadata).fileName;
         }
         return "";
+    }
+
+    @NonNull
+    private List<SelectionMenuItem> provideSelectionMenuItems(@NonNull SweetEditor editor) {
+        List<SelectionMenuItem> items = new ArrayList<>();
+        String selectedText = editor.getSelectedText();
+        boolean hasSelection = selectedText != null && !selectedText.isEmpty();
+
+        items.add(new SelectionMenuItem(SelectionMenuItem.ACTION_CUT, "Cut", hasSelection));
+        items.add(new SelectionMenuItem(SelectionMenuItem.ACTION_COPY, "Copy", hasSelection));
+        items.add(new SelectionMenuItem(SelectionMenuItem.ACTION_PASTE, "Paste", true));
+        items.add(new SelectionMenuItem(SelectionMenuItem.ACTION_SELECT_ALL, "Select All", true));
+
+        if (isCurrentFilePython()) {
+            items.add(new SelectionMenuItem(
+                    ACTION_RUN_SELECTION,
+                    "Run Selection",
+                    hasSelection && mPythonEnvironment != null
+            ));
+        }
+        return items;
+    }
+
+    private void onSelectionMenuItemClicked(@NonNull SelectionMenuItemClickEvent event) {
+        if (ACTION_RUN_SELECTION.equals(event.item.id)) {
+            runSelectedPythonSnippet();
+        }
+    }
+
+    private boolean isCurrentFilePython() {
+        String lowerName = currentFileName().toLowerCase(Locale.ROOT);
+        return lowerName.endsWith(".py")
+                || lowerName.endsWith(".pyw")
+                || lowerName.endsWith(".pyi");
+    }
+
+    private void runSelectedPythonSnippet() {
+        if (mPythonEnvironment == null) {
+            updateStatus("Please install/import official Python package first");
+            return;
+        }
+        if (!isCurrentFilePython()) {
+            updateStatus("Run Selection is only available for Python files");
+            return;
+        }
+
+        String selected = mEditor.getSelectedText();
+        if (selected == null || selected.trim().isEmpty()) {
+            updateStatus("No text selected");
+            return;
+        }
+
+        showConsole(false);
+        final String snippet = selected;
+        startPythonTask("Running selected Python...", () -> {
+            PythonRuntime.PythonEnvironment env = requirePythonEnvironment();
+            int exitCode = mPythonRuntime.runCode(env, snippet);
+            PythonRuntime.OutputBuffers output = mPythonRuntime.readOutputBuffers(env);
+            postTaskResult("Run Selection", exitCode, output);
+        });
     }
 
     private void cancelPendingSuggestion() {
