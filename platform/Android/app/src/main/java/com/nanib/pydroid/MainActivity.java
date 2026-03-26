@@ -1,7 +1,6 @@
 package com.nanib.pydroid;
 
 import android.content.Intent;
-import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.Typeface;
 import android.os.Build;
@@ -29,9 +28,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
-import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
-import androidx.core.view.WindowInsetsCompat;
 
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 
@@ -310,24 +307,21 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void setupImmersiveWindow() {
-        WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
-        Window window = getWindow();
-        window.setStatusBarColor(Color.TRANSPARENT);
-        window.setNavigationBarColor(Color.TRANSPARENT);
+        WindowCompat.setDecorFitsSystemWindows(getWindow(), true);
     }
 
     private void applyToolbarInsets() {
-        ViewCompat.setOnApplyWindowInsetsListener(mToolbarContainer, (v, insets) -> {
-            int top = insets.getInsets(WindowInsetsCompat.Type.statusBars()).top;
-            v.setPadding(v.getPaddingLeft(), top + 6, v.getPaddingRight(), v.getPaddingBottom());
-            return insets;
-        });
+        mRootContainer.setPadding(0, 0, 0, 0);
     }
 
     private void applyAppTheme() {
         int bg = mIsDarkTheme ? DARK_BG : LIGHT_BG;
         int fg = mIsDarkTheme ? DARK_FG : LIGHT_FG;
         int secondary = mIsDarkTheme ? DARK_SECONDARY : LIGHT_SECONDARY;
+
+        Window window = getWindow();
+        window.setStatusBarColor(bg);
+        window.setNavigationBarColor(bg);
 
         mRootContainer.setBackgroundColor(bg);
         mToolbarContainer.setBackgroundColor(bg);
