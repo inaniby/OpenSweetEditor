@@ -306,6 +306,8 @@ EDITOR_API const uint8_t* get_layout_metrics(intptr_t editor_handle, size_t* out
 ///        editor_tick_edge_scroll; 0 = platform should stop the timer)
 ///    i32 needs_fling (1 = platform should start/continue per-frame callback calling
 ///        editor_tick_fling; 0 = platform should stop the callback)
+///    i32 needs_animation (1 = any animation still active; platform can use a single
+///        frame callback calling editor_tick_animations instead of separate tick calls)
 ///
 /// Handle gesture event
 /// @param type Event type
@@ -340,6 +342,14 @@ EDITOR_API const uint8_t* editor_tick_edge_scroll(intptr_t editor_handle, size_t
 /// When needs_fling becomes false in the returned payload, stop the timer.
 /// @return GestureResult binary payload
 EDITOR_API const uint8_t* editor_tick_fling(intptr_t editor_handle, size_t* out_size);
+
+/// Unified animation tick: advances all active animations (edge-scroll, fling).
+/// Platform can use a single frame callback driven by needs_animation and call this
+/// instead of editor_tick_edge_scroll() / editor_tick_fling() separately.
+/// Returns the same GestureResult binary layout as handle_editor_gesture_event.
+/// When needs_animation becomes false in the returned payload, stop the callback.
+/// @return GestureResult binary payload
+EDITOR_API const uint8_t* editor_tick_animations(intptr_t editor_handle, size_t* out_size);
 
 /// KeyEventResult binary return layout (payload uses native byte order; all supported platforms are currently LE):
 /// 1. i32 handled

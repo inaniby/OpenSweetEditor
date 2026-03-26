@@ -133,6 +133,12 @@ final class ProtocolDecoder {
         if (data.remaining() >= 4) {
             result.needsEdgeScroll = data.getInt() != 0;
         }
+        if (data.remaining() >= 4) {
+            result.needsFling = data.getInt() != 0;
+        }
+        if (data.remaining() >= 4) {
+            result.needsAnimation = data.getInt() != 0;
+        }
         return result;
     }
 

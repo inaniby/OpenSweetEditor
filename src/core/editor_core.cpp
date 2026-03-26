@@ -633,6 +633,7 @@ m_fling_ = makeUPtr<FlingAnimator>(tc);
           gesture_result.type = GestureType::DRAG_SELECT;
           fillGestureResult(gesture_result);
           gesture_result.needs_edge_scroll = m_edge_scroll_.active;
+          gesture_result.needs_animation = m_edge_scroll_.active;
           return gesture_result;
         }
       }
@@ -759,6 +760,7 @@ m_fling_ = makeUPtr<FlingAnimator>(tc);
       result.needs_edge_scroll = m_edge_scroll_.active;
     }
     result.needs_fling = m_fling_->isActive();
+    result.needs_animation = result.needs_edge_scroll || result.needs_fling;
 
     LOGD("EditorCore::handleGestureEvent, m_view_state_ = %s", m_view_state_.dump().c_str());
     return result;
@@ -771,6 +773,7 @@ m_fling_ = makeUPtr<FlingAnimator>(tc);
     if (!m_fling_->isActive()) {
       fillGestureResult(result);
       result.needs_fling = false;
+      result.needs_animation = m_edge_scroll_.active;
       return result;
     }
 
@@ -791,6 +794,7 @@ m_fling_ = makeUPtr<FlingAnimator>(tc);
 
     fillGestureResult(result);
     result.needs_fling = still_active;
+    result.needs_animation = m_edge_scroll_.active || still_active;
     return result;
   }
 
@@ -2996,17 +3000,17 @@ m_fling_ = makeUPtr<FlingAnimator>(tc);
     float edge_zone = std::clamp(m_viewport_.height * kEdgeZoneRatio,
                                  kMinEdgeZone, kMaxEdgeZone);
 
-    // Max speed per 16ms tick: 2 line-heights
+    // Max speed: 2 line-heights per 16ms frame, converted to px/s
     const float line_height = m_text_layout_->getLineHeight();
-    const float max_speed = line_height * 2.0f;
+    const float max_speed_per_sec = (line_height * 2.0f) / 0.016f;
 
     float speed = 0.0f;
     if (screen_point.y < edge_zone) {
       float ratio = (edge_zone - screen_point.y) / edge_zone;
-      speed = -max_speed * ratio;
+      speed = -max_speed_per_sec * ratio;
     } else if (screen_point.y > m_viewport_.height - edge_zone) {
       float ratio = (screen_point.y - (m_viewport_.height - edge_zone)) / edge_zone;
-      speed = max_speed * ratio;
+      speed = max_speed_per_sec * ratio;
     }
 
     if (speed != 0.0f) {
@@ -3015,9 +3019,13 @@ m_fling_ = makeUPtr<FlingAnimator>(tc);
       m_edge_scroll_.last_screen_point = screen_point;
       m_edge_scroll_.is_handle_drag = is_handle_drag;
       m_edge_scroll_.is_mouse = is_mouse;
+      if (m_edge_scroll_.last_tick_time == 0) {
+        m_edge_scroll_.last_tick_time = TimeUtil::milliTime();
+      }
     } else {
       m_edge_scroll_.active = false;
       m_edge_scroll_.speed = 0.0f;
+      m_edge_scroll_.last_tick_time = 0;
     }
   }
 
@@ -3028,11 +3036,17 @@ m_fling_ = makeUPtr<FlingAnimator>(tc);
     if (!m_edge_scroll_.active) {
       fillGestureResult(result);
       result.needs_edge_scroll = false;
+      result.needs_animation = m_fling_->isActive();
       return result;
     }
 
-    // Apply scroll delta; the same screen point now maps to a new text position.
-    m_view_state_.scroll_y += m_edge_scroll_.speed;
+    int64_t now = TimeUtil::milliTime();
+    float dt_sec = static_cast<float>(now - m_edge_scroll_.last_tick_time) / 1000.0f;
+    if (dt_sec <= 0) dt_sec = 0.016f;
+    dt_sec = std::min(dt_sec, 0.1f);
+    m_edge_scroll_.last_tick_time = now;
+
+    m_view_state_.scroll_y += m_edge_scroll_.speed * dt_sec;
     normalizeScrollState();
     markScrollbarInteraction();
 
@@ -3047,6 +3061,35 @@ m_fling_ = makeUPtr<FlingAnimator>(tc);
 
     fillGestureResult(result);
     result.needs_edge_scroll = m_edge_scroll_.active;
+    result.needs_animation = m_edge_scroll_.active || m_fling_->isActive();
+    return result;
+  }
+
+  GestureResult EditorCore::tickAnimations() {
+    GestureResult result;
+
+    bool did_edge_scroll = false;
+    if (m_edge_scroll_.active) {
+      result = tickEdgeScroll();
+      did_edge_scroll = true;
+    }
+
+    if (m_fling_->isActive()) {
+      GestureResult fling_result = tickFling();
+      if (!did_edge_scroll) {
+        result = fling_result;
+      } else {
+        result.needs_fling = fling_result.needs_fling;
+        result.view_scroll_x = fling_result.view_scroll_x;
+        result.view_scroll_y = fling_result.view_scroll_y;
+      }
+    }
+
+    if (!did_edge_scroll && !m_fling_->isActive()) {
+      fillGestureResult(result);
+    }
+
+    result.needs_animation = m_edge_scroll_.active || m_fling_->isActive();
     return result;
   }
 

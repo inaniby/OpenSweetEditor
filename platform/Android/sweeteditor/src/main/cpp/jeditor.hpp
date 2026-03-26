@@ -249,6 +249,13 @@ public:
     return wrapBinaryPayload(env, payload, out_size);
   }
 
+  static jobject tickAnimations(JNIEnv* env, jclass clazz, jlong handle) {
+    if (handle == 0) return nullptr;
+    size_t out_size = 0;
+    const uint8_t* payload = editor_tick_animations(static_cast<intptr_t>(handle), &out_size);
+    return wrapBinaryPayload(env, payload, out_size);
+  }
+
   static jobject buildRenderModel(JNIEnv* env, jclass clazz, jlong handle) {
     size_t out_size = 0;
     return wrapBinaryPayload(env, build_editor_render_model(static_cast<intptr_t>(handle), &out_size), out_size);
@@ -836,6 +843,7 @@ public:
       {"nativeHandleGestureEvent", "(JII[F)Ljava/nio/ByteBuffer;", (void*) handleGestureEvent},
       {"nativeTickEdgeScroll", "(J)Ljava/nio/ByteBuffer;", (void*) tickEdgeScroll},
       {"nativeTickFling", "(J)Ljava/nio/ByteBuffer;", (void*) tickFling},
+      {"nativeTickAnimations", "(J)Ljava/nio/ByteBuffer;", (void*) tickAnimations},
       {"nativeOnFontMetricsChanged", "(J)V", (void*) onFontMetricsChanged},
       {"nativeBuildRenderModel", "(J)Ljava/nio/ByteBuffer;", (void*) buildRenderModel},
       {"nativeHandleKeyEvent", "(JILjava/lang/String;I)Ljava/nio/ByteBuffer;", (void*) handleKeyEvent},

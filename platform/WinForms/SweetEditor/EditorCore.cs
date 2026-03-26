@@ -584,6 +584,14 @@ namespace SweetEditor {
 		[JsonPropertyName("needs_edge_scroll")]
 		public bool NeedsEdgeScroll { get; set; }
 
+		/// <summary>Whether the platform should start/continue a fling animation callback.</summary>
+		[JsonPropertyName("needs_fling")]
+		public bool NeedsFling { get; set; }
+
+		/// <summary>Whether any animation is still active; platform can use a single callback.</summary>
+		[JsonPropertyName("needs_animation")]
+		public bool NeedsAnimation { get; set; }
+
 		/// <summary>Creates the default gesture result.</summary>
 		public GestureResult() {
 			Type = GestureType.UNDEFINED;
@@ -1349,6 +1357,9 @@ namespace SweetEditor {
 		[DllImport(LibraryName, EntryPoint = "editor_tick_edge_scroll", CallingConvention = CallingConvention.Cdecl)]
 		internal static extern IntPtr TickEdgeScroll(IntPtr handle, out UIntPtr outSize);
 
+		[DllImport(LibraryName, EntryPoint = "editor_tick_animations", CallingConvention = CallingConvention.Cdecl)]
+		internal static extern IntPtr TickAnimations(IntPtr handle, out UIntPtr outSize);
+
 		[DllImport(LibraryName, EntryPoint = "handle_editor_key_event", CallingConvention = CallingConvention.Cdecl)]
 		internal static extern IntPtr HandleKeyEvent(IntPtr handle, ushort keyCode, [MarshalAs(UnmanagedType.LPUTF8Str)] string? text, byte modifiers, out UIntPtr outSize);
 
@@ -1828,6 +1839,12 @@ namespace SweetEditor {
 		/// <summary>Advances edge-scroll by one tick and returns an updated gesture result.</summary>
 		public GestureResult TickEdgeScroll() {
 			IntPtr payloadPtr = NativeMethods.TickEdgeScroll(nativeHandle, out UIntPtr payloadSize);
+			return ProtocolDecoder.ParseGestureResult(payloadPtr, payloadSize);
+		}
+
+		/// <summary>Unified animation tick: advances all active animations (edge-scroll, fling).</summary>
+		public GestureResult TickAnimations() {
+			IntPtr payloadPtr = NativeMethods.TickAnimations(nativeHandle, out UIntPtr payloadSize);
 			return ProtocolDecoder.ParseGestureResult(payloadPtr, payloadSize);
 		}
 

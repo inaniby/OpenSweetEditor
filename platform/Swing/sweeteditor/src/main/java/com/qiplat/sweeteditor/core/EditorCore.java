@@ -166,6 +166,16 @@ public class EditorCore implements AutoCloseable {
         }
     }
 
+    /** Unified animation tick: advances all active animations (edge-scroll, fling). */
+    public GestureResult tickAnimations() {
+        EditorNative.NativeBinaryResult result = EditorNative.tickAnimations(nativeHandle);
+        try {
+            return ProtocolDecoder.decodeGestureResult(result.asByteBuffer());
+        } finally {
+            result.free();
+        }
+    }
+
     public KeyEventResult handleKeyEvent(int keyCode, String text, int modifiers) {
         try (Arena tempArena = Arena.ofConfined()) {
             EditorNative.NativeBinaryResult result = EditorNative.handleKeyEvent(nativeHandle, keyCode, text, modifiers, tempArena);

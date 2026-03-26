@@ -210,6 +210,10 @@ namespace NS_SWEETEDITOR {
     /// When true, the platform must call tickFling() each frame (e.g. via Choreographer).
     /// When false, the platform should stop the fling timer.
     bool needs_fling {false};
+    /// Aggregated animation flag (needs_edge_scroll || needs_fling).
+    /// Platform can use a single animation loop driven by this flag
+    /// and call tickAnimations() instead of separate tick functions.
+    bool needs_animation {false};
   };
 
   /// Gesture handler class
@@ -280,7 +284,7 @@ namespace NS_SWEETEDITOR {
     {HitTargetType::INLAY_HINT_COLOR, "INLAY_HINT_COLOR"},
   })
   NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(HitTarget, type, line, column, icon_id, color_value)
-  NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(GestureResult, type, tap_point, modifiers, scale, scroll_x, scroll_y, cursor_position, has_selection, selection, view_scroll_x, view_scroll_y, view_scale, hit_target, needs_edge_scroll, needs_fling)
+  NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(GestureResult, type, tap_point, modifiers, scale, scroll_x, scroll_y, cursor_position, has_selection, selection, view_scroll_x, view_scroll_y, view_scale, hit_target, needs_edge_scroll, needs_fling, needs_animation)
 }
 
 #endif //SWEETEDITOR_GESTURE_H

@@ -459,10 +459,10 @@ ScrollbarThumbActiveColor = Color.FromArgb(unchecked((int)0xEE6A9AD0)),
 
 		private EditorSettings? settings;
 
-		// Edge-scroll timer for auto-scrolling during mouse drag selection
-		private const int EdgeScrollIntervalMs = 16;
-		private System.Windows.Forms.Timer? edgeScrollTimer;
-		private bool edgeScrollActive = false;
+		// Unified animation timer: drives edge-scroll, fling, etc. at ~16ms
+		private const int AnimationIntervalMs = 16;
+		private System.Windows.Forms.Timer? animationTimer;
+		private bool animationActive = false;
 		private const float DefaultContentStartPaddingDp = 3.0f;
 
 		public EditorControl() {
@@ -1299,7 +1299,7 @@ ScrollbarThumbActiveColor = Color.FromArgb(unchecked((int)0xEE6A9AD0)),
 				});
 				FireGestureEvents(gestureResult, new System.Drawing.PointF(e.X, e.Y));
 				Flush();
-				UpdateEdgeScrollTimer(gestureResult.NeedsEdgeScroll);
+			UpdateAnimationTimer(gestureResult.NeedsAnimation);
 			} else if (e.Button == MouseButtons.Right) {
 				GestureResult gestureResult = editorCore.HandleGestureEvent(new GestureEvent {
 					Type = EventType.MOUSE_RIGHT_DOWN,
@@ -1324,8 +1324,8 @@ ScrollbarThumbActiveColor = Color.FromArgb(unchecked((int)0xEE6A9AD0)),
 					DirectScale = 1
 				});
 				FireGestureEvents(gestureResult, new System.Drawing.PointF(e.X, e.Y));
-				Flush();
-				UpdateEdgeScrollTimer(gestureResult.NeedsEdgeScroll);
+			Flush();
+				UpdateAnimationTimer(gestureResult.NeedsAnimation);
 			}
 			base.OnMouseMove(e);
 		}
@@ -1340,8 +1340,8 @@ ScrollbarThumbActiveColor = Color.FromArgb(unchecked((int)0xEE6A9AD0)),
 					Modifiers = mods,
 					DirectScale = 1
 				});
-				FireGestureEvents(gestureResult, new System.Drawing.PointF(e.X, e.Y));
-				UpdateEdgeScrollTimer(false);
+			FireGestureEvents(gestureResult, new System.Drawing.PointF(e.X, e.Y));
+				UpdateAnimationTimer(gestureResult.NeedsAnimation);
 			}
 			base.OnMouseUp(e);
 		}
@@ -1362,29 +1362,29 @@ ScrollbarThumbActiveColor = Color.FromArgb(unchecked((int)0xEE6A9AD0)),
 			base.OnMouseWheel(e);
 		}
 
-		private void InitEdgeScrollTimer() {
-			edgeScrollTimer = new System.Windows.Forms.Timer();
-			edgeScrollTimer.Interval = EdgeScrollIntervalMs;
-			edgeScrollTimer.Tick += (_, _) => {
-				if (!edgeScrollActive) return;
-				GestureResult result = editorCore.TickEdgeScroll();
+		private void InitAnimationTimer() {
+			animationTimer = new System.Windows.Forms.Timer();
+			animationTimer.Interval = AnimationIntervalMs;
+			animationTimer.Tick += (_, _) => {
+				if (!animationActive) return;
+				GestureResult result = editorCore.TickAnimations();
 				FireGestureEvents(result, System.Drawing.PointF.Empty);
 				Flush();
-				if (!result.NeedsEdgeScroll) {
-					edgeScrollActive = false;
-					edgeScrollTimer.Stop();
+				if (!result.NeedsAnimation) {
+					animationActive = false;
+					animationTimer.Stop();
 				}
 			};
 		}
 
-		private void UpdateEdgeScrollTimer(bool needsEdgeScroll) {
-			if (edgeScrollTimer == null) InitEdgeScrollTimer();
-			if (needsEdgeScroll && !edgeScrollActive) {
-				edgeScrollActive = true;
-				edgeScrollTimer!.Start();
-			} else if (!needsEdgeScroll && edgeScrollActive) {
-				edgeScrollActive = false;
-				edgeScrollTimer!.Stop();
+		private void UpdateAnimationTimer(bool needsAnimation) {
+			if (animationTimer == null) InitAnimationTimer();
+			if (needsAnimation && !animationActive) {
+				animationActive = true;
+				animationTimer!.Start();
+			} else if (!needsAnimation && animationActive) {
+				animationActive = false;
+				animationTimer!.Stop();
 			}
 		}
 

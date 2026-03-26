@@ -1078,6 +1078,12 @@ namespace SweetEditor {
 			if (TryReadInt32(data, ref offset, out int needsEdgeScrollInt)) {
 				result.NeedsEdgeScroll = needsEdgeScrollInt != 0;
 			}
+			if (TryReadInt32(data, ref offset, out int needsFlingInt)) {
+				result.NeedsFling = needsFlingInt != 0;
+			}
+			if (TryReadInt32(data, ref offset, out int needsAnimationInt)) {
+				result.NeedsAnimation = needsAnimationInt != 0;
+			}
 			return result;
 		}
 

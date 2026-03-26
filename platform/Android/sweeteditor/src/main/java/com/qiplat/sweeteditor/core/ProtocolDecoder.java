@@ -134,8 +134,13 @@ final class ProtocolDecoder {
             needsFling = data.getInt() != 0;
         }
 
+        boolean needsAnimation = false;
+        if (data.remaining() >= 4) {
+            needsAnimation = data.getInt() != 0;
+        }
+
         return new EditorCore.GestureResult(gestureType, tapPoint,
-                cursorPosition, hasSelection, selection, viewScrollX, viewScrollY, viewScale, hitTarget, needsEdgeScroll, needsFling);
+                cursorPosition, hasSelection, selection, viewScrollX, viewScrollY, viewScale, hitTarget, needsEdgeScroll, needsFling, needsAnimation);
     }
 
     static ScrollMetrics decodeScrollMetrics(@Nullable ByteBuffer data) {

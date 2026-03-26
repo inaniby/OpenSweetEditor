@@ -273,6 +273,12 @@ namespace NS_SWEETEDITOR {
     ///         whether to continue the timer)
     GestureResult tickFling();
 
+    /// Unified animation tick: advances all active animations (edge-scroll, fling).
+    /// Platform can use a single frame callback driven by needs_animation and call this
+    /// instead of tickEdgeScroll() / tickFling() separately.
+    /// @return Updated gesture result with needs_animation reflecting whether any animation is still active
+    GestureResult tickAnimations();
+
     /// Immediately stop any active fling animation
     void stopFling();
 
@@ -703,10 +709,11 @@ namespace NS_SWEETEDITOR {
     /// The platform timer calls tickEdgeScroll() which uses this state to scroll + update selection.
     struct EdgeScrollState {
       bool active {false};         ///< Whether edge scrolling is needed
-      float speed {0};             ///< Scroll speed in pixels per tick (positive = down, negative = up)
+      float speed {0};             ///< Scroll speed in pixels per second (positive = down, negative = up)
       PointF last_screen_point;    ///< Last finger position (used to re-run hitTest after scroll)
       bool is_handle_drag {false}; ///< true = handle drag, false = select drag
       bool is_mouse {false};       ///< Mouse drag (no y-offset)
+      int64_t last_tick_time {0};  ///< Monotonic timestamp of last tick (for dt calculation)
     };
     EdgeScrollState m_edge_scroll_;
 

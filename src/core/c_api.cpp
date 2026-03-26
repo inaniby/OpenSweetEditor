@@ -393,6 +393,7 @@ static const uint8_t* gestureResultToBinary(const GestureResult& result, size_t*
   appendI32(buffer, static_cast<int32_t>(result.hit_target.color_value));
   appendI32(buffer, result.needs_edge_scroll ? 1 : 0);
   appendI32(buffer, result.needs_fling ? 1 : 0);
+  appendI32(buffer, result.needs_animation ? 1 : 0);
   return allocBinaryPayload(buffer.data(), buffer.size(), out_size);
 }
 
@@ -734,6 +735,18 @@ const uint8_t* editor_tick_fling(intptr_t editor_handle, size_t* out_size) {
     return nullptr;
   }
   GestureResult result = editor_core->tickFling();
+  return gestureResultToBinary(result, out_size);
+}
+
+const uint8_t* editor_tick_animations(intptr_t editor_handle, size_t* out_size) {
+  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  if (editor_core == nullptr) {
+    if (out_size != nullptr) {
+      *out_size = 0;
+    }
+    return nullptr;
+  }
+  GestureResult result = editor_core->tickAnimations();
   return gestureResultToBinary(result, out_size);
 }
 
