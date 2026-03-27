@@ -1,0 +1,11 @@
+{
+  "name": "sweeteditor",
+  "version": "1.0.0",
+  "description": "Cross-platform code editor core for OHOS, powered by SweetEditor C++.",
+  "main": "./src/main/ets/Index.ets",
+  "author": "",
+  "license": "",
+  "dependencies": {
+    "libsweeteditor.so": "file:./src/main/cpp/types/libsweeteditor"
+  }
+}
