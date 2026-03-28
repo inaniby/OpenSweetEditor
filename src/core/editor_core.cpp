@@ -140,6 +140,8 @@ m_fling_ = makeUPtr<FlingAnimator>(tc);
 
   void EditorCore::onFontMetricsChanged() {
     float old_line_height = m_text_layout_->getLineHeight();
+    PendingScaleAnchor scale_anchor = m_pending_scale_anchor_;
+    m_pending_scale_anchor_.active = false;
 
     // ── Anchor-based scroll preservation ──
     // Before resetting the measurer, find which logical line sits at the
@@ -192,7 +194,23 @@ m_fling_ = makeUPtr<FlingAnimator>(tc);
     // multiplication-based computation in ensurePrefixIndexUpTo), so
     // scroll_y is guaranteed to be consistent with what resolveVisibleLines
     // will see later.
-    if (old_line_height > 0 && new_line_height > 0 && old_line_height != new_line_height) {
+    if (scale_anchor.active) {
+      CursorRect anchor_rect = getPositionScreenRect(scale_anchor.anchor_position);
+      float target_scroll_x = m_view_state_.scroll_x + (anchor_rect.x + scale_anchor.offset_x - scale_anchor.focus_screen.x);
+      float target_scroll_y = m_view_state_.scroll_y + (anchor_rect.y + scale_anchor.offset_y - scale_anchor.focus_screen.y);
+      if (m_scale_gesture_active_) {
+        m_view_state_.scroll_x = target_scroll_x;
+        m_view_state_.scroll_y = target_scroll_y;
+      } else {
+        m_view_state_.scroll_x = std::round(target_scroll_x);
+        m_view_state_.scroll_y = std::round(target_scroll_y);
+      }
+      LOGD("onFontMetricsChanged(scale-anchor): focus=%s anchor=%s scroll=(%.3f, %.3f)",
+           scale_anchor.focus_screen.dump().c_str(),
+           scale_anchor.anchor_position.dump().c_str(),
+           m_view_state_.scroll_x,
+           m_view_state_.scroll_y);
+    } else if (old_line_height > 0 && new_line_height > 0 && old_line_height != new_line_height) {
       float old_scroll_y = m_view_state_.scroll_y;
       float ratio = new_line_height / old_line_height;
       float new_anchor_y = m_text_layout_->getLineStartY(anchor_line);
@@ -217,6 +235,8 @@ m_fling_ = makeUPtr<FlingAnimator>(tc);
   }
 
   void EditorCore::setScale(float scale) {
+    m_pending_scale_anchor_.active = false;
+    m_scale_gesture_active_ = false;
     m_view_state_.scale = scale;
     normalizeScrollState();
     LOGD("EditorCore::setScale, m_view_state_ = %s", m_view_state_.dump().c_str());
@@ -460,6 +480,19 @@ m_fling_ = makeUPtr<FlingAnimator>(tc);
     result.view_scroll_y = m_view_state_.scroll_y;
     result.view_scale = m_view_state_.scale;
     result.is_handle_drag = (m_dragging_handle_ != HandleDragTarget::NONE);
+  }
+
+  PointF EditorCore::resolveScaleFocus(const GestureEvent& event) const {
+    if (event.points.size() >= 2) {
+      return {
+        (event.points[0].x + event.points[1].x) * 0.5f,
+        (event.points[0].y + event.points[1].y) * 0.5f
+      };
+    }
+    if (!event.points.empty()) {
+      return event.points[0];
+    }
+    return {m_viewport_.width * 0.5f, m_viewport_.height * 0.5f};
   }
 
   bool EditorCore::handleScrollbarGesture(const GestureEvent& event, GestureResult& result) {
@@ -741,8 +774,17 @@ m_fling_ = makeUPtr<FlingAnimator>(tc);
       break;
     }
     case GestureType::SCALE: {
+      const PointF focus_screen = resolveScaleFocus(event);
+      TextPosition anchor_position = m_text_layout_->hitTest(focus_screen);
+      CursorRect anchor_rect = getPositionScreenRect(anchor_position);
+      m_pending_scale_anchor_.active = true;
+      m_pending_scale_anchor_.focus_screen = focus_screen;
+      m_pending_scale_anchor_.anchor_position = anchor_position;
+      m_pending_scale_anchor_.offset_x = focus_screen.x - anchor_rect.x;
+      m_pending_scale_anchor_.offset_y = focus_screen.y - anchor_rect.y;
+      m_scale_gesture_active_ = (event.type == EventType::TOUCH_MOVE && event.points.size() >= 2);
       m_view_state_.scale = std::max(1.0f, std::min(m_settings_.max_scale, m_view_state_.scale * result.scale));
-      // Don't adjust scroll here — metrics haven't been updated yet.
+      // Don't adjust scroll here - metrics haven't been updated yet.
       // Platform will call onFontMetricsChanged() which adjusts scroll with accurate line heights.
       break;
     }
@@ -765,14 +807,25 @@ m_fling_ = makeUPtr<FlingAnimator>(tc);
       break;
     }
 
-    // Snap scroll to integer pixels for crisp text when pointer is released
-    if (event.type == EventType::TOUCH_UP || event.type == EventType::MOUSE_UP
-        || event.type == EventType::TOUCH_CANCEL) {
+    const bool scale_gesture_end =
+      m_scale_gesture_active_ &&
+      (event.type == EventType::TOUCH_POINTER_UP
+        || event.type == EventType::TOUCH_UP
+        || event.type == EventType::TOUCH_CANCEL);
+
+    // Snap scroll to integer pixels for crisp text when pointer is released.
+    // Keep sub-pixel scroll during live touch scaling to reduce jitter.
+    if (scale_gesture_end || ((!m_scale_gesture_active_) &&
+        (event.type == EventType::TOUCH_UP || event.type == EventType::MOUSE_UP
+        || event.type == EventType::TOUCH_CANCEL))) {
       m_view_state_.scroll_x = std::round(m_view_state_.scroll_x);
       m_view_state_.scroll_y = std::round(m_view_state_.scroll_y);
     }
+    if (scale_gesture_end) {
+      m_scale_gesture_active_ = false;
+    }
 
-    // For SCALE gestures, skip premature normalize — metrics haven't been updated yet.
+    // For SCALE gestures, skip premature normalize �?metrics haven't been updated yet.
     // Platform will call onFontMetricsChanged() which normalizes with correct metrics.
     if (result.type == GestureType::SCALE) {
       m_text_layout_->setViewState(m_view_state_);
@@ -3390,3 +3443,4 @@ m_fling_ = makeUPtr<FlingAnimator>(tc);
 #pragma endregion
 
 }
+

@@ -700,6 +700,18 @@ namespace NS_SWEETEDITOR {
     float m_scrollbar_drag_max_scroll_x_ {0};
     float m_scrollbar_drag_max_scroll_y_ {0};
 
+    /// Pending focal anchor captured during exact scale handling.
+    /// Applied in onFontMetricsChanged() after platform text metrics catch up.
+    struct PendingScaleAnchor {
+      bool active {false};
+      PointF focus_screen;
+      TextPosition anchor_position;
+      float offset_x {0};
+      float offset_y {0};
+    };
+    PendingScaleAnchor m_pending_scale_anchor_;
+    bool m_scale_gesture_active_ {false};
+
     /// Cached screen positions of selection handles (for hit test, updated each buildRenderModel frame)
     PointF m_cached_start_handle_pos_;
     PointF m_cached_end_handle_pos_;
@@ -816,6 +828,8 @@ namespace NS_SWEETEDITOR {
 
     /// Fill current editor state into GestureResult (remove duplicate assignments)
     void fillGestureResult(GestureResult& result) const;
+    /// Resolve focal point for scale gestures.
+    PointF resolveScaleFocus(const GestureEvent& event) const;
     /// Mark all logical lines as layout dirty
     void markAllLinesDirty(bool reset_heights = false);
     /// Reset composition state (clear composing flag and text)
