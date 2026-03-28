@@ -98,8 +98,7 @@ struct Index {
 
   aboutToAppear(): void {
     this.editorController.whenReady(() => {
-      this.configureEditor();
-      void this.loadActiveFile();
+      void this.initializeEditorDemo();
     });
 
     const uiContext = this.getUIContext();
@@ -115,6 +114,19 @@ struct Index {
       this.topPadding = uiContext.px2vp(avoidArea.topRect.height);
     }).catch(() => {
     });
+  }
+
+  private async initializeEditorDemo(): Promise<void> {
+    const manager = this.getResourceManager();
+    if (manager) {
+      try {
+        await DemoDecorationProvider.ensureSweetLineReady(manager);
+      } catch (_e) {
+        this.statusMessage = 'SweetLine init failed';
+      }
+    }
+    this.configureEditor();
+    await this.loadActiveFile();
   }
 
   aboutToDisappear(): void {

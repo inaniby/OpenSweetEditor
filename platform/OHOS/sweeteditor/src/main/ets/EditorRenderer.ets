@@ -665,23 +665,29 @@ export class EditorRenderer {
         }
       }
 
+      ctx.save();
       ctx.strokeStyle = colorToString(color);
-      ctx.lineWidth = 3.0;
+      const strokeWidth = Math.max(1.25, Math.min(2.25, diag.height * 0.09));
+      const halfWave = Math.max(6.0, Math.min(10.0, diag.height * 0.42));
+      const amplitude = Math.max(1.5, Math.min(3.0, diag.height * 0.12));
+      const dashOn = Math.max(2.5, Math.min(5.0, diag.height * 0.22));
+      const dashOff = Math.max(1.5, Math.min(4.0, diag.height * 0.14));
+      ctx.lineWidth = strokeWidth;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
 
       const startX = diag.origin.x;
       const endX = startX + diag.width;
       const baseY = diag.origin.y + diag.height - 1.0;
 
       if (diag.severity === 3) {
-        ctx.setLineDash([3, 2]);
+        ctx.setLineDash([dashOn, dashOff]);
         ctx.beginPath();
         ctx.moveTo(startX, baseY);
         ctx.lineTo(endX, baseY);
         ctx.stroke();
         ctx.setLineDash([]);
       } else {
-        const halfWave = 7.0;
-        const amplitude = 3.5;
         ctx.beginPath();
         ctx.moveTo(startX, baseY);
         let x = startX;
@@ -696,6 +702,7 @@ export class EditorRenderer {
         }
         ctx.stroke();
       }
+      ctx.restore();
     }
   }
 

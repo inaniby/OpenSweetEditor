@@ -2,16 +2,21 @@ import { EditorTheme, LanguageConfiguration } from '@qiplat/sweeteditor';
 import { DemoFileMetadata } from './DemoTypes';
 
 export const DEMO_STYLE_COLOR: number = EditorTheme.STYLE_USER_BASE + 1;
+
 export const DEMO_RAWFILE_ROOT: string = 'demo_shared/files';
+
+export const DEMO_RAWFILE_SYNTAX_ROOT: string = 'demo_shared/syntaxes';
+
 export const FALLBACK_FILE_NAME: string = 'example.java';
+
 export const FALLBACK_TEXT: string =
   'public class DemoFallback {\n' +
-  '    public static void main(String[] args) {\n' +
-  '        // TODO sync platform/_res into rawfile\n' +
-  '        String color = "#4A8F7A";\n' +
-  '        System.out.println(color);\n' +
-  '    }\n' +
-  '}\n';
+    '    public static void main(String[] args) {\n' +
+    '        // TODO sync platform/_res into rawfile\n' +
+    '        String color = "#4A8F7A";\n' +
+    '        System.out.println(color);\n' +
+    '    }\n' +
+    '}\n';
 
 export function createDemoTheme(isDarkTheme: boolean): EditorTheme {
   const theme = isDarkTheme ? EditorTheme.dark() : EditorTheme.light();

@@ -201,8 +201,8 @@ export class ProtocolEncoder {
     let totalSpans = 0;
     spansByLine.forEach(spans => totalSpans += spans.length);
     const writer = new BinaryWriter(8 + spansByLine.size * 8 + totalSpans * 12);
-    writer.writeInt32(spansByLine.size);
     writer.writeInt32(layer);
+    writer.writeInt32(spansByLine.size);
     spansByLine.forEach((spans, line) => {
       writer.writeInt32(line);
       writer.writeInt32(spans.length);
