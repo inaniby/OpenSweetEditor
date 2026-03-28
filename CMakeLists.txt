@@ -161,7 +161,7 @@ endif ()
 # merge static libs
 if (BUILD_STATIC_LIB)
     target_link_libraries(${STATIC_LIB_NAME} PRIVATE ${LINK_LIB})
-    include(script/MergeStaticLib.cmake)
+    include(scripts/MergeStaticLib.cmake)
     get_target_property(SIMDUTF_PATH simdutf IMPORTED_LOCATION)
     merge_static_libs(${STATIC_LIB_NAME} ${SIMDUTF_PATH})
 endif ()
