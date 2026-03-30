@@ -29,6 +29,7 @@ set(SRC_DIR ${CMAKE_PROJECT_DIR}/src)
 set(3DPARTY_DIR ${CMAKE_PROJECT_DIR}/3dparty)
 set(STATIC_LIB_NAME "${CMAKE_PROJECT_NAME}_static")
 set(SHARED_LIB_NAME "${CMAKE_PROJECT_NAME}")
+set(APPLE_FRAMEWORK_NAME "SweetNativeCore")
 
 # header search path
 list(APPEND INCLUDE_DIRS
@@ -82,6 +83,17 @@ file(GLOB_RECURSE CORE_SOURCE_FILES ${SRC_DIR}/core/*.*)
 if (BUILD_SHARED_LIB)
     message(STATUS "add target: ${SHARED_LIB_NAME} as dynamic lib")
     add_library(${SHARED_LIB_NAME} SHARED ${CORE_SOURCE_FILES} ${PLATFORM_FILES})
+    if (APPLE)
+        file(GLOB_RECURSE APPLE_PUBLIC_HEADERS ${SRC_DIR}/include/*.h ${SRC_DIR}/include/*.hpp)
+        set_target_properties(${SHARED_LIB_NAME} PROPERTIES
+                FRAMEWORK TRUE
+                FRAMEWORK_VERSION A
+                MACOSX_FRAMEWORK_IDENTIFIER "com.qiplat.${APPLE_FRAMEWORK_NAME}"
+                PUBLIC_HEADER "${APPLE_PUBLIC_HEADERS}"
+                OUTPUT_NAME "${APPLE_FRAMEWORK_NAME}"
+                XCODE_GENERATE_SCHEME TRUE
+        )
+    endif ()
 endif ()
 if (BUILD_STATIC_LIB)
     message(STATUS "add target: ${STATIC_LIB_NAME} as static lib")
@@ -191,11 +203,20 @@ if (BUILD_STATIC_LIB)
 endif ()
 # install lib and executable
 if (INSTALL_TARGETS)
-    install(TARGETS ${INSTALL_TARGETS}
-            RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-            LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-            ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    )
+    if (APPLE AND BUILD_SHARED_LIB)
+        install(TARGETS ${INSTALL_TARGETS}
+                RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+                LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+                ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+                FRAMEWORK DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        )
+    else ()
+        install(TARGETS ${INSTALL_TARGETS}
+                RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+                LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+                ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        )
+    endif ()
     if (MSVC)
         foreach(TARGET_NAME ${INSTALL_TARGETS})
             get_target_property(tgt_type ${TARGET_NAME} TYPE)

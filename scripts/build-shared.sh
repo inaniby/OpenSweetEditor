@@ -56,6 +56,7 @@ set -- "${POSITIONAL_ARGS[@]}"
 
 TARGET_NAME=sweeteditor
 WASM_TARGET_NAME=libsweeteditor
+APPLE_XCFRAMEWORK_NAME=SweetNativeCore.xcframework
 echo "============================= Start building: $PLATFORM ============================="
 
 function resolve_android_strip_tool() {
@@ -90,6 +91,83 @@ function copy_built_libraries() {
   local dest_dir="$2"
   mkdir -p "$dest_dir"
   find "$build_dir" -type f \( -name "*.dll" -o -name "*.so" -o -name "*.dylib" -o -name "*.wasm" -o -name "*.js" \) -exec cp -f {} "$dest_dir/" \;
+}
+
+function copy_apple_dylib() {
+  local build_dir="$1"
+  local dest_dir="$2"
+  local dylib_path=""
+  local framework_binary_path=""
+  local candidates=(
+    "$build_dir/lib/libsweeteditor.dylib"
+    "$build_dir/lib/Release/libsweeteditor.dylib"
+    "$build_dir/lib/Release-iphoneos/libsweeteditor.dylib"
+    "$build_dir/lib/Release-iphonesimulator/libsweeteditor.dylib"
+    "$build_dir/Release/libsweeteditor.dylib"
+    "$build_dir/Release-iphoneos/libsweeteditor.dylib"
+    "$build_dir/Release-iphonesimulator/libsweeteditor.dylib"
+  )
+
+  mkdir -p "$dest_dir"
+
+  for dylib_path in "${candidates[@]}"; do
+    if [ -f "$dylib_path" ]; then
+      cp -f "$dylib_path" "$dest_dir/"
+      return 0
+    fi
+  done
+
+  dylib_path="$(find "$build_dir" -type f -name "libsweeteditor.dylib" | head -n 1 || true)"
+  if [ -n "$dylib_path" ]; then
+    cp -f "$dylib_path" "$dest_dir/"
+    return 0
+  fi
+
+  local framework_candidates=(
+    "$build_dir/lib/Release/SweetNativeCore.framework/SweetNativeCore"
+    "$build_dir/lib/Release/SweetNativeCore.framework/Versions/A/SweetNativeCore"
+    "$build_dir/lib/SweetNativeCore.framework/SweetNativeCore"
+    "$build_dir/lib/SweetNativeCore.framework/Versions/A/SweetNativeCore"
+    "$build_dir/Release/SweetNativeCore.framework/SweetNativeCore"
+    "$build_dir/Release/SweetNativeCore.framework/Versions/A/SweetNativeCore"
+    "$build_dir/Release-iphoneos/SweetNativeCore.framework/SweetNativeCore"
+    "$build_dir/Release-iphonesimulator/SweetNativeCore.framework/SweetNativeCore"
+  )
+
+  for framework_binary_path in "${framework_candidates[@]}"; do
+    if [ -f "$framework_binary_path" ]; then
+      cp -f "$framework_binary_path" "$dest_dir/libsweeteditor.dylib"
+      return 0
+    fi
+  done
+
+  framework_binary_path="$(find "$build_dir" -type f \( -path "*SweetNativeCore.framework/SweetNativeCore" -o -path "*SweetNativeCore.framework/Versions/A/SweetNativeCore" \) | head -n 1 || true)"
+  if [ -n "$framework_binary_path" ]; then
+    cp -f "$framework_binary_path" "$dest_dir/libsweeteditor.dylib"
+    return 0
+  fi
+
+  echo "Apple dylib not found under $build_dir" >&2
+  return 1
+}
+
+function copy_apple_xcframework_artifacts() {
+  local apple_binaries_dir="$1"
+  local apple_output_dir="$2"
+  local xcframework_dir="${apple_binaries_dir}/${APPLE_XCFRAMEWORK_NAME}"
+  local xcframework_zip="${apple_output_dir}/${APPLE_XCFRAMEWORK_NAME}.zip"
+
+  if [ ! -d "$xcframework_dir" ]; then
+    echo "Apple XCFramework not found at $xcframework_dir" >&2
+    return 1
+  fi
+
+  mkdir -p "$apple_output_dir"
+  rm -f "$xcframework_zip"
+  (
+    cd "$apple_binaries_dir"
+    ditto -c -k --sequesterRsrc --keepParent "$APPLE_XCFRAMEWORK_NAME" "$xcframework_zip"
+  )
 }
 
 function build_windows_msvc() {
@@ -151,21 +229,39 @@ function build_apple() {
   cmake "${cmake_args[@]}"
 
   cmake --build "$apple_build_dir" --target "$apple_target_name" -j 12
-  copy_built_libraries "$apple_build_dir/lib" "$apple_prebuilt_dir"
+  copy_apple_dylib "$apple_build_dir" "$apple_prebuilt_dir"
 }
 
 function build_ios() {
-  IOS_SDK=$1
-  IOS_ARCH=$2
-  IOS_VARIANT=$3
+  IOS_TARGET=$1
+  if [[ "$IOS_TARGET" == simulator-* ]]; then
+    IOS_VARIANT="simulator"
+    IOS_ARCH="${IOS_TARGET#simulator-}"
+    IOS_SDK="iphonesimulator"
+    IOS_PREBUILT_DIR="$OUTPUT_DIR/ios/$IOS_TARGET"
+  else
+    IOS_VARIANT="ios"
+    IOS_ARCH="$IOS_TARGET"
+    IOS_SDK="iphoneos"
+    IOS_PREBUILT_DIR="$OUTPUT_DIR/ios/$IOS_ARCH"
+    rm -rf "$OUTPUT_DIR/ios/device-$IOS_ARCH"
+  fi
   echo "============================= iOS $IOS_VARIANT $IOS_ARCH ============================="
-  IOS_BUILD_DIR="$BUILD_DIR/ios-xcode/$IOS_VARIANT/$IOS_ARCH"
-  IOS_PREBUILT_DIR="$OUTPUT_DIR/ios/$IOS_VARIANT-$IOS_ARCH"
+  IOS_BUILD_DIR="$BUILD_DIR/ios-xcode/$IOS_TARGET"
   build_apple "$IOS_BUILD_DIR" "$IOS_PREBUILT_DIR" "$IOS_SDK" "$IOS_ARCH" "$TARGET_NAME" "Xcode" "iOS" \
     -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED=NO \
     -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_REQUIRED=NO \
     -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY= \
     -DCMAKE_XCODE_ATTRIBUTE_DEVELOPMENT_TEAM=
+}
+
+function build_apple_xcframework_artifacts() {
+  local apple_output_dir="$OUTPUT_DIR/apple"
+
+  echo "============================= Apple XCFramework ============================="
+  mkdir -p "$apple_output_dir"
+  bash "$PROJECT_DIR/platform/Apple/scripts/build_native_xcframework.sh"
+  copy_apple_xcframework_artifacts "$PROJECT_DIR/platform/Apple/binaries" "$apple_output_dir"
 }
 
 function build_linux() {
@@ -271,9 +367,9 @@ if [ $PLATFORM = "all" ]; then
   build_windows_msvc
   build_osx arm64
   build_osx x86_64
-  build_ios iphoneos arm64 device
-  build_ios iphonesimulator arm64 simulator
-  build_ios iphonesimulator x86_64 simulator
+  build_ios arm64
+  build_ios simulator-arm64
+  build_apple_xcframework_artifacts
   build_linux x86_64
   build_android arm64-v8a
   build_android x86_64
@@ -287,8 +383,14 @@ elif [ $PLATFORM = "osx" ]; then
   build_osx arm64
   build_osx x86_64
 elif [ $PLATFORM = "ios" ]; then
-  build_ios iphoneos arm64 device
-  build_ios iphonesimulator arm64 simulator
+  build_ios arm64
+  build_ios simulator-arm64
+elif [ $PLATFORM = "apple" ]; then
+  build_osx arm64
+  build_osx x86_64
+  build_ios arm64
+  build_ios simulator-arm64
+  build_apple_xcframework_artifacts
 elif [ $PLATFORM = "linux" ]; then
   build_linux x86_64
 elif [ $PLATFORM = "android" ]; then
