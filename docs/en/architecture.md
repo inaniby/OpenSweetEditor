@@ -45,7 +45,7 @@ Core benefits:
 |                          Platform Layer (Input + Render)                          |
 |                                                                                   |
 | Android        Apple         Swing / WinForms      OHOS            Web*           |
-| Canvas         CoreText/CG   Java2D / GDI+         ArkUI Canvas    Reserved       |
+| Canvas         CoreText/CG   Java2D / GDI+         ArkUI Canvas    Testing        |
 +----------------+-------------+----------------------+---------------+--------------+
          |               |                 |                    |
          | JNI direct    | manual C bridge | C API / payload    | NAPI direct
@@ -72,7 +72,7 @@ Current integration status (code state):
 - Android: integrated (JNI direct)
 - Swing / WinForms: integrated (C API)
 - Apple: integrated (Swift Package + manual bridge)
-- Web (Emscripten): directory exists, binding file is empty for now
+- Web (Emscripten): experimental testing work is maintained in the unofficial fork repository: <https://github.com/LangLang03/OpenSweetEditor-Web/tree/main/platform/Emscripten>
 - OHOS: integrated (ArkTS component + NAPI direct bridge)
 
 ---
@@ -535,7 +535,7 @@ String notes:
 | iOS/macOS | Swift Package + manual C bridge | Swift calls bridge functions |
 | Windows | P/Invoke | `DllImport("sweeteditor.dll")` |
 | Swing | Java FFM | downcall to C API |
-| Web | Emscripten | directory exists, binding not finished |
+| Web | Emscripten | Testing in unofficial fork: <https://github.com/LangLang03/OpenSweetEditor-Web/tree/main/platform/Emscripten> |
 | OHOS | ArkTS NAPI (`libsweeteditor.so`) | ArkTS `native` calls into shared C++ and decodes binary payload in `EditorProtocol.ets` |
 
 Note: Android currently does not use `c_api.h` call chain. New public features must sync both JNI path and C API path.

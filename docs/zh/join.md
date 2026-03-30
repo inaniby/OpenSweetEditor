@@ -32,7 +32,7 @@
 │   ├── WinForms                     C# P/Invoke + C API
 │   ├── Apple                        Swift Package + 手工 C bridge
 │   ├── OHOS                         OHOS SDK + NAPI 直连
-│   └── Emscripten                   预留目录
+│   └── Emscripten                   Web 实验性测试（非官方 fork：https://github.com/LangLang03/OpenSweetEditor-Web/tree/main/platform/Emscripten）
 └── prebuilt                         预构建动态库
 ```
 

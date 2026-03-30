@@ -32,7 +32,7 @@ This document gives practical development entry points based on the current repo
 │   ├── WinForms                     C# P/Invoke + C API
 │   ├── Apple                        Swift Package + manual C bridge
 │   ├── OHOS                         OHOS SDK + direct NAPI
-│   └── Emscripten                   reserved Web directory (bindings empty)
+│   └── Emscripten                   experimental Web testing (unofficial fork: https://github.com/LangLang03/OpenSweetEditor-Web/tree/main/platform/Emscripten)
 └── prebuilt                         prebuilt shared libs
 ```
 

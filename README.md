@@ -32,7 +32,7 @@ It is suited for long-term editor infrastructure in IDEs, AI programming tools, 
 - **Separation of core and rendering**: platform layers focus on input bridging and native drawing, reducing regression risk and maintenance cost across platforms
 - **Comprehensive advanced editing capabilities**: supports code folding, snippets, linked editing, diagnostic decorations, completion extensions, and more
 - **A clear performance path**: built on Piece Table, incremental layout, viewport rendering, SIMD Unicode acceleration, and mmap-based large-file loading
-- **Friendly native integration**: already adapted for Android, Apple platforms, Windows, Swing, and OHOS, with Web integration in progress
+- **Friendly native integration**: already adapted for Android, Apple platforms, Windows, Swing, and OHOS, with Web support currently in testing through an unofficial fork
 
 ## Platform Support Status
 
@@ -44,7 +44,7 @@ It is suited for long-term editor infrastructure in IDEs, AI programming tools, 
 | Windows | Implemented | GDI+ | WinForms | this repo: [platform/WinForms](./platform/WinForms) |
 | Swing | Implemented | Java2D | Swing | this repo: [platform/Swing](./platform/Swing) |
 | OHOS | Implemented | ArkUI Canvas | ArkUI | this repo: [platform/OHOS](./platform/OHOS) |
-| Web | In Progress | - | - | this repo: [platform/Emscripten](./platform/Emscripten) |
+| Web | Testing (Unofficial) | - | - | fork repo: [LangLang03/OpenSweetEditor-Web](https://github.com/LangLang03/OpenSweetEditor-Web/tree/main/platform/Emscripten) |
 | Flutter | In Progress | - | Flutter | - |
 | Compose Multiplatform | Planned | - | Compose | - |
 | Android Compose | Planned | - | Compose | - |
@@ -59,7 +59,7 @@ It is suited for long-term editor infrastructure in IDEs, AI programming tools, 
 |                          Platform Layer (Input + Render)                          |
 |                                                                                   |
 | Android        Apple         Swing / WinForms      OHOS            Web*           |
-| Canvas         CoreText/CG   Java2D / GDI+         ArkUI Canvas    Reserved       |
+| Canvas         CoreText/CG   Java2D / GDI+         ArkUI Canvas    Testing        |
 +----------------+-------------+----------------------+---------------+--------------+
          |               |                 |                    |
          | JNI direct    | manual C bridge | C API / payload    | NAPI direct
@@ -82,6 +82,8 @@ It is suited for long-term editor infrastructure in IDEs, AI programming tools, 
 ```
 
 SweetEditor uses a **unified-core, separated-rendering** architecture: the C++ core handles editing logic and layout, while platform layers only deal with input bridging and native drawing.
+
+> Web support is currently experimental testing work maintained in the unofficial fork repository: [LangLang03/OpenSweetEditor-Web](https://github.com/LangLang03/OpenSweetEditor-Web).
 
 > For the full architecture documentation, see [Architecture](docs/en/architecture.md)
 
@@ -116,7 +118,7 @@ For platform quick-start documentation, see:
 - Swing: [English](docs/en/api-platform-swing.md#quick-start)
 - OHOS: [English](docs/en/api-platform-ohos.md#quick-start)
 
-For WebAssembly and other platform build instructions, see the corresponding platform documentation.
+For WebAssembly testing builds, use the unofficial fork repository: [LangLang03/OpenSweetEditor-Web](https://github.com/LangLang03/OpenSweetEditor-Web). For other platforms, see the corresponding platform documentation.
 
 ### Minimal Integration Example
 

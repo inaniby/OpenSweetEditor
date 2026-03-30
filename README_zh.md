@@ -32,7 +32,7 @@ SweetEditor 是一套跨平台代码编辑器内核，面向需要在 Android、
 - **核心与渲染分离**：平台层聚焦输入桥接与原生绘制，降低多平台回归和维护成本
 - **高级编辑能力完整**：支持代码折叠、Snippet、Linked Editing、诊断装饰、补全扩展等能力
 - **性能路径明确**：基于 Piece Table、增量布局、视口渲染、SIMD Unicode 加速与 mmap 大文件加载
-- **原生接入友好**：已适配 Android、Apple 平台、Windows、Swing 和 OHOS，Web 接入仍在进行中
+- **原生接入友好**：已适配 Android、Apple 平台、Windows、Swing 和 OHOS，Web 当前为测试状态，由非官方 fork 仓库维护
 
 ## 平台支持状态
 
@@ -44,7 +44,7 @@ SweetEditor 是一套跨平台代码编辑器内核，面向需要在 Android、
 | Windows | 已实现 | GDI+ | WinForms | 当前仓库：[platform/WinForms](./platform/WinForms) |
 | Swing | 已实现 | Java2D | Swing | 当前仓库：[platform/Swing](./platform/Swing) |
 | OHOS | 已实现 | ArkUI Canvas | ArkUI | 当前仓库：[platform/OHOS](./platform/OHOS) |
-| Web | 进行中 | - | - | 当前仓库：[platform/Emscripten](./platform/Emscripten) |
+| Web | 测试中（非官方） | - | - | fork 仓库：[LangLang03/OpenSweetEditor-Web](https://github.com/LangLang03/OpenSweetEditor-Web/tree/main/platform/Emscripten) |
 | Flutter | 进行中 | - | Flutter | - |
 | Compose Multiplatform | 待实现 | - | Compose | - |
 | Android Compose | 待实现 | - | Compose | - |
@@ -59,7 +59,7 @@ SweetEditor 是一套跨平台代码编辑器内核，面向需要在 Android、
 |                          平台层（Input + Render）                                 |
 |                                                                                   |
 | Android        Apple         Swing / WinForms      OHOS            Web*           |
-| Canvas         CoreText/CG   Java2D / GDI+         ArkUI Canvas    预留目录       |
+| Canvas         CoreText/CG   Java2D / GDI+         ArkUI Canvas    测试中         |
 +----------------+-------------+----------------------+---------------+--------------+
          |               |                 |                    |
          | JNI 直连      | 手工 C bridge   | C API / payload    | NAPI 直连
@@ -82,6 +82,8 @@ SweetEditor 是一套跨平台代码编辑器内核，面向需要在 Android、
 ```
 
 SweetEditor 采用“核心统一、渲染分离”的架构：C++ 内核负责编辑逻辑与布局，平台层只处理输入桥接与原生绘制。
+
+> Web 当前为实验性测试支持，由非官方 fork 仓库维护：[LangLang03/OpenSweetEditor-Web](https://github.com/LangLang03/OpenSweetEditor-Web)。
 
 > 完整架构文档请参阅 [架构设计文档](docs/zh/architecture.md)
 
@@ -116,7 +118,7 @@ cmake --build . -j
 - Swing：[中文](docs/zh/api-platform-swing.md#快速开始)
 - OHOS：[中文](docs/zh/api-platform-ohos.md)
 
-WebAssembly 及其他平台的构建说明请参阅对应平台文档。
+WebAssembly 测试构建请使用非官方 fork 仓库：[LangLang03/OpenSweetEditor-Web](https://github.com/LangLang03/OpenSweetEditor-Web)。其他平台构建说明请参阅对应平台文档。
 
 ### 最小集成示例
 

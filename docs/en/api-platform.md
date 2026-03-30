@@ -20,7 +20,7 @@ This document describes the current repository code state (2026-03). If the docu
 | WinForms | P/Invoke -> C API | Active | Consumes binary payload |
 | Apple | Swift Package + manual C bridge | Active | Mainly consumes binary payload; bridge header and `c_api.h` need explicit cross-check |
 | OHOS | ArkTS NAPI direct to shared C++ (`libsweeteditor.so`) | Active | `EditorCore.ets` + `EditorProtocol.ets` decode binary payload on the ArkTS side |
-| Web (Emscripten) | Reserved directory | Not integrated | `platform/Emscripten/sweeteditor_bindings.cpp` is empty now |
+| Web (Emscripten) | Unofficial fork (`LangLang03/OpenSweetEditor-Web`) | Testing | Experimental Web platform work is maintained in fork repo: <https://github.com/LangLang03/OpenSweetEditor-Web/tree/main/platform/Emscripten> |
 
 ## Current Platform Layer Conventions
 

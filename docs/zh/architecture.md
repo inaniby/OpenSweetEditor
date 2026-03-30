@@ -45,7 +45,7 @@ SweetEditor 的核心设计理念是 **"计算与渲染的彻底分离"**：
 |                          平台层（Input + Render）                                 |
 |                                                                                   |
 | Android        Apple         Swing / WinForms      OHOS            Web*           |
-| Canvas         CoreText/CG   Java2D / GDI+         ArkUI Canvas    预留目录       |
+| Canvas         CoreText/CG   Java2D / GDI+         ArkUI Canvas    测试中         |
 +----------------+-------------+----------------------+---------------+--------------+
          |               |                 |                    |
          | JNI 直连      | 手工 C bridge   | C API / payload    | NAPI 直连
@@ -72,7 +72,7 @@ SweetEditor 的核心设计理念是 **"计算与渲染的彻底分离"**：
 - Android：已接入（JNI 直连）
 - Swing / WinForms：已接入（C API）
 - Apple：已接入（Swift Package + 手工 bridge）
-- Web(Emscripten)：目录存在，绑定文件当前为空
+- Web(Emscripten)：实验性测试支持，由非官方 fork 仓库维护：<https://github.com/LangLang03/OpenSweetEditor-Web/tree/main/platform/Emscripten>
 - OHOS：已接入（ArkTS 组件 + NAPI 直连桥接）
 
 ---
@@ -535,7 +535,7 @@ free_editor(editor);
 | iOS/macOS | Swift Package + 手工 C bridge | Swift 调 bridge 函数 |
 | Windows | P/Invoke | `DllImport(\"sweeteditor.dll\")` |
 | Swing | Java FFM | Downcall 到 C API |
-| Web | Emscripten | 目录存在，绑定未完成 |
+| Web | Emscripten | 非官方 fork 中测试中：<https://github.com/LangLang03/OpenSweetEditor-Web/tree/main/platform/Emscripten> |
 | OHOS | ArkTS NAPI（`libsweeteditor.so`） | ArkTS 通过 `native` 直连共享 C++，并在 `EditorProtocol.ets` 中解码 binary payload |
 
 注意：Android 目前不是经由 `c_api.h` 调用链路；新增公共能力时需要同步 JNI 路径与 C API 路径。
