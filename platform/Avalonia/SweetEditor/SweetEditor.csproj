@@ -1,0 +1,42 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Library</OutputType>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <AssemblyName>SweetEditor.Avalonia</AssemblyName>
+    <PackageId>SweetEditor.Avalonia</PackageId>
+    <Title>SweetEditor.Avalonia</Title>
+    <Authors>Scave</Authors>
+    <Company>Mobile-IPE</Company>
+    <Product>QiStudio</Product>
+    <Version>1.0.0</Version>
+    <Description>Cross-platform code editor core for Avalonia, powered by SweetEditor C++.</Description>
+    <PackageProjectUrl>https://github.com/FinalScave/OpenSweetEditor</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/FinalScave/OpenSweetEditor.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>editor;code-editor;avalonia;syntax-highlighting;cpp;ide-editor</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="11.0.0" />
+    <PackageReference Include="Avalonia.Desktop" Version="11.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+    <Content Include="..\..\..\cmake-build-release-visual-studio\bin\sweeteditor.dll" Condition="Exists('..\..\..\cmake-build-release-visual-studio\bin\sweeteditor.dll')" Pack="true" PackagePath="runtimes\win-x64\native\">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\cmake-build-release-visual-studio\bin\libsweeteditor.so" Condition="Exists('..\..\..\cmake-build-release-visual-studio\bin\libsweeteditor.so')" Pack="true" PackagePath="runtimes\linux-x64\native\">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\cmake-build-release-visual-studio\bin\libsweeteditor.dylib" Condition="Exists('..\..\..\cmake-build-release-visual-studio\bin\libsweeteditor.dylib')" Pack="true" PackagePath="runtimes\osx-x64\native\">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+</Project>
