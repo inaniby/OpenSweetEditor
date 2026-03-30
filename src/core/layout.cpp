@@ -1353,14 +1353,26 @@ namespace NS_SWEETEDITOR {
             }
             size_t visible_start = skip_left;
             size_t visible_len = run.length - skip_left - skip_right;
+
+            // Align to surrogate pair boundaries to avoid splitting emoji
+            if (visible_start > 0 && visible_start < run.length &&
+                utf8::internal::is_lead_surrogate(run.text[visible_start - 1])) {
+              visible_start--;
+              visible_len++;
+            }
+            if (visible_len > 0 && (visible_start + visible_len) < run.length &&
+                utf8::internal::is_lead_surrogate(run.text[visible_start + visible_len - 1])) {
+              visible_len++;
+            }
+
             if (visible_len == 0) {
               current_x = run_right;
               run_it = visual_line.runs.erase(run_it);
               continue;
             }
             if (visible_start > 0 || visible_len < run.length) {
-              float crop_offset = skip_left > 0
-                  ? measureWidth(run.text.substr(0, skip_left), run.style.font_style) : 0;
+              float crop_offset = visible_start > 0
+                  ? measureWidth(run.text.substr(0, visible_start), run.style.font_style) : 0;
               run.x = text_area_x + (run_left + crop_offset) - scroll_x;
               run.text = run.text.substr(visible_start, visible_len);
               run.width = measureWidth(run.text, run.style.font_style);
