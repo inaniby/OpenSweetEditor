@@ -56,7 +56,8 @@ set -- "${POSITIONAL_ARGS[@]}"
 
 TARGET_NAME=sweeteditor
 WASM_TARGET_NAME=libsweeteditor
-APPLE_XCFRAMEWORK_NAME=SweetNativeCore.xcframework
+APPLE_XCFRAMEWORK_IOS="SweetNativeCoreIOS.xcframework"
+APPLE_XCFRAMEWORK_OSX="SweetNativeCoreOSX.xcframework"
 echo "============================= Start building: $PLATFORM ============================="
 
 function resolve_android_strip_tool() {
@@ -151,22 +152,40 @@ function copy_apple_dylib() {
   return 1
 }
 
-function copy_apple_xcframework_artifacts() {
-  local apple_binaries_dir="$1"
-  local apple_output_dir="$2"
-  local xcframework_dir="${apple_binaries_dir}/${APPLE_XCFRAMEWORK_NAME}"
-  local xcframework_zip="${apple_output_dir}/${APPLE_XCFRAMEWORK_NAME}.zip"
+function copy_xcframework() {
+  local platform="$1"
+  local apple_binaries_dir="$2"
+  local output_dir="$3"
+  local xcframework_name
+  local xcframework_dir
+  local xcframework_zip
+
+  case "$platform" in
+    ios)
+      xcframework_name="$APPLE_XCFRAMEWORK_IOS"
+      ;;
+    osx)
+      xcframework_name="$APPLE_XCFRAMEWORK_OSX"
+      ;;
+    *)
+      echo "Unknown platform: $platform" >&2
+      return 1
+      ;;
+  esac
+
+  xcframework_dir="${apple_binaries_dir}/${xcframework_name}"
+  xcframework_zip="${output_dir}/${xcframework_name}.zip"
 
   if [ ! -d "$xcframework_dir" ]; then
-    echo "Apple XCFramework not found at $xcframework_dir" >&2
+    echo "XCFramework not found at $xcframework_dir" >&2
     return 1
   fi
 
-  mkdir -p "$apple_output_dir"
+  mkdir -p "$output_dir"
   rm -f "$xcframework_zip"
   (
     cd "$apple_binaries_dir"
-    ditto -c -k --sequesterRsrc --keepParent "$APPLE_XCFRAMEWORK_NAME" "$xcframework_zip"
+    ditto -c -k --sequesterRsrc --keepParent "$xcframework_name" "$xcframework_zip"
   )
 }
 
@@ -255,13 +274,22 @@ function build_ios() {
     -DCMAKE_XCODE_ATTRIBUTE_DEVELOPMENT_TEAM=
 }
 
-function build_apple_xcframework_artifacts() {
-  local apple_output_dir="$OUTPUT_DIR/apple"
+function build_ios_xcframework() {
+  local ios_output_dir="$OUTPUT_DIR/ios"
 
-  echo "============================= Apple XCFramework ============================="
-  mkdir -p "$apple_output_dir"
-  bash "$PROJECT_DIR/platform/Apple/scripts/build_native_xcframework.sh"
-  copy_apple_xcframework_artifacts "$PROJECT_DIR/platform/Apple/binaries" "$apple_output_dir"
+  echo "============================= iOS XCFramework ============================="
+  mkdir -p "$ios_output_dir"
+  bash "$PROJECT_DIR/platform/Apple/scripts/build_native_xcframework.sh" ios
+  copy_xcframework ios "$PROJECT_DIR/platform/Apple/binaries" "$ios_output_dir"
+}
+
+function build_osx_xcframework() {
+  local osx_output_dir="$OUTPUT_DIR/osx"
+
+  echo "============================= macOS XCFramework ============================="
+  mkdir -p "$osx_output_dir"
+  bash "$PROJECT_DIR/platform/Apple/scripts/build_native_xcframework.sh" osx
+  copy_xcframework osx "$PROJECT_DIR/platform/Apple/binaries" "$osx_output_dir"
 }
 
 function build_linux() {
@@ -369,7 +397,8 @@ if [ $PLATFORM = "all" ]; then
   build_osx x86_64
   build_ios arm64
   build_ios simulator-arm64
-  build_apple_xcframework_artifacts
+  build_ios_xcframework
+  build_osx_xcframework
   build_linux x86_64
   build_android arm64-v8a
   build_android x86_64
@@ -382,15 +411,15 @@ elif [ $PLATFORM = "windows" ]; then
 elif [ $PLATFORM = "osx" ]; then
   build_osx arm64
   build_osx x86_64
+  build_osx_xcframework
 elif [ $PLATFORM = "ios" ]; then
   build_ios arm64
   build_ios simulator-arm64
-elif [ $PLATFORM = "apple" ]; then
+  build_ios_xcframework
+elif [ $PLATFORM = "osx" ]; then
   build_osx arm64
   build_osx x86_64
-  build_ios arm64
-  build_ios simulator-arm64
-  build_apple_xcframework_artifacts
+  build_osx_xcframework
 elif [ $PLATFORM = "linux" ]; then
   build_linux x86_64
 elif [ $PLATFORM = "android" ]; then
