@@ -49,6 +49,7 @@ namespace SweetEditor {
 		private int lastViewportWidth = -1;
 		private int lastViewportHeight = -1;
 		private bool renderModelDirty = true;
+		private bool perfOverlayEnabled = true;
 		private const float DefaultContentStartPaddingDp = 3.0f;
 		private const float WheelDeltaScale = 40f;
 
@@ -139,6 +140,12 @@ namespace SweetEditor {
 			Flush();
 		}
 
+		public void SetPerfOverlayEnabled(bool enabled) {
+			perfOverlayEnabled = enabled;
+		}
+
+		public bool IsPerfOverlayEnabled() => perfOverlayEnabled;
+
 		public void SyncPlatformScaleInternal(float scale) {
 			renderer.SyncPlatformScale(scale);
 			editorCore.OnFontMetricsChanged();
@@ -212,6 +219,10 @@ namespace SweetEditor {
 			newLineActionProviderManager?.AddProvider(provider);
 		public void RemoveNewLineActionProvider(INewLineActionProvider provider) =>
 			newLineActionProviderManager?.RemoveProvider(provider);
+
+		public CursorRect GetPositionRect(int line, int column) => editorCore.GetPositionRect(line, column);
+
+		public CursorRect GetCursorRect() => editorCore.GetCursorRect();
 
 		public void AddDecorationProvider(IDecorationProvider provider) =>
 			decorationProviderManager?.AddProvider(provider);
@@ -348,6 +359,8 @@ namespace SweetEditor {
 
 		public int GetLineCount() => editorCore.GetLineCount();
 
+		public int GetTotalLineCount() => GetLineCount();
+
 		public string GetLineText(int line) => editorCore.GetLineText(line);
 
 		public TextRange GetWordRangeAtCursor() => editorCore.GetWordRangeAtCursor();
@@ -357,6 +370,12 @@ namespace SweetEditor {
 		public void SetSelection(TextRange range) {
 			editorCore.SetSelection(range);
 			Flush();
+		}
+
+		public void SetSelection(int startLine, int startColumn, int endLine, int endColumn) {
+			SetSelection(new TextRange(
+				new TextPosition { Line = startLine, Column = startColumn },
+				new TextPosition { Line = endLine, Column = endColumn }));
 		}
 
 		public TextRange GetSelection() => editorCore.GetSelection();
@@ -400,7 +419,7 @@ namespace SweetEditor {
 
 		#region Public API - Scrolling
 
-		public void ScrollToLine(int line, ScrollBehavior behavior) {
+		public void ScrollToLine(int line, ScrollBehavior behavior = ScrollBehavior.CENTER) {
 			editorCore.ScrollToLine(line, behavior);
 			var metrics = editorCore.GetScrollMetrics();
 			ScrollChanged?.Invoke(this, new ScrollChangedEventArgs(metrics.ScrollX, metrics.ScrollY));
@@ -408,7 +427,7 @@ namespace SweetEditor {
 			Flush();
 		}
 
-		public void GotoPosition(int line, int column) {
+		public void GotoPosition(int line, int column = 0) {
 			editorCore.GotoPosition(line, column);
 			var metrics = editorCore.GetScrollMetrics();
 			ScrollChanged?.Invoke(this, new ScrollChangedEventArgs(metrics.ScrollX, metrics.ScrollY));
@@ -429,8 +448,25 @@ namespace SweetEditor {
 
 		#region Public API - Decorations
 
+		public void registerTextStyle(uint styleId, int color, int backgroundColor, int fontStyle) =>
+			editorCore.registerTextStyle(styleId, color, backgroundColor, fontStyle);
+
+		public void registerTextStyle(uint styleId, int color, int fontStyle) =>
+			editorCore.registerTextStyle(styleId, color, fontStyle);
+
+		public void registerBatchTextStyles(IReadOnlyDictionary<uint, TextStyle> stylesById) =>
+			editorCore.registerBatchTextStyles(stylesById);
+
+		public void SetLineSpans(int line, SpanLayer layer, IList<StyleSpan> spans) {
+			editorCore.SetLineSpans(line, (int)layer, spans);
+		}
+
 		public void SetLineSpans(int line, int layer, IList<StyleSpan> spans) {
 			editorCore.SetLineSpans(line, layer, spans);
+		}
+
+		public void SetLineSpans(int line, IList<StyleSpan> spans) {
+			SetLineSpans(line, SpanLayer.SYNTAX, spans);
 		}
 
 		public void SetLineInlayHints(int line, IList<InlayHint> hints) {
@@ -443,6 +479,10 @@ namespace SweetEditor {
 
 		public void SetLineGutterIcons(int line, IList<GutterIcon> icons) {
 			editorCore.SetLineGutterIcons(line, icons);
+		}
+
+		public void SetBatchLineSpans(SpanLayer layer, Dictionary<int, IList<StyleSpan>> spansByLine) {
+			editorCore.SetBatchLineSpans((int)layer, spansByLine);
 		}
 
 		public void SetBatchLineSpans(int layer, Dictionary<int, IList<StyleSpan>> spansByLine) {
@@ -467,6 +507,10 @@ namespace SweetEditor {
 
 		public void ClearGutterIcons() {
 			editorCore.ClearGutterIcons();
+		}
+
+		public void SetMaxGutterIcons(int count) {
+			editorCore.SetMaxGutterIcons((uint)Math.Max(0, count));
 		}
 
 		public void SetMaxGutterIcons(uint count) {
@@ -505,14 +549,32 @@ namespace SweetEditor {
 			editorCore.SetFoldRegions(regions);
 		}
 
+		public bool ToggleFold(int line) {
+			bool result = editorCore.ToggleFold((uint)Math.Max(0, line));
+			Flush();
+			return result;
+		}
+
 		public bool ToggleFold(uint line) {
 			bool result = editorCore.ToggleFold(line);
 			Flush();
 			return result;
 		}
 
+		public bool FoldAt(int line) {
+			bool result = editorCore.FoldAt((uint)Math.Max(0, line));
+			Flush();
+			return result;
+		}
+
 		public bool FoldAt(uint line) {
 			bool result = editorCore.FoldAt(line);
+			Flush();
+			return result;
+		}
+
+		public bool UnfoldAt(int line) {
+			bool result = editorCore.UnfoldAt((uint)Math.Max(0, line));
 			Flush();
 			return result;
 		}
@@ -533,6 +595,8 @@ namespace SweetEditor {
 			Flush();
 		}
 
+		public bool IsLineVisible(int line) => editorCore.IsLineVisible((uint)Math.Max(0, line));
+
 		public bool IsLineVisible(uint line) => editorCore.IsLineVisible(line);
 
 		public void ClearHighlights() {
@@ -541,6 +605,10 @@ namespace SweetEditor {
 
 		public void ClearHighlightsLayer(byte layer) {
 			editorCore.ClearHighlightsLayer(layer);
+		}
+
+		public void ClearHighlights(SpanLayer layer) {
+			editorCore.ClearHighlightsLayer((byte)layer);
 		}
 
 		public void ClearInlayHints() {
@@ -707,6 +775,7 @@ namespace SweetEditor {
 				if (action != null) {
 					var editResult = editorCore.InsertText(action.Text);
 					FireTextChanged(TextChangeAction.Key, editResult);
+					UpdateCompletionAfterContentMutation();
 					e.Handled = true;
 					Flush();
 					return;
@@ -723,6 +792,9 @@ namespace SweetEditor {
 			if (result.Handled) {
 				e.Handled = true;
 				FireKeyEventChanges(result, TextChangeAction.Key);
+				if (result.ContentChanged) {
+					UpdateCompletionAfterContentMutation();
+				}
 				Flush();
 			}
 		}
@@ -741,6 +813,8 @@ namespace SweetEditor {
 						completionProviderManager.TriggerCompletion(CompletionTriggerKind.Character, e.Text);
 					} else if (char.IsLetterOrDigit(e.Text[0]) || e.Text[0] == '_') {
 						completionProviderManager.TriggerCompletion(CompletionTriggerKind.Invoked, null);
+					} else {
+						completionProviderManager.Dismiss();
 					}
 				}
 
@@ -878,6 +952,64 @@ namespace SweetEditor {
 			}
 		}
 
+		private void UpdateCompletionAfterContentMutation() {
+			if (completionProviderManager == null || editorCore.IsInLinkedEditing()) {
+				return;
+			}
+
+			TextPosition cursor = editorCore.GetCursorPosition();
+			string lineText = cursor.Line >= 0 ? editorCore.GetLineText(cursor.Line) : string.Empty;
+			string? triggerCharacter = GetAdjacentCompletionTrigger(lineText, cursor.Column);
+			if (triggerCharacter != null) {
+				completionProviderManager.TriggerCompletion(CompletionTriggerKind.Retrigger, triggerCharacter);
+				return;
+			}
+
+			if (HasAdjacentCompletionWordCharacter(lineText, cursor.Column)) {
+				completionProviderManager.TriggerCompletion(CompletionTriggerKind.Retrigger, null);
+				return;
+			}
+
+			completionProviderManager.Dismiss();
+		}
+
+		private string? GetAdjacentCompletionTrigger(string lineText, int column) {
+			char? previous = GetCharAt(lineText, column - 1);
+			if (previous.HasValue) {
+				string candidate = previous.Value.ToString();
+				if (completionProviderManager?.IsTriggerCharacter(candidate) == true) {
+					return candidate;
+				}
+			}
+
+			char? current = GetCharAt(lineText, column);
+			if (current.HasValue) {
+				string candidate = current.Value.ToString();
+				if (completionProviderManager?.IsTriggerCharacter(candidate) == true) {
+					return candidate;
+				}
+			}
+
+			return null;
+		}
+
+		private static bool HasAdjacentCompletionWordCharacter(string lineText, int column) {
+			char? previous = GetCharAt(lineText, column - 1);
+			char? current = GetCharAt(lineText, column);
+			return (previous.HasValue && IsCompletionWordCharacter(previous.Value)) ||
+				(current.HasValue && IsCompletionWordCharacter(current.Value));
+		}
+
+		private static char? GetCharAt(string text, int index) {
+			if (string.IsNullOrEmpty(text) || index < 0 || index >= text.Length) {
+				return null;
+			}
+			return text[index];
+		}
+
+		private static bool IsCompletionWordCharacter(char ch) =>
+			char.IsLetterOrDigit(ch) || ch == '_';
+
 		private void FireTextChanged(TextChangeAction action, TextEditResult editResult) {
 			if (editResult.Changes != null && editResult.Changes.Count > 0) {
 				TextChanged?.Invoke(this, new TextChangedEventArgs(action, editResult.Changes));
@@ -920,7 +1052,7 @@ namespace SweetEditor {
 			EnsureRenderModelUpToDate();
 			long renderStart = Stopwatch.GetTimestamp();
 			renderer.Render(context, renderModel, currentTheme, size);
-			if (RenderStatsUpdated != null) {
+			if (perfOverlayEnabled && RenderStatsUpdated != null) {
 				double renderMs = (Stopwatch.GetTimestamp() - renderStart) * 1000.0 / Stopwatch.Frequency;
 				EditorRenderModel model = renderModel.GetValueOrDefault();
 				RenderStatsUpdated.Invoke(this, new RenderStatsEventArgs(

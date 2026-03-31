@@ -1,0 +1,124 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:demo="clr-namespace:Demo"
+             xmlns:se="clr-namespace:SweetEditor;assembly=SweetEditor.Avalonia"
+             x:Class="Demo.MainView">
+    <UserControl.Styles>
+        <Style Selector="Border.toolbar-host">
+            <Setter Property="Background" Value="#202733"/>
+            <Setter Property="BorderBrush" Value="#38495E"/>
+            <Setter Property="BorderThickness" Value="0,0,0,1"/>
+        </Style>
+        <Style Selector="Button.toolbar">
+            <Setter Property="Background" Value="#334255"/>
+            <Setter Property="Foreground" Value="#EDF5FF"/>
+            <Setter Property="BorderBrush" Value="#526B86"/>
+            <Setter Property="MinHeight" Value="30"/>
+            <Setter Property="Padding" Value="12,6"/>
+        </Style>
+        <Style Selector="ComboBox.toolbar">
+            <Setter Property="Background" Value="#334255"/>
+            <Setter Property="Foreground" Value="#EDF5FF"/>
+            <Setter Property="BorderBrush" Value="#526B86"/>
+            <Setter Property="MinHeight" Value="30"/>
+        </Style>
+        <Style Selector="TextBlock.toolbar-status">
+            <Setter Property="Foreground" Value="#D8E7F8"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+        </Style>
+    </UserControl.Styles>
+    <Grid>
+        <DockPanel>
+            <Border DockPanel.Dock="Top"
+                    Classes="toolbar-host">
+                <StackPanel Margin="8,6" Spacing="4">
+                    <WrapPanel Orientation="Horizontal">
+                        <ComboBox Name="FileComboBox"
+                                  Classes="toolbar"
+                                  Width="180"
+                                  Margin="0,0,6,6"
+                                  VerticalAlignment="Center"
+                                  SelectionChanged="OnFileSelectionChanged"/>
+                        <Button Name="UndoButton" Classes="toolbar" Content="Undo" Margin="0,0,6,6" Click="OnUndo"/>
+                        <Button Name="RedoButton" Classes="toolbar" Content="Redo" Margin="0,0,6,6" Click="OnRedo"/>
+                        <Button Name="SelectAllButton" Classes="toolbar" Content="Select All" Margin="0,0,6,6" Click="OnSelectAll"/>
+                        <Button Name="GetSelectionButton" Classes="toolbar" Content="Get Selection" Margin="0,0,6,6" Click="OnGetSelection"/>
+                        <Button Name="LoadDecorationsButton" Classes="toolbar" Content="Load Decorations" Margin="0,0,6,6" Click="OnLoadDecorations"/>
+                        <Button Name="ClearDecorationsButton" Classes="toolbar" Content="Clear Decorations" Margin="0,0,6,6" Click="OnClearDecorations"/>
+                        <Button Name="ThemeButton" Classes="toolbar" Content="Toggle Theme" Margin="0,0,6,6" Click="OnToggleTheme"/>
+                        <Button Name="WrapModeButton" Classes="toolbar" Content="WrapMode" Margin="0,0,6,6" Click="OnCycleWrapMode"/>
+                        <Button Name="ReloadButton" Classes="toolbar" Content="Reload" Margin="0,0,6,6" Click="OnReloadCurrentFile"/>
+                    </WrapPanel>
+                    <WrapPanel Orientation="Horizontal">
+                        <Button Name="TriggerCompletionButton" Classes="toolbar" Content="Completion" Margin="0,0,6,6" Click="OnTriggerCompletion"/>
+                        <Button Name="AddPhantomButton" Classes="toolbar" Content="Phantom+" Margin="0,0,6,6" Click="OnAddPhantom"/>
+                        <Button Name="ClearPhantomButton" Classes="toolbar" Content="Phantom-" Margin="0,0,6,6" Click="OnClearPhantom"/>
+                        <Button Name="SelectionMenuButton" Classes="toolbar" Content="Selection Menu" Margin="0,0,6,6" Click="OnOpenSelectionMenu"/>
+                        <Button Name="InsertSnippetButton" Classes="toolbar" Content="Snippet" Margin="0,0,6,6" Click="OnInsertSnippet"/>
+                        <Button Name="LinkedEditButton" Classes="toolbar" Content="Linked Edit" Margin="0,0,6,6" Click="OnStartLinkedEdit"/>
+                        <Button Name="FoldAllButton" Classes="toolbar" Content="Fold All" Margin="0,0,6,6" Click="OnFoldAll"/>
+                        <Button Name="UnfoldAllButton" Classes="toolbar" Content="Unfold All" Margin="0,0,6,6" Click="OnUnfoldAll"/>
+                        <TextBlock Name="StatusTextBlock" Classes="toolbar-status" VerticalAlignment="Center" Margin="8,0,0,6"/>
+                    </WrapPanel>
+                </StackPanel>
+            </Border>
+            <se:EditorControl Name="Editor"/>
+        </DockPanel>
+
+        <Border Name="PerfOverlay"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Top"
+                Margin="0,92,12,0"
+                Padding="10,8"
+                Background="#B2121A22"
+                BorderBrush="#88A7C5D8"
+                BorderThickness="1"
+                CornerRadius="10"
+                IsHitTestVisible="False">
+            <StackPanel Spacing="4">
+                <TextBlock Text="PERF MONITOR"
+                           FontSize="11"
+                           FontWeight="SemiBold"
+                           Foreground="#E7F0FF"
+                           Opacity="0.9"/>
+                <TextBlock Name="PerfTextBlock"
+                           FontSize="12"
+                           FontFamily="Consolas, Menlo, Monaco, monospace"
+                           Foreground="#E8F5FF"/>
+                <demo:PerfGraphControl Name="PerfGraph"
+                                       Width="220"
+                                       Height="84"
+                                       Margin="0,2,0,0"/>
+                <TextBlock Text="FPS / Render / CPU"
+                           FontSize="10"
+                           Foreground="#D6E7F8"
+                           Opacity="0.85"/>
+            </StackPanel>
+        </Border>
+
+        <Popup Name="CompletionPopup"
+               IsLightDismissEnabled="False">
+            <Border Name="CompletionOverlay"
+                    MinWidth="300"
+                    Padding="10,8"
+                    Background="#AA10161F"
+                    BorderBrush="#887E95AD"
+                    BorderThickness="1"
+                    CornerRadius="8"
+                    IsHitTestVisible="False">
+                <StackPanel Spacing="4">
+                    <TextBlock Text="COMPLETION PREVIEW"
+                               FontSize="10"
+                               FontWeight="SemiBold"
+                               Foreground="#D7E5F7"/>
+                    <TextBlock Name="CompletionSummaryTextBlock"
+                               FontSize="11"
+                               FontFamily="Consolas, Menlo, Monaco, monospace"
+                               Foreground="#E6F2FF"/>
+                    <StackPanel Name="CompletionItemsPanel"
+                                Spacing="4"/>
+                </StackPanel>
+            </Border>
+        </Popup>
+    </Grid>
+</UserControl>

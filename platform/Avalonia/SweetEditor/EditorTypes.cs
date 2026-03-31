@@ -103,6 +103,14 @@ namespace SweetEditor {
 		public override string ToString() => $"({X}, {Y})";
 	}
 
+	public struct CursorRect {
+		public float X;
+		public float Y;
+		public float Height;
+
+		public override string ToString() => $"CursorRect(X={X}, Y={Y}, Height={Height})";
+	}
+
 	public struct TextStyle {
 		public int Color;
 		public int BackgroundColor;

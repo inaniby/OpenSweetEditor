@@ -372,11 +372,21 @@ namespace SweetEditor {
 			NativeMethods.GetPositionRect(handle, (nuint)position.Line, (nuint)position.Column, ref x, ref y, ref height);
 		}
 
+		public CursorRect GetPositionRect(int line, int column) {
+			GetPositionRect(new TextPosition { Line = line, Column = column }, out float x, out float y, out float height);
+			return new CursorRect { X = x, Y = y, Height = height };
+		}
+
 		public void GetCursorRect(out float x, out float y, out float height) {
 			x = 0;
 			y = 0;
 			height = 0;
 			NativeMethods.GetCursorRect(handle, ref x, ref y, ref height);
+		}
+
+		public CursorRect GetCursorRect() {
+			GetCursorRect(out float x, out float y, out float height);
+			return new CursorRect { X = x, Y = y, Height = height };
 		}
 
 		public void ScrollToLine(int line, ScrollBehavior behavior) {
@@ -401,9 +411,21 @@ namespace SweetEditor {
 			NativeMethods.registerTextStyle(handle, styleId, style.Color, style.BackgroundColor, style.FontStyle);
 		}
 
+		public void registerTextStyle(uint styleId, int color, int backgroundColor, int fontStyle) {
+			RegisterTextStyle(styleId, new TextStyle(color, backgroundColor, fontStyle));
+		}
+
+		public void registerTextStyle(uint styleId, int color, int fontStyle) {
+			RegisterTextStyle(styleId, new TextStyle(color, fontStyle));
+		}
+
 		public void RegisterBatchTextStyles(IReadOnlyDictionary<uint, TextStyle> stylesById) {
 			byte[] data = ProtocolEncoder.PackBatchTextStyles(stylesById);
 			NativeMethods.registerBatchTextStyles(handle, data, (nuint)data.Length);
+		}
+
+		public void registerBatchTextStyles(IReadOnlyDictionary<uint, TextStyle> stylesById) {
+			RegisterBatchTextStyles(stylesById);
 		}
 
 		public void SetLineSpans(int line, int layer, IList<StyleSpan> spans) {

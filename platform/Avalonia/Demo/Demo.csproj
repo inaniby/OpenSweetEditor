@@ -1,5 +1,4 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net9.0</TargetFramework>
@@ -32,10 +31,14 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <TargetPath>libsweeteditor.so</TargetPath>
     </None>
+    <None Include="..\..\..\prebuilt\linux\x86_64\libsweeteditor.so"
+          Condition="!Exists('..\..\..\cmake-build-release-visual-studio\bin\libsweeteditor.so') and Exists('..\..\..\prebuilt\linux\x86_64\libsweeteditor.so')">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <TargetPath>libsweeteditor.so</TargetPath>
+    </None>
     <None Include="Native/linux-x64/libsweetline.so">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <TargetPath>libsweetline.so</TargetPath>
     </None>
   </ItemGroup>
-
 </Project>

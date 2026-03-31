@@ -2,7 +2,40 @@ using System;
 using System.Collections.Generic;
 
 namespace SweetEditor {
-	public sealed class NewLineActionProviderManager {
+	public interface INewLineActionProvider {
+		NewLineAction? ProvideNewLineAction(NewLineContext context);
+	}
+
+	public sealed class NewLineContext {
+		public int LineNumber { get; }
+		public int Column { get; }
+		public string LineText { get; }
+		public LanguageConfiguration? LanguageConfig { get; }
+		public IEditorMetadata? EditorMetadata { get; }
+
+		public NewLineContext(
+			int lineNumber,
+			int column,
+			string lineText,
+			LanguageConfiguration? languageConfig,
+			IEditorMetadata? editorMetadata) {
+			LineNumber = lineNumber;
+			Column = column;
+			LineText = lineText;
+			LanguageConfig = languageConfig;
+			EditorMetadata = editorMetadata;
+		}
+	}
+
+	public sealed class NewLineAction {
+		public string Text { get; }
+
+		public NewLineAction(string text) {
+			Text = text;
+		}
+	}
+
+	internal sealed class NewLineActionProviderManager {
 		private readonly List<INewLineActionProvider> providers = new();
 		private readonly EditorControl editor;
 
@@ -33,7 +66,7 @@ namespace SweetEditor {
 			var context = CreateContext();
 			foreach (var provider in providers) {
 				try {
-					var action = provider.GetNewLineAction(context);
+					var action = provider.ProvideNewLineAction(context);
 					if (action != null) {
 						return action;
 					}
@@ -44,42 +77,15 @@ namespace SweetEditor {
 			return null;
 		}
 
-		private NewLineActionContext CreateContext() {
+		private NewLineContext CreateContext() {
 			var cursorPosition = editor.GetCursorPosition();
 			var lineText = cursorPosition.Line >= 0 ? editor.GetLineText(cursorPosition.Line) : string.Empty;
-			
-			return new NewLineActionContext(
-				cursorPosition,
+			return new NewLineContext(
+				cursorPosition.Line,
+				cursorPosition.Column,
 				lineText,
 				editor.GetLanguageConfiguration(),
-				editor.Metadata
-			);
-		}
-	}
-
-	public class NewLineActionContext {
-		public TextPosition CursorPosition { get; }
-		public string LineText { get; }
-		public LanguageConfiguration? LanguageConfiguration { get; }
-		public IEditorMetadata? EditorMetadata { get; }
-
-		public NewLineActionContext(TextPosition cursorPosition, string lineText, 
-									LanguageConfiguration? languageConfiguration, 
-									IEditorMetadata? editorMetadata) {
-			CursorPosition = cursorPosition;
-			LineText = lineText;
-			LanguageConfiguration = languageConfiguration;
-			EditorMetadata = editorMetadata;
-		}
-	}
-
-	public class NewLineAction {
-		public string Text { get; set; } = string.Empty;
-		public int? CursorPosition { get; set; }
-
-		public NewLineAction(string text, int? cursorPosition = null) {
-			Text = text;
-			CursorPosition = cursorPosition;
+				editor.Metadata);
 		}
 	}
 }
