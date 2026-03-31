@@ -21,13 +21,13 @@
   #endif
   #define EDITOR_CALL __stdcall
   #ifndef __cplusplus
-    typedef wchar_t U16Char;
+    typedef uint16_t U16Char;
   #endif
 #else
   #define EDITOR_API __attribute__((visibility("default")))
   #define EDITOR_CALL
   #ifndef __cplusplus
-    typedef uint_least16_t U16Char;
+    typedef uint16_t U16Char;
   #endif
 #endif
 
