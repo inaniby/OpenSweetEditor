@@ -35,12 +35,12 @@ The Widget layer handles platform-native rendering, user interaction, and extens
 | Category | Required Types | Description |
 |---|---|---|
 | **Widget** | `SweetEditor`, `SweetEditorController` *(declarative frameworks MUST; imperative frameworks MAY)*, `EditorTheme`, `EditorSettings`, `EditorIconProvider`, `EditorMetadata`, `LanguageConfiguration` | Widget entry, controller, theme, configuration |
-| **Decoration** | `DecorationProvider`, `DecorationProviderManager`, `DecorationReceiver`, `DecorationContext`, `DecorationResult`, `DecorationType` | Decoration provider system |
-| **Completion** | `CompletionProvider`, `CompletionProviderManager`, `CompletionContext`, `CompletionItem`, `CompletionResult`, `CompletionReceiver` | Completion provider system |
-| **Event** | `EditorEventBus`, `EditorEventListener`, `EditorEvent`, `TextChangedEvent`, `CursorChangedEvent`, `SelectionChangedEvent`, `ScrollChangedEvent`, `ScaleChangedEvent`, `DocumentLoadedEvent`, `FoldToggleEvent`, `GutterIconClickEvent`, `InlayHintClickEvent`, `LongPressEvent`*(mobile only)*, `DoubleTapEvent`, `ContextMenuEvent`*(desktop & cross-platform UI frameworks)* | Event system |
+| **Decoration** | `DecorationProvider`, `DecorationProviderManager`, `DecorationContext`, `DecorationResult`, `DecorationType`; if the Receiver callback pattern is used, `DecorationReceiver` is the recommended name | Decoration provider system |
+| **Completion** | `CompletionProvider`, `CompletionProviderManager`, `CompletionContext`, `CompletionItem`, `CompletionResult`; if the Receiver callback pattern is used, `CompletionReceiver` is the recommended name | Completion provider system |
+| **Event** | A type-safe event mechanism, `EditorEvent`, `TextChangedEvent`, `CursorChangedEvent`, `SelectionChangedEvent`, `ScrollChangedEvent`, `ScaleChangedEvent`, `DocumentLoadedEvent`, `FoldToggleEvent`, `GutterIconClickEvent`, `InlayHintClickEvent`, `LongPressEvent`*(mobile only)*, `DoubleTapEvent`, `ContextMenuEvent`*(desktop & cross-platform UI frameworks)*; if an explicit event-bus/listener pattern is used, `EditorEventBus` and `EditorEventListener` are the recommended names | Event system |
 | **NewLine** | `NewLineActionProvider`, `NewLineActionProviderManager`, `NewLineAction`, `NewLineContext` | Newline action provider system |
-| **Copilot** *(SHOULD)* | `InlineSuggestion`, `InlineSuggestionListener`; MAY: `InlineSuggestionController` | Inline suggestion data + callback; Controller is an optional implementation pattern |
-| **Selection** *(MAY, mobile-only)* | `SelectionMenuController` and related types | Selection menu (MAY omit on desktop) |
+| **Copilot** *(SHOULD)* | `InlineSuggestion`, a host-visible accept/dismiss callback mechanism; MAY: `InlineSuggestionListener`, `InlineSuggestionController` | Inline suggestion data + callback; Controller is an optional implementation pattern |
+| **Selection** *(MAY, mobile-only)* | `SelectionMenuController`, `SelectionMenuItem`, a host-visible item-click callback mechanism; MAY: `SelectionMenuListener` | Selection menu (MAY omit on desktop) |
 | **Perf** *(SHOULD)* | `PerfOverlay`, `MeasurePerfStats`, `PerfStepRecorder` | Performance overlay |
 
 ### 1.3 Recommended Internal Implementation Patterns (SHOULD)
@@ -86,11 +86,15 @@ Other public types:
 | `EditorTheme` | OC: `SEEditorTheme` | Theme definition |
 | `EditorSettings` | OC: `SEEditorSettings` | Configuration |
 | `DecorationProvider` | C#/TS/Kotlin: `IDecorationProvider`; OC: `SEDecorationProvider` | Provider interface |
-| `DecorationReceiver` | C#/TS/Kotlin: `IDecorationReceiver`; OC: `SEDecorationReceiver` | Callback interface |
 | `CompletionProvider` | C#/TS/Kotlin: `ICompletionProvider`; OC: `SECompletionProvider` | Provider interface |
-| `CompletionReceiver` | C#/TS/Kotlin: `ICompletionReceiver`; OC: `SECompletionReceiver` | Callback interface |
+| `DecorationReceiver` | C#/TS/Kotlin: `IDecorationReceiver`; OC: `SEDecorationReceiver` | Callback interface; only applicable when the platform exposes an explicit Receiver type |
+| `CompletionReceiver` | C#/TS/Kotlin: `ICompletionReceiver`; OC: `SECompletionReceiver` | Callback interface; only applicable when the platform exposes an explicit Receiver type |
 | `NewLineActionProvider` | C#/TS/Kotlin: `INewLineActionProvider`; OC: `SENewLineActionProvider` | Provider interface |
-| `EditorEventListener` | C#/TS/Kotlin: `IEditorEventListener`; OC: `SEEditorEventListener` | Listener interface |
+| `EditorMetadata` | C#/TS/Kotlin: `IEditorMetadata`; OC: `SEEditorMetadata` | Metadata concept type; only applicable when the platform exposes an explicit public type |
+| `EditorEventListener` | C#/TS/Kotlin: `IEditorEventListener`; OC: `SEEditorEventListener` | Listener interface; applies only when the platform exposes an explicit listener-interface pattern |
+| `InlineSuggestionListener` | C#/TS/Kotlin: `IInlineSuggestionListener`; OC: `SEInlineSuggestionListener` | Listener interface; only applicable when the platform exposes an explicit inline-suggestion listener |
+| `SelectionMenuItem` | OC: `SESelectionMenuItem` | Selection menu item data type |
+| `SelectionMenuListener` | C#/TS/Kotlin: `ISelectionMenuListener`; OC: `SESelectionMenuListener` | Listener interface; only applicable when the platform exposes an explicit selection-menu listener |
 | `EditorIconProvider` | C#/TS/Kotlin: `IEditorIconProvider`; OC: `SEEditorIconProvider` | Icon provider interface |
 | `SweetEditorController` | OC: `SESweetEditorController` | External control entry for declarative frameworks (see Section 3.0) |
 
@@ -98,6 +102,8 @@ Other public types:
 > - Languages whose convention requires an `I` prefix on interfaces (e.g. C#, TypeScript, Kotlin) MAY use the `I`-prefixed variant
 > - Languages whose convention requires a project prefix on class names (e.g. Objective-C) MAY use the `SE` prefix variant (abbreviation of SweetEditor)
 > - All other languages SHOULD use the canonical name directly
+
+> If the event system uses platform-native `event` / delegate / stream / signal APIs, the platform does not need to expose public `EditorEventBus` / `EditorEventListener` types; in that case only the semantics in Section 7 are required.
 
 ### 2.2 Field / Property Names (MUST)
 
@@ -139,7 +145,7 @@ Editor components inherently contain many imperative operations (e.g. `loadDocum
 
 In imperative frameworks (Android View, UIKit, AppKit, Swing, WinForms, etc.), host code can directly hold a reference to the widget instance.
 
-- The APIs in Section 3.2 MUST be exposed as public methods directly on the widget entry class (e.g. `SweetEditor`, `SweetEditorView`, `SweetEditorControl`)
+- The APIs in Section 3.2, plus any module-specific public APIs defined in later sections for implemented optional modules, MUST be exposed as public methods directly on the widget entry class (e.g. `SweetEditor`, `SweetEditorView`, `SweetEditorControl`)
 - MAY additionally provide `SweetEditorController` to decouple control logic, but this is not required
 
 ```java
@@ -154,7 +160,7 @@ editor.applyTheme(EditorTheme.dark());
 In declarative frameworks (Flutter, Jetpack Compose, SwiftUI, ArkUI, etc.), Widgets/Composables are immutable description objects and host code cannot directly hold a widget instance.
 
 - MUST provide a `SweetEditorController` class as the sole imperative entry point for external control of the editor
-- `SweetEditorController` MUST expose all APIs defined in Section 3.2
+- `SweetEditorController` MUST expose all APIs defined in Section 3.2, plus any module-specific public APIs from later sections for implemented optional modules
 - The widget entry class (e.g. `SweetEditorWidget`, `SweetEditorView`) MUST accept `SweetEditorController` as a constructor parameter
 - The widget MUST internally bind itself to the Controller on mount and unbind on unmount
 
@@ -174,7 +180,7 @@ controller.applyTheme(EditorTheme.dark());
 | Calls before mount | **SHOULD** | When calling Controller methods before the widget is mounted, SHOULD queue operations and execute them in order after mount; MAY choose to silently ignore (no-op) |
 | Bind / Unbind | **MUST** | Provide internal `bind(editorApi)` / `unbind()` mechanism (naming MAY vary by platform); widget calls `bind` on mount and `unbind` on unmount |
 | Multiple bindings | **MUST** | The same Controller instance MAY be bound to a new widget after the previous one unbinds; MUST NOT be bound to multiple widgets simultaneously |
-| API consistency | **MUST** | Method signatures exposed on the Controller MUST match the Public API table in Section 3.2 (method name, parameters, return type) |
+| API consistency | **MUST** | Method signatures exposed on the Controller MUST match the Public API table in Section 3.2 and any implemented module-specific public API tables in later sections (method name, parameters, return type) |
 | Getter methods | **SHOULD** | When the widget is not mounted, getter methods (e.g. `getDocument()`, `getCursorPosition()`) SHOULD return null or default values; MUST NOT throw exceptions |
 | Resource disposal | **MUST** | Provide a `dispose()` method (naming MAY vary by platform, e.g. `close()`, `release()`) that releases internal resources and unbinds the widget |
 
@@ -398,13 +404,10 @@ controller.applyTheme(EditorTheme.dark());
 | Trigger completion | `triggerCompletion()` | — |
 | Show completion items | `showCompletionItems(items)` | — |
 | Dismiss completion | `dismissCompletion()` | — |
-| Set completion item view factory | `setCompletionItemViewFactory(factory)` | — |
+| Configure completion item rendering | `setCompletionItemRenderer(renderer)` | `setCompletionItemViewFactory(factory)`, `setCompletionCellRenderer(renderer)`, or other platform-idiomatic rendering customization APIs |
 | **Style** | | |
 | Register text style | `registerTextStyle(id, ...)` | — |
 | Clear all decorations | `clearAllDecorations()` | — |
-| **Events** | | |
-| Subscribe | `subscribe(eventType, listener)` | — |
-| Unsubscribe | `unsubscribe(eventType, listener)` | — |
 | **Flush** | | |
 | Flush | `flush()` | — |
 | **Query** | | |
@@ -415,21 +418,28 @@ controller.applyTheme(EditorTheme.dark());
 
 > Clipboard methods (`copyToClipboard`, `pasteFromClipboard`, `cutToClipboard`) are **MAY** because clipboard access is platform-specific.
 
+> Event exposure does not require a uniform method shape. Platforms MUST provide a type-safe event mechanism per Section 7, and may use `subscribe` / `unsubscribe`, platform-native `event` / delegates, typed `Stream` getters, signals / observers, or equivalent forms.
+
+> Section 3.2 is the widget-entry public API index. Optional module-specific public APIs and callback contracts are further specified in later sections (for example Sections 4, 7, 15, and 21).
+
 ---
 
 ## 4. Provider Interfaces (MUST)
 
 > **General rules:**
-> - `provideDecorations` and `provideCompletions` MUST use the **Receiver callback pattern** to support both synchronous and asynchronous returns:
->   - **Sync**: call `receiver.accept(result)` directly within the `provide*()` method body, then return
->   - **Async**: launch a background thread/coroutine within `provide*()`, call `receiver.accept(result)` later; may be called multiple times
->   - `receiver.isCancelled()` is used for early cancellation checks during long-running computations
+> - `provideDecorations` and `provideCompletions` MUST support both **synchronous** and **asynchronous** result delivery
+> - `DecorationProvider` MUST support multi-shot result delivery so a single request may yield zero, one, or multiple successive snapshots
+> - `CompletionProvider` MUST support at least single-shot result delivery, and MAY support multi-shot / incremental result updates
+> - In-flight decoration / completion requests MUST have an explicit cancellation / staleness contract; once a request becomes cancelled or stale, any late result from that request MUST be ignored
+> - Platforms MAY expose provider results via a Receiver callback, `Future` / `Promise` / `Task`, coroutine / `suspend` API, stream / observable, or another platform-idiomatic async form
+> - The **Receiver callback pattern remains the recommended public shape** because it naturally supports sync return, async return, multi-shot updates, and cancellation checks in one contract
+> - If the platform does not expose the Receiver shape, it MUST still document how its chosen API expresses immediate delivery, deferred delivery, multi-shot updates where applicable, and cancellation / staleness
 > - Multiple instances of the same Provider type can be registered; the Manager is responsible for iterating and merging results
-> - The provider-manager pattern (register → iterate → dispatch) MUST be consistent across all platforms
+> - The provider-manager pattern (register -> iterate -> dispatch) MUST be consistent across all platforms
 
 ### 4.1 DecorationProvider
 
-#### Interface Signature
+#### Recommended Receiver Signature
 
 ```
 interface DecorationProvider {
@@ -442,6 +452,8 @@ interface DecorationReceiver {
     isCancelled() -> boolean
 }
 ```
+
+> Platforms MAY expose a semantically equivalent async API instead of an explicit `DecorationReceiver`, but the contract MUST still support immediate results, deferred results, and cancellation / staleness checks. If an explicit Receiver type is exposed, `DecorationReceiver` is the recommended name.
 
 #### DecorationContext MUST Fields
 
@@ -495,7 +507,7 @@ The Manager iterates all registered Providers and merges each Provider's snapsho
 
 ### 4.2 CompletionProvider
 
-#### Interface Signature
+#### Recommended Receiver Signature
 
 ```
 interface CompletionProvider {
@@ -508,6 +520,8 @@ interface CompletionReceiver {
     isCancelled() -> boolean
 }
 ```
+
+> Platforms MAY expose a semantically equivalent async API instead of an explicit `CompletionReceiver`, but the contract MUST still support immediate results, deferred results, and cancellation / staleness checks. If an explicit Receiver type is exposed, `CompletionReceiver` is the recommended name.
 
 #### CompletionTriggerKind Enum (MUST)
 
@@ -550,7 +564,7 @@ interface NewLineActionProvider {
 }
 ```
 
-> `NewLineActionProvider` does not use the Receiver pattern because newline actions must return synchronously.
+> `NewLineActionProvider` remains synchronous because newline handling is part of the immediate input path.
 
 #### NewLineContext MUST Fields
 
@@ -571,9 +585,6 @@ interface NewLineActionProvider {
 #### Multi-Provider Chain Priority Strategy
 
 The Manager iterates all Providers in registration order and returns the first non-null `NewLineAction`. If all Providers return null, the default newline behavior is used.
-
----
-
 ## 5. EditorTheme (MUST)
 
 All platforms MUST define `EditorTheme` with the following color fields. Field names follow Section 2.2 casing rules.
@@ -735,13 +746,16 @@ All platforms MUST expose the following settings through getter/setter pairs (or
 
 ## 7. Event System (MUST)
 
-### 7.1 Event Bus
+### 7.1 Event Mechanism
 
-All platforms MUST provide an `EditorEventBus` with:
-- `subscribe(eventType, listener)` — register a listener for a specific event type
-- `unsubscribe(eventType, listener)` — remove a listener
-- `publish(event)` — dispatch an event to all registered listeners
-- `clear()` — remove all listeners
+All platforms MUST provide a **type-safe** editor event exposure mechanism so host code can observe specific event types and manage subscription lifecycle through unsubscribe / dispose / cancel-listening or an equivalent operation.
+
+Platforms MAY use any of the following forms:
+- `EditorEventBus` + `subscribe` / `unsubscribe` / `publish` / `clear`
+- Platform-native event / delegate / listener mechanisms (for example C# `event`, Java listener callbacks)
+- Typed stream / signal / observable getters (for example Dart `Stream<T>`)
+
+If a platform adopts an explicit event-bus/listener pattern, the related public types SHOULD be named `EditorEventBus` / `EditorEventListener`.
 
 ### 7.2 Required Event Types
 
@@ -757,6 +771,8 @@ ContextMenuEvent      // desktop (macOS/Windows/Linux) & cross-platform UI frame
 ```
 
 > `LongPressEvent` is for mobile platforms (iOS/Android), while `ContextMenuEvent` is for desktop platforms (macOS/Windows/Linux) and cross-platform UI frameworks. Platform implementations SHOULD only register events relevant to their platform.
+
+> The above event types MUST be distinguishable and consumable in a type-safe way through the platform's chosen event mechanism.
 
 Platform-specific events (e.g. `SelectionMenuItemClickEvent` on mobile) MAY be added.
 
@@ -834,20 +850,19 @@ Minor visual differences are acceptable:
 
 ## 10. Threading and Concurrency Model (MUST)
 
-All SweetEditor public APIs are called and call back on the UI thread (main thread) by default.
+State-mutating editor operations and host-visible callbacks are UI-thread-affine by default. Platforms MAY expose additional thread-safe query surfaces, but MUST choose a concrete threading model and document it explicitly.
 
 | Rule | Constraint | Description |
 |---|---|---|
-| API call thread | **MUST** | All public methods of `EditorCore` and `SweetEditor` / `SweetEditorController` MUST be called on the UI thread. Calling from a non-UI thread is undefined behavior |
-| Event callback thread | **MUST** | All event callbacks dispatched by `EditorEventBus.publish()` MUST execute on the UI thread |
-| Provider call thread | **MUST** | `provideDecorations()` and `provideCompletions()` MUST be called on the UI thread |
-| Provider async callback thread | **MUST** | `receiver.accept()` may be called from any thread, but the Manager MUST switch back to the UI thread when applying results to Core |
-| `buildRenderModel()` | **MUST** | MUST be called on the UI thread; the returned `EditorRenderModel` is a snapshot of the current frame, SHOULD be treated as immutable, and MAY be safely read on the render thread |
-| `NewLineActionProvider` | **MUST** | `provideNewLineAction()` MUST be called and return synchronously on the UI thread |
+| State-mutating API thread | **MUST** | Public methods that mutate editor state or trigger visible UI updates MUST be called on the UI thread unless the platform explicitly documents an equivalent serialized threading model |
+| API thread contract documentation | **MUST** | Platform documentation MUST explicitly identify which public APIs are UI-thread-only and which pure query / snapshot APIs, if any, are safe to call from background threads |
+| Pure query API thread | **SHOULD** | Pure query / snapshot APIs SHOULD either remain UI-thread-only or be explicitly documented as background-safe; platforms MAY allow background reads only when implemented safely |
+| Event callback thread | **MUST** | All event callbacks / delegate invocations / stream emissions that are visible to host code MUST execute on the UI thread |
+| Provider call thread | **MUST** | Platforms MUST choose a stable invocation model for `provideDecorations()` and `provideCompletions()` (UI thread, worker thread, or another documented serialized executor) and MUST document that model for host code |
+| Provider async callback thread | **MUST** | Provider result delivery may happen from any thread, but the Manager MUST switch back to the UI thread when applying results to Core or mutating host-visible editor state |
+| `buildRenderModel()` | **MUST** | `buildRenderModel()` MUST observe a stable editor snapshot. Platforms MAY require UI-thread calls or provide a stronger thread-safe snapshot contract, but the returned `EditorRenderModel` SHOULD be treated as immutable and MAY be safely read on the render thread |
+| `NewLineActionProvider` | **MUST** | `provideNewLineAction()` MUST complete synchronously on the input path so Enter handling does not depend on a later async callback |
 | Thread safety annotations | **SHOULD** | Platforms SHOULD annotate thread constraints in public API documentation (e.g. Java `@MainThread`, Swift `@MainActor`) |
-
----
-
 ## 11. Error Handling (MUST)
 
 Public APIs adopt defensive handling for invalid inputs without throwing exceptions; exceptions in Provider callbacks are isolated by the Manager.
@@ -896,7 +911,7 @@ Resource creation and destruction follow explicit ordering constraints to preven
 | Rule | Constraint | Description |
 |---|---|---|
 | Registration timing | **SHOULD** | Providers SHOULD be registered after `loadDocument()` to ensure valid document data in the Context |
-| Cleanup on widget destruction | **MUST** | When the widget is destroyed, MUST automatically unregister all registered Providers and cancel all in-flight async requests (by having `receiver.isCancelled()` return true) |
+| Cleanup on widget destruction | **MUST** | When the widget is destroyed, MUST automatically unregister all registered Providers and cancel or mark stale all in-flight async requests so late results are ignored |
 | Provider references | **SHOULD** | Platform implementations SHOULD avoid Providers holding strong references to the widget instance to prevent circular references causing memory leaks (Java/Kotlin: WeakReference; Swift: weak/unowned; Dart: no special handling needed) |
 
 ### 12.3 `SweetEditorController` Lifecycle (Declarative Frameworks)
@@ -915,7 +930,7 @@ When the widget is destroyed, subsystems MUST be released in the following order
 ```
 1. Cancel all in-flight async Provider requests
 2. Unregister all Providers (Decoration / Completion / NewLine)
-3. Clear all EventBus listeners
+3. Clear all host-visible event subscriptions / listeners / observers
 4. Destroy EditorCore (release C++ memory)
 5. Release platform-specific resources (textures, canvases, timers, etc.)
 ```
@@ -1038,8 +1053,8 @@ All platforms MUST support at least the following two construction methods:
 
 | Method | Constraint | Description |
 |---|---|---|
-| From string | **MUST** | `Document(text: String)` — create from in-memory text content |
-| From file path | **SHOULD** | `Document(file: File)` / `Document(path: String)` — create from a local file (using memory mapping to optimize large files) |
+| From string | **MUST** | `Document(text: String)` - create from in-memory text content |
+| From file path | **SHOULD** | `Document(file: File)` / `Document(path: String)` - create from a local file; large-file loading strategy is platform-specific |
 
 > Constructor parameter naming and types MAY vary by platform (e.g. Java `File`, C# `string path`, Swift `URL`), but semantics MUST be consistent.
 
@@ -1055,9 +1070,9 @@ All platforms MUST support at least the following two construction methods:
 
 | Rule | Constraint | Description |
 |---|---|---|
-| Native handle | **MUST** | `Document` MUST internally hold a C++ side document handle (`intptr_t`); all operations are delegated to C++ Core through the bridge layer |
-| Resource release | **MUST** | When `Document` is destroyed, MUST release C++ side document memory (Java: `close()` / `finalize()`, C#: `Dispose()`, Swift: `deinit`, Dart: `Finalizer`) |
-| Encoding model | **MUST** | C++ Core internally uses a hybrid model of UTF-8 storage + UTF-16 layout/measurement; the platform layer MUST NOT assume a specific internal encoding and MUST obtain text through public APIs |
+| Native document reference | **MUST** | `Document` MUST internally retain a bridge-layer reference to a C++ side document instance; whether this is represented as an opaque handle, pointer wrapper, object wrapper, or another mechanism is an implementation detail |
+| Resource release | **MUST** | When `Document` is destroyed / disposed according to the platform lifecycle, the bridge layer MUST eventually release the C++ side document memory; the exact cleanup mechanism is platform-specific |
+| Encoding model | **MUST** | Platform layers MUST NOT assume or expose a specific internal storage / layout encoding beyond the semantics guaranteed by the public APIs |
 | Line endings | **MUST** | C++ Core supports LF, CR, and CRLF line endings; text returned by `getLineText()` MUST NOT include line endings |
 
 ### 14.4 Relationship with `loadDocument()`
@@ -1067,9 +1082,6 @@ All platforms MUST support at least the following two construction methods:
 | Loading timing | **MUST** | After creation, `Document` MUST be loaded into the editor via `loadDocument(doc)`; an unloaded `Document` will not trigger any rendering or events |
 | Document replacement | **MUST** | Calling `loadDocument()` again replaces the current document; the old document reference is managed by host code |
 | Document ownership | **SHOULD** | The same `Document` instance SHOULD NOT be loaded into multiple editor instances simultaneously |
-
----
-
 ## 15. Copilot / InlineSuggestion Interface Definition (SHOULD)
 
 The inline suggestion (Copilot) module is SHOULD level, but when implemented MUST follow the interface specification below.
@@ -1084,7 +1096,16 @@ The inline suggestion (Copilot) module is SHOULD level, but when implemented MUS
 
 > `InlineSuggestion` SHOULD be an immutable object.
 
-### 15.2 `InlineSuggestionListener` Interface
+### 15.2 Inline Suggestion Callback Contract
+
+Platforms MUST provide a host-visible way to observe inline suggestion acceptance and dismissal.
+
+Platforms MAY use any of the following forms:
+- An explicit listener interface
+- Delegate / closure / callback setters
+- Platform-native events / typed streams / signals
+
+If a platform exposes an explicit listener interface, the recommended shape is:
 
 ```
 interface InlineSuggestionListener {
@@ -1092,6 +1113,15 @@ interface InlineSuggestionListener {
     onSuggestionDismissed(suggestion: InlineSuggestion) -> void
 }
 ```
+
+The callback contract MUST satisfy all of the following:
+- A visible inline suggestion MUST have two distinct host-visible events: `accepted` and `dismissed`
+- `accepted` payload MUST include the accepted `InlineSuggestion` value, or an equivalent payload from which the same suggestion can be unambiguously identified
+- `dismissed` payload MUST include the dismissed `InlineSuggestion` value, or an equivalent payload / identifier, unless the platform's callback form is a no-payload dismissed signal and that limitation is explicitly documented
+- For a single shown suggestion instance, `accepted` MUST fire at most once and `dismissed` MUST fire at most once
+- After either `accepted` or `dismissed` fires for a shown suggestion instance, no further callbacks for that same suggestion instance MAY be emitted
+- If `showInlineSuggestion()` replaces an already-visible suggestion, the previous suggestion instance MUST transition through `dismissed` before the new suggestion becomes current
+- After widget destruction, unbind, or controller disposal, no further host-visible inline-suggestion callbacks MAY be emitted
 
 | Callback | Constraint | Trigger Condition |
 |---|---|---|
@@ -1105,7 +1135,9 @@ interface InlineSuggestionListener {
 | `showInlineSuggestion(suggestion)` | **MUST** | Show inline suggestion: inject PhantomText and display Accept/Dismiss action bar |
 | `dismissInlineSuggestion()` | **MUST** | Dismiss current inline suggestion (clear PhantomText and hide action bar) |
 | `isInlineSuggestionShowing()` | **MUST** | Query whether an inline suggestion is currently showing |
-| `setInlineSuggestionListener(listener)` | **MUST** | Set the Accept/Dismiss callback listener for inline suggestions |
+| `setInlineSuggestionCallbacks(callbacks)` | **MUST** | Register host-visible accepted / dismissed callbacks for inline suggestions |
+
+> Platforms MAY expose semantically equivalent APIs such as `setInlineSuggestionListener(listener)`, delegate setters, event subscriptions, or typed streams.
 
 ### 15.4 Auto-dismiss Behavior
 
@@ -1125,20 +1157,18 @@ interface InlineSuggestionListener {
 - Tab/Esc key interception
 
 Platforms MAY choose not to use the Controller pattern, but MUST implement equivalent functionality.
-
----
-
 ## 16. `EditorMetadata` and `LanguageConfiguration` Field Definitions (MUST)
 
 ### 16.1 `EditorMetadata`
 
-`EditorMetadata` is a **marker interface** that defines no fields.
+`EditorMetadata` is a **semantic concept type** representing host-defined metadata attached to an editor instance. The platform layer is responsible only for storing and returning it, not interpreting its internal structure.
 
 | Rule | Constraint | Description |
 |---|---|---|
-| Interface definition | **MUST** | All platforms MUST define `EditorMetadata` as an empty interface (Java: `interface`, C#: `interface`, Swift: `protocol`, Dart: `abstract class`, ArkTS: `interface`) |
-| Purpose | **MUST** | Host code defines custom metadata (e.g. file path, language ID) by implementing this interface, and stores/retrieves it via `setMetadata()` / `getMetadata()` |
-| Type casting | **MUST** | `getMetadata()` returns `EditorMetadata?`; host code MUST downcast to the concrete subtype themselves |
+| Representation form | **MUST** | Platforms MUST provide some representation capable of carrying arbitrary host-defined metadata; they MAY use a marker interface / protocol / abstract class / base class / `Object` / `any` / `unknown` / generic payload, etc. |
+| Explicit type naming | **SHOULD** | If the platform chooses to expose an explicit public type, it SHOULD be named `EditorMetadata`; language-conventional variants such as `IEditorMetadata` or `SEEditorMetadata` are also allowed |
+| Purpose | **MUST** | Host code stores and retrieves custom metadata (e.g. file path, language ID) via `setMetadata()` / `getMetadata()`; the platform layer MUST treat it as an opaque value and MUST NOT impose its own schema |
+| Retrieval semantics | **MUST** | `getMetadata()` MUST return the same metadata value previously set, or `null` if none exists; if the platform exposes a wider carrier type (such as `Object?`), host code is responsible for its own casts / type assertions |
 
 ### 16.2 `LanguageConfiguration`
 
@@ -1147,7 +1177,7 @@ Platforms MAY choose not to use the Controller pattern, but MUST implement equiv
 | Field | Type | MUST/MAY | Description |
 |---|---|---|---|
 | `languageId` | String | **MUST** | Language identifier (e.g. `"java"`, `"cpp"`, `"swift"`) |
-| `brackets` | List\<BracketPair\> | **MUST** | Bracket pair list (automatically synced to Core's `setBracketPairs()` when set) |
+| `brackets` | List\<BracketPair\> | **MUST** | Bracket pair list |
 | `autoClosingPairs` | List\<BracketPair\> | **MUST** | Auto-closing bracket pair list |
 | `tabSize` | int? | **MAY** | Tab width (null means use editor default) |
 | `insertSpaces` | bool? | **MAY** | Whether to use spaces instead of tabs (null means use editor default) |
@@ -1163,10 +1193,7 @@ Platforms MAY choose not to use the Controller pattern, but MUST implement equiv
 |---|---|---|
 | Construction | **SHOULD** | SHOULD provide Builder pattern construction (Java/Kotlin/ArkTS/Dart); MAY use direct constructors (Swift/C#) |
 | Immutability | **SHOULD** | SHOULD be immutable after construction |
-| Bracket sync | **MUST** | When `setLanguageConfiguration()` is called, the platform layer MUST automatically sync `brackets` to Core's `setBracketPairs()` |
-
----
-
+| Runtime effect | **MUST** | When `setLanguageConfiguration()` is called, bracket matching and auto-closing behavior visible to the editor MUST be updated consistently with the new configuration |
 ## 17. `CompletionItem` Field Definitions (MUST)
 
 `CompletionItem` is the core data type of the completion system. Application priority on commit: `textEdit` → `insertText` → `label`.
@@ -1205,38 +1232,50 @@ Platforms MAY choose not to use the Controller pattern, but MUST implement equiv
 
 ---
 
-## 18. Performance Constraints & SLA (SHOULD)
+## 18. Performance Guidance & Reference Targets (SHOULD)
 
-Based on the `perf/` module (`PerfOverlay`, `PerfStepRecorder`, `MeasurePerfStats`) and the C++ Core `PERF_TIMER` macros, this section defines cross-platform performance baselines.
+Based on the `perf/` module (`PerfOverlay`, `PerfStepRecorder`, `MeasurePerfStats`) and the C++ Core `PERF_TIMER` macros, this section defines cross-platform performance guidance and reference targets rather than hard conformance gates.
 
-### 18.1 Frame Rate & Rendering Latency
-
-| Metric | Constraint Level | Target | Description |
-|---|---|---|---|
-| Scroll frame rate | **SHOULD** | ≥ 60fps | Scrolling SHOULD maintain 60fps for documents under 10K lines |
-| `buildRenderModel()` latency | **SHOULD** | ≤ 8ms | Exceeding 8ms is marked as SLOW (consistent with `WARN_BUILD_MS` across platforms) |
-| Single-frame draw latency | **SHOULD** | ≤ 8ms | Exceeding 8ms is marked as SLOW (consistent with `WARN_PAINT_MS` across platforms) |
-| Single-frame total latency | **SHOULD** | ≤ 16.6ms | Exceeding 16.6ms is marked as SLOW FRAME |
-| Single render step | **SHOULD** | ≤ 2ms | Exceeding 2ms is marked with `!` in PerfOverlay (consistent with `WARN_PAINT_STEP_MS`) |
-| Input path latency | **SHOULD** | ≤ 3ms | Time from gesture/keyboard event to Core processing completion (consistent with `WARN_INPUT_MS`) |
-
-### 18.2 Large Document Performance Guidance
-
-| Scenario | Constraint Level | Guidance |
-|---|---|---|
-| 100K-line document loading | **SHOULD** | Use mmap or streaming load to avoid allocating all memory at once; load time SHOULD ≤ 500ms |
-| 100K-line document scrolling | **SHOULD** | Rely on viewport rendering (only layout and draw visible lines); scroll frame rate SHOULD ≥ 30fps |
-| Memory usage | **SHOULD** | Platform-layer memory usage for a 100K-line document SHOULD ≤ 50MB (excluding C++ Core document storage) |
-
-### 18.3 Provider Timeout Policy
+### 18.1 Runtime Performance Invariants
 
 | Rule | Constraint Level | Description |
 |---|---|---|
-| `DecorationProvider` timeout | **SHOULD** | If `receiver.accept()` is not called within 5 seconds, Manager SHOULD cancel the request (`receiver.isCancelled()` returns true) |
-| `CompletionProvider` timeout | **SHOULD** | If `receiver.accept()` is not called within 3 seconds, Manager SHOULD cancel the request |
-| `NewLineActionProvider` timeout | **MUST** | `provideNewLineAction()` is a synchronous call and MUST return within 1ms |
+| Viewport-scoped rendering | **MUST** | Layout and painting on the platform side MUST be scoped to the visible region (plus small lookahead buffers when needed); platforms MUST NOT require full-document relayout or redraw for ordinary scrolling |
+| Provider non-blocking | **MUST** | Slow decoration / completion providers MUST NOT block typing, scrolling, or painting on the host-visible interaction path |
+| Stale async results | **MUST** | Outdated async provider results MUST be cancellable or discarded before they mutate visible editor state |
+| Core/layout duplication | **MUST** | Platform hot paths MUST NOT redundantly recompute geometry or layout information that is already produced by Core and can be consumed directly |
+| Performance diagnostics | **SHOULD** | Platforms SHOULD preserve enough timing hooks to support PerfOverlay or equivalent debug-only performance diagnostics |
 
-### 18.4 `PerfOverlay` Debug Panel (SHOULD)
+### 18.2 Reference Targets
+
+The following numbers are reference targets for release builds on representative hardware. They are optimization goals, not conformance gates.
+
+| Metric | Constraint Level | Target | Description |
+|---|---|---|---|
+| Scroll frame rate | **SHOULD** | >= 60fps on reference hardware | Scrolling SHOULD maintain near-60fps for documents under 10K lines |
+| `buildRenderModel()` latency | **SHOULD** | <= 8ms | Exceeding 8ms is marked as SLOW (consistent with `WARN_BUILD_MS` across platforms) |
+| Single-frame draw latency | **SHOULD** | <= 8ms | Exceeding 8ms is marked as SLOW (consistent with `WARN_PAINT_MS` across platforms) |
+| Single-frame total latency | **SHOULD** | <= 16.6ms | Exceeding 16.6ms is marked as SLOW FRAME |
+| Single render step | **SHOULD** | <= 2ms | Exceeding 2ms is marked with `!` in PerfOverlay (consistent with `WARN_PAINT_STEP_MS`) |
+| Input path latency | **SHOULD** | <= 3ms | Time from gesture/keyboard event to Core processing completion (consistent with `WARN_INPUT_MS`) |
+
+### 18.3 Large Document Performance Guidance
+
+| Scenario | Constraint Level | Guidance |
+|---|---|---|
+| 100K-line document loading | **SHOULD** | Use memory mapping, streaming load, or equivalent large-file strategies to avoid allocating all memory at once; load time target is <= 500ms on reference hardware |
+| 100K-line document scrolling | **SHOULD** | Rely on viewport rendering (only layout and draw visible lines); scroll frame rate target is >= 30fps on reference hardware |
+| Memory usage | **SHOULD** | Platform-layer memory usage target for a 100K-line document is <= 50MB (excluding C++ Core document storage) |
+
+### 18.4 Provider Timeout Guidance
+
+| Rule | Constraint Level | Description |
+|---|---|---|
+| `DecorationProvider` timeout | **SHOULD** | If no decoration result is delivered within 5 seconds, the Manager SHOULD cancel or mark the request stale |
+| `CompletionProvider` timeout | **SHOULD** | If no completion result is delivered within 3 seconds, the Manager SHOULD cancel or mark the request stale |
+| `NewLineActionProvider` latency | **MUST/SHOULD** | `provideNewLineAction()` MUST stay synchronous on the input path and SHOULD complete within a sub-millisecond to 1ms budget on reference hardware; it MUST NOT introduce user-perceptible Enter-key latency |
+
+### 18.5 `PerfOverlay` Debug Panel (SHOULD)
 
 | Rule | Constraint Level | Description |
 |---|---|---|
@@ -1245,9 +1284,6 @@ Based on the `perf/` module (`PerfOverlay`, `PerfStepRecorder`, `MeasurePerfStat
 | Display position | **SHOULD** | When enabled, SHOULD display a semi-transparent performance panel at the top-left of the editor area |
 | Display content | **SHOULD** | SHOULD include at minimum: FPS, per-frame total/build/draw latency, text measurement statistics |
 | Stability | **MUST** | PerfOverlay field names, thresholds, and step names are for debug display and MUST NOT be treated as a stable API contract |
-
----
-
 ## 19. Testing Standards (SHOULD)
 
 ### 19.1 C++ Core Tests
@@ -1308,11 +1344,70 @@ Accessibility support is at the MAY level, but implementations SHOULD follow the
 
 ---
 
-## 21. Versioning
+## 21. Selection / SelectionMenu Interface Definition (MAY, mobile-only)
+
+The selection menu module is MAY overall. Desktop platforms MAY omit it entirely. If implemented, it MUST follow the contract below.
+
+### 21.1 `SelectionMenuItem` Data Type
+
+| Field | Type | MUST/MAY | Description |
+|---|---|---|---|
+| `id` | String | **MUST** | Stable action identifier used by host code to distinguish menu items |
+| `label` | String | **MUST** | Display text shown in the menu |
+| `enabled` | boolean | **MAY** | Whether the menu item is currently actionable; defaults to enabled if omitted |
+| `iconId` | int? | **MAY** | Optional icon resource ID when the platform supports icons in the selection menu |
+
+### 21.2 Selection Menu Callback Contract
+
+Platforms MUST provide a host-visible way to observe selection-menu item activation. Platforms MAY use an explicit listener interface, delegate / closure / callback setters, or platform-native events / typed streams / signals.
+
+If a platform exposes an explicit listener interface, the recommended shape is:
+
+```
+interface SelectionMenuListener {
+    onSelectionMenuItemSelected(itemId: String) -> void
+    onSelectionMenuDismissed() -> void
+}
+```
+
+The callback contract MUST satisfy all of the following:
+- A visible selection menu MUST expose a host-visible `item-selected` event and a host-visible `dismissed` event
+- The `item-selected` payload MUST include the selected `itemId`, or an equivalent payload from which the selected menu item can be unambiguously identified
+- For a single shown menu instance, `dismissed` MUST fire at most once
+- After a menu instance is dismissed, no further selection-menu callbacks for that same menu instance MAY be emitted
+- After widget destruction, unbind, or controller disposal, no further host-visible selection-menu callbacks MAY be emitted
+
+### 21.3 `SweetEditor` Selection API
+
+| Method | Constraint | Description |
+|---|---|---|
+| `showSelectionMenu(items)` | **MUST** | Show a selection menu anchored to the current selection or caret geometry |
+| `dismissSelectionMenu()` | **MUST** | Dismiss the currently visible selection menu |
+| `isSelectionMenuShowing()` | **SHOULD** | Query whether a selection menu is currently visible |
+| `setSelectionMenuCallbacks(callbacks)` | **SHOULD** | Register host-visible item-selected / dismissed callbacks for the selection menu |
+
+> Platforms MAY expose semantically equivalent APIs such as `setSelectionMenuListener(listener)`, delegate setters, event subscriptions, or typed streams.
+
+### 21.4 Positioning and Lifetime
+
+| Rule | Constraint | Description |
+|---|---|---|
+| Selection anchor | **MUST** | When visible, the menu MUST be anchored to the current selection / caret geometry or an equivalent platform-native selection affordance |
+| Selection invalidation | **MUST** | If the selection becomes empty, invalid, or detached from the current document state, the menu MUST dismiss |
+| Scroll / viewport change | **SHOULD** | Scrolling or viewport changes SHOULD update the menu position; they SHOULD NOT require dismiss unless the platform cannot reposition safely |
+| Command completion | **SHOULD** | After the user activates a selection-menu command, the menu SHOULD dismiss unless the platform intentionally keeps it open for a multi-step workflow |
+
+### 21.5 `SelectionMenuController` (MAY)
+
+`SelectionMenuController` is the recommended internal implementation pattern for mobile selection menus. It may manage item updates, visibility, positioning, and callback dispatch, but platforms MAY implement equivalent behavior directly in the widget layer.
+
+---
+
+## 22. Versioning
 
 This standard applies to SweetEditor platform implementations as of 2026-03. When the C++ core adds new enums, events, or API methods, all platforms MUST be updated to match within the same release cycle.
 
-### 21.1 Platform Package Version Numbering
+### 22.1 Platform Package Version Numbering
 
 Platform package version numbers MUST maintain alignment with the C++ Core version. The version format is `a.b.c` (major.minor.patch).
 
