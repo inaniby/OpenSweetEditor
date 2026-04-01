@@ -15,6 +15,9 @@ public class EditorSettings {
     private final SweetEditor mEditor;
 
     private float mScale = 1.0f;
+    private float mEditorTextSize = 14f;
+    private String mFontFamily = null;
+    private boolean mGutterVisible = true;
     private FoldArrowMode mFoldArrowMode = FoldArrowMode.ALWAYS;
     private WrapMode mWrapMode = WrapMode.NONE;
     private float mLineSpacingAdd = 0f;
@@ -42,6 +45,36 @@ public class EditorSettings {
 
     public float getScale() {
         return mScale;
+    }
+
+    public void setEditorTextSize(float textSize) {
+        mEditorTextSize = textSize;
+        mEditor.updateFonts(mFontFamily, mEditorTextSize);
+        mEditor.flush();
+    }
+
+    public float getEditorTextSize() {
+        return mEditorTextSize;
+    }
+
+    public void setFontFamily(String fontFamily) {
+        mFontFamily = fontFamily;
+        mEditor.updateFonts(mFontFamily, mEditorTextSize);
+        mEditor.flush();
+    }
+
+    public String getFontFamily() {
+        return mFontFamily;
+    }
+
+    public void setGutterVisible(boolean visible) {
+        mGutterVisible = visible;
+        mEditor.getEditorCore().setGutterVisible(visible);
+        mEditor.flush();
+    }
+
+    public boolean isGutterVisible() {
+        return mGutterVisible;
     }
 
     public void setFoldArrowMode(FoldArrowMode mode) {

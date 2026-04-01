@@ -37,6 +37,22 @@ public class Document implements AutoCloseable {
         return EditorNative.getDocumentLineCount(nativeHandle);
     }
 
+    /**
+     * Get the full text content of the document.
+     * @return the complete document text, or empty string if the handle is invalid
+     */
+    public String getText() {
+        if (nativeHandle == 0) return "";
+        int lineCount = getLineCount();
+        if (lineCount == 0) return "";
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < lineCount; i++) {
+            if (i > 0) sb.append('\n');
+            sb.append(getLineText(i));
+        }
+        return sb.toString();
+    }
+
     @Override
     public void close() {
         EditorNative.freeDocument(nativeHandle);

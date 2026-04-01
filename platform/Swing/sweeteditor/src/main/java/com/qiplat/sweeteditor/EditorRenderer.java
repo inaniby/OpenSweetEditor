@@ -36,8 +36,8 @@ final class EditorRenderer implements EditorCore.TextMeasureCallback {
     private Font inlayHintBoldFont;
     private Font inlayHintItalicFont;
     private Font inlayHintBoldItalicFont;
-    private final Font baseRegularFont;
-    private final Font baseInlayHintFont;
+    private Font baseRegularFont;
+    private Font baseInlayHintFont;
 
     private EditorIconProvider editorIconProvider;
     private final MeasurePerfStats measurePerfStats = new MeasurePerfStats();
@@ -108,6 +108,17 @@ final class EditorRenderer implements EditorCore.TextMeasureCallback {
 
     public void applyTheme(EditorTheme theme) {
         this.theme = theme;
+    }
+
+    public void updateFonts(String fontFamily, float textSize) {
+        int size = Math.max(1, Math.round(textSize));
+        if (fontFamily != null && !fontFamily.isEmpty()) {
+            baseRegularFont = new Font(fontFamily, Font.PLAIN, size);
+        } else {
+            baseRegularFont = findMonospaceFont(size);
+        }
+        baseInlayHintFont = new Font("SansSerif", Font.PLAIN, Math.max(1, size - 2));
+        syncPlatformScale(1.0f);
     }
 
     @Override

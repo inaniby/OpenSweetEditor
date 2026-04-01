@@ -847,6 +847,23 @@ public final class EditorNative {
         });
     }
 
+    public static int[] getSelection(long handle, Arena arena) {
+        try {
+            MemorySegment outSL = arena.allocate(ValueLayout.JAVA_LONG);
+            MemorySegment outSC = arena.allocate(ValueLayout.JAVA_LONG);
+            MemorySegment outEL = arena.allocate(ValueLayout.JAVA_LONG);
+            MemorySegment outEC = arena.allocate(ValueLayout.JAVA_LONG);
+            int hasSelection = (int) GET_SELECTION.invokeExact(handle, outSL, outSC, outEL, outEC);
+            if (hasSelection == 0) return null;
+            return new int[]{
+                    (int) outSL.get(ValueLayout.JAVA_LONG, 0), (int) outSC.get(ValueLayout.JAVA_LONG, 0),
+                    (int) outEL.get(ValueLayout.JAVA_LONG, 0), (int) outEC.get(ValueLayout.JAVA_LONG, 0)
+            };
+        } catch (Throwable t) {
+            throw new RuntimeException(t);
+        }
+    }
+
     public static void setSelection(long handle, int startLine, int startColumn, int endLine, int endColumn) {
         invokeVoid(() -> {
             SET_SELECTION.invokeExact(handle, (long) startLine, (long) startColumn, (long) endLine, (long) endColumn);

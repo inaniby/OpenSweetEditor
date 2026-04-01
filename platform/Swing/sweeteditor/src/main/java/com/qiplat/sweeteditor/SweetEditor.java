@@ -1,6 +1,9 @@
 package com.qiplat.sweeteditor;
 
 import com.qiplat.sweeteditor.completion.*;
+import com.qiplat.sweeteditor.copilot.InlineSuggestion;
+import com.qiplat.sweeteditor.copilot.InlineSuggestionController;
+import com.qiplat.sweeteditor.copilot.InlineSuggestionListener;
 import com.qiplat.sweeteditor.core.Document;
 import com.qiplat.sweeteditor.core.EditorCore;
 import com.qiplat.sweeteditor.core.EditorOptions;
@@ -70,6 +73,7 @@ public class SweetEditor extends JPanel {
     private CompletionProviderManager completionProviderManager;
     private CompletionPopupController completionPopupController;
     private NewLineActionProviderManager newLineActionProviderManager;
+    private InlineSuggestionController inlineSuggestionController;
     private LanguageConfiguration languageConfiguration;
     private EditorMetadata metadata;
 
@@ -107,6 +111,8 @@ public class SweetEditor extends JPanel {
 
         settings = new EditorSettings(this);
         settings.setContentStartPadding(dpToPx(DEFAULT_CONTENT_START_PADDING_DP));
+
+        inlineSuggestionController = new InlineSuggestionController(this);
 
         if (currentTheme != null && !currentTheme.textStyles.isEmpty()) {
             editorCore.registerBatchTextStyles(currentTheme.textStyles);
@@ -151,7 +157,7 @@ public class SweetEditor extends JPanel {
 
     // ==================== Viewport/Font/Appearance Configuration ====================
 
-    public EditorTheme getEditorTheme() { return currentTheme; }
+    public EditorTheme getTheme() { return currentTheme; }
 
     public EditorSettings getSettings() { return settings; }
 
@@ -164,6 +170,9 @@ public class SweetEditor extends JPanel {
         }
         if (completionPopupController != null) {
             completionPopupController.applyTheme(theme);
+        }
+        if (inlineSuggestionController != null) {
+            inlineSuggestionController.applyTheme(theme);
         }
         flush();
     }
@@ -277,7 +286,20 @@ public class SweetEditor extends JPanel {
 
     public void selectAll() { editorCore.selectAll(); flush(); }
     public String getSelectedText() { return editorCore.getSelectedText(); }
+    public void setCursorPosition(TextPosition position) {
+        editorCore.setCursorPosition(position.line, position.column);
+        flush();
+    }
     public int[] getCursorPosition() { return editorCore.getCursorPosition(); }
+    public void setSelection(int startLine, int startColumn, int endLine, int endColumn) {
+        editorCore.setSelection(startLine, startColumn, endLine, endColumn);
+        flush();
+    }
+    public TextRange getSelection() {
+        int[] sel = editorCore.getSelection();
+        if (sel == null) return null;
+        return new TextRange(new TextPosition(sel[0], sel[1]), new TextPosition(sel[2], sel[3]));
+    }
     public int[] getWordRangeAtCursor() { return editorCore.getWordRangeAtCursor(); }
     public String getWordAtCursor() { return editorCore.getWordAtCursor(); }
 
@@ -290,6 +312,7 @@ public class SweetEditor extends JPanel {
 
     // ==================== Scroll/Navigation ====================
 
+    public void scrollToLine(int line, ScrollBehavior behavior) { editorCore.scrollToLine(line, behavior.value); flush(); }
     public void gotoPosition(int line, int column) { editorCore.gotoPosition(line, column); flush(); }
     public void setScroll(float scrollX, float scrollY) { editorCore.setScroll(scrollX, scrollY); flush(); }
     public ScrollMetrics getScrollMetrics() { return editorCore.getScrollMetrics(); }
@@ -335,6 +358,9 @@ public class SweetEditor extends JPanel {
 
     public void setFoldRegions(List<? extends FoldRegion> regions) { editorCore.setFoldRegions(regions); }
     public boolean toggleFold(int line) { boolean r = editorCore.toggleFold(line); if (r) flush(); return r; }
+    public boolean foldAt(int line) { boolean r = editorCore.foldAt(line); if (r) flush(); return r; }
+    public boolean unfoldAt(int line) { boolean r = editorCore.unfoldAt(line); if (r) flush(); return r; }
+    public boolean isLineVisible(int line) { return editorCore.isLineVisible(line); }
     public void foldAll() { editorCore.foldAll(); flush(); }
     public void unfoldAll() { editorCore.unfoldAll(); flush(); }
 
@@ -451,6 +477,30 @@ public class SweetEditor extends JPanel {
         }
     }
 
+    // ==================== Inline Suggestion (Copilot) API ====================
+
+    public void showInlineSuggestion(InlineSuggestion suggestion) {
+        if (inlineSuggestionController != null) {
+            inlineSuggestionController.show(suggestion);
+        }
+    }
+
+    public void dismissInlineSuggestion() {
+        if (inlineSuggestionController != null) {
+            inlineSuggestionController.dismiss();
+        }
+    }
+
+    public boolean isInlineSuggestionShowing() {
+        return inlineSuggestionController != null && inlineSuggestionController.isShowing();
+    }
+
+    public void setInlineSuggestionListener(InlineSuggestionListener listener) {
+        if (inlineSuggestionController != null) {
+            inlineSuggestionController.setListener(listener);
+        }
+    }
+
     // ==================== Event Subscription ====================
 
     public <T extends EditorEvent> void subscribe(Class<T> eventType, EditorEventListener<T> listener) {
@@ -474,6 +524,7 @@ public class SweetEditor extends JPanel {
 
         renderer.render(g2, renderModel, getWidth(), getHeight(), cursorVisible);
         updateCompletionPopupCursorAnchor();
+        updateInlineSuggestionPosition();
     }
 
 
@@ -521,6 +572,14 @@ public class SweetEditor extends JPanel {
                 long inputPerfStart = startInputPerf();
                 try {
                     if (editorCore.isComposing() && e.getKeyCode() != KeyEvent.VK_ESCAPE) return;
+
+                    // Inline suggestion keyboard interception (Tab=accept, Esc=dismiss)
+                    if (inlineSuggestionController != null && inlineSuggestionController.isShowing()) {
+                        if (inlineSuggestionController.handleKeyEvent(e.getKeyCode())) {
+                            e.consume();
+                            return;
+                        }
+                    }
 
                     // Completion panel keyboard interception
                     if (completionPopupController != null && completionPopupController.isShowing()) {
@@ -956,6 +1015,13 @@ public class SweetEditor extends JPanel {
         renderModelDirty = true;
     }
 
+    void updateFonts(String fontFamily, float textSize) {
+        renderer.updateFonts(fontFamily, textSize);
+        setFont(renderer.getRegularFont());
+        fontMetricsDirty = true;
+        renderModelDirty = true;
+    }
+
     /**
      * Flush all pending changes (decoration / layout / scroll / selection) and trigger a redraw.
      * <p>
@@ -995,6 +1061,15 @@ public class SweetEditor extends JPanel {
         if (renderModel != null && completionPopupController != null
                 && renderModel.cursor != null && renderModel.cursor.position != null) {
             completionPopupController.updateCursorPosition(
+                    renderModel.cursor.position.x, renderModel.cursor.position.y, renderModel.cursor.height);
+        }
+    }
+
+    private void updateInlineSuggestionPosition() {
+        if (renderModel != null && inlineSuggestionController != null
+                && inlineSuggestionController.isShowing()
+                && renderModel.cursor != null && renderModel.cursor.position != null) {
+            inlineSuggestionController.updatePosition(
                     renderModel.cursor.position.x, renderModel.cursor.position.y, renderModel.cursor.height);
         }
     }

@@ -372,6 +372,12 @@ public class EditorCore implements AutoCloseable {
         EditorNative.setSelection(nativeHandle, startLine, startColumn, endLine, endColumn);
     }
 
+    public int[] getSelection() {
+        try (Arena tempArena = Arena.ofConfined()) {
+            return EditorNative.getSelection(nativeHandle, tempArena);
+        }
+    }
+
     // ===================== IME =====================
 
     public void compositionStart() { EditorNative.compositionStart(nativeHandle); }
