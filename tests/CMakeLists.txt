@@ -1,4 +1,4 @@
-set(TEST_PRODUCT_NAME test)
+set(TEST_PRODUCT_NAME unit_tests)
 add_definitions(-DCATCH_AMALGAMATED_CUSTOM_MAIN=ON)
 add_executable(${TEST_PRODUCT_NAME}
         ${3DPARTY_DIR}/include/catch2/catch_amalgamated.cpp
@@ -6,8 +6,12 @@ add_executable(${TEST_PRODUCT_NAME}
         edit_document.cpp
         document_parity.cpp
         editor_core_editing.cpp
+        editor_render.cpp
         editor_undo_redo.cpp
         editor_scroll.cpp
+        gesture.cpp
+        interaction_behavior.cpp
+        keymap.cpp
         layout_mapping.cpp
         layout_decorations.cpp
         decoration_adjust.cpp

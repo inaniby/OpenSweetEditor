@@ -125,9 +125,11 @@ namespace NS_SWEETEDITOR {
         cancelPending();
       } else {
         auto it = m_pending_sub_map_->find(chord);
+        const bool matched = (it != m_pending_sub_map_->end());
+        const EditorCommand command = matched ? it->second : EditorCommand::NONE;
         cancelPending();
-        if (it != m_pending_sub_map_->end()) {
-          return {ResolveStatus::MATCHED, it->second};
+        if (matched) {
+          return {ResolveStatus::MATCHED, command};
         }
         return {ResolveStatus::NO_MATCH, EditorCommand::NONE};
       }
