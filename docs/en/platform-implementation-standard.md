@@ -24,7 +24,7 @@ The Core layer does not involve UI rendering. It contains only bridging, data mo
 |---|---|---|
 | **Core Bridge** | `EditorCore`, `Document`, `ProtocolEncoder`, `ProtocolDecoder`, `TextMeasurer`, `EditorOptions` | Native bridge + public core API wrapper |
 | **Foundation** | `TextPosition`, `TextRange`, `WrapMode`, `FoldArrowMode`, `AutoIndentMode`, `CurrentLineRenderMode`, `ScrollBehavior` | Fundamental value types and enums |
-| **Adornment** | `StyleSpan`, `SpanLayer`, `InlayHint`, `InlayType`, `PhantomText`, `FoldRegion`, `GutterIcon`, `DiagnosticItem`, `IndentGuide`, `BracketGuide`, `FlowGuide`, `SeparatorGuide`, `SeparatorStyle`, `TextStyle` | Decoration data types |
+| **Adornment** | `StyleSpan`, `SpanLayer`, `InlayHint`, `InlayType`, `PhantomText`, `FoldRegion`, `GutterIcon`, `Diagnostic`, `IndentGuide`, `BracketGuide`, `FlowGuide`, `SeparatorGuide`, `SeparatorStyle`, `TextStyle` | Decoration data types |
 | **Visual** | `EditorRenderModel`, `VisualLine`, `VisualRun`, `VisualRunType`, `Cursor`, `CursorRect`, `SelectionRect`, `SelectionHandle`, `ScrollMetrics`, `ScrollbarModel`, `ScrollbarRect`, `GuideSegment`, `GuideType`, `GuideDirection`, `GuideStyle`, `DiagnosticDecoration`, `CompositionDecoration`, `FoldMarkerRenderItem`, `FoldState`, `GutterIconRenderItem`, `LinkedEditingRect`, `BracketHighlightRect`, `PointF` | Render model types |
 | **Snippet** | `LinkedEditingModel`, `TabStopGroup` | Linked editing / tab stop groups |
 | **Keymap** | `KeyMap`, `KeyBinding`, `KeyChord`, `KeyCode`, `KeyModifier`, `EditorCommand` | Shortcut mapping data types and command identifiers |
@@ -211,7 +211,7 @@ controller.applyTheme(EditorTheme.dark());
 | Function | Canonical Name | Allowed Variants |
 |---|---|---|
 | **Configuration** | | |
-| Set document | `setDocument(doc)` | — |
+| Load document | `loadDocument(doc)` | — |
 | Set viewport | `setViewport(w, h)` | — |
 | Font metrics changed | `onFontMetricsChanged()` | — |
 | Fold arrow mode | `setFoldArrowMode(mode)` | — |
@@ -328,7 +328,7 @@ controller.applyTheme(EditorTheme.dark());
 | Clear matched brackets | `clearMatchedBrackets()` | — |
 | **Folding** | | |
 | Set fold regions | `setFoldRegions(regions)` | — |
-| Toggle fold | `toggleFold(line)` | — |
+| Toggle fold | `toggleFoldAt(line)` | Swift: `toggleFold(at:)` |
 | Fold | `foldAt(line)` | Swift: `fold(at:)` |
 | Unfold | `unfoldAt(line)` | Swift: `unfold(at:)` |
 | Fold all | `foldAll()` | — |
@@ -397,7 +397,7 @@ controller.applyTheme(EditorTheme.dark());
 | Get position rect | `getPositionRect(line, col)` | — |
 | Get cursor rect | `getCursorRect()` | property: `cursorRect` / `CursorRect { get; }` |
 | **Folding** | | |
-| Toggle fold | `toggleFoldAt(line)` | `toggleFold(line)`, Swift: `toggleFold(at:)` |
+| Toggle fold | `toggleFoldAt(line)` | Swift: `toggleFold(at:)` |
 | Fold line | `foldAt(line)` | — |
 | Unfold line | `unfoldAt(line)` | — |
 | Is line visible | `isLineVisible(line)` | — |
@@ -521,14 +521,14 @@ When multiple Providers return different ApplyModes, the Manager MUST use the hi
 
 #### DecorationResult MUST Fields
 
-`DecorationResult` contains 11 decoration data types, each with a corresponding `ApplyMode` (default `MERGE`). Data types MUST use the standard types defined in the Core layer (e.g. `StyleSpan`, `InlayHint`, `DiagnosticItem`, etc.).
+`DecorationResult` contains 11 decoration data types, each with a corresponding `ApplyMode` (default `MERGE`). Data types MUST use the standard types defined in the Core layer (e.g. `StyleSpan`, `InlayHint`, `Diagnostic`, etc.).
 
 | Data Field | Type | ApplyMode Field |
 |---|---|---|
 | `syntaxSpans` | Map\<int, List\<StyleSpan\>\>? | `syntaxSpansMode` |
 | `semanticSpans` | Map\<int, List\<StyleSpan\>\>? | `semanticSpansMode` |
 | `inlayHints` | Map\<int, List\<InlayHint\>\>? | `inlayHintsMode` |
-| `diagnostics` | Map\<int, List\<DiagnosticItem\>\>? | `diagnosticsMode` |
+| `diagnostics` | Map\<int, List\<Diagnostic\>\>? | `diagnosticsMode` |
 | `indentGuides` | List\<IndentGuide\>? | `indentGuidesMode` |
 | `bracketGuides` | List\<BracketGuide\>? | `bracketGuidesMode` |
 | `flowGuides` | List\<FlowGuide\>? | `flowGuidesMode` |
@@ -949,28 +949,35 @@ All editor appearance and behavior configuration MUST be centralized through the
 
 All platforms MUST expose the following settings through getter/setter pairs (or properties):
 
-| Field | Type | Default | setter | getter | Description |
-|---|---|---|---|---|---|
-| `editorTextSize` | float | Platform-dependent | `setEditorTextSize(size)` | `getEditorTextSize()` | Editor text size |
-| `typeface` / `fontFamily` | Platform font type | `monospace` | `setTypeface(typeface)` / `setFontFamily(family)` | `getTypeface()` / `getFontFamily()` | Font family |
-| `scale` | float | 1.0 | `setScale(scale)` | `getScale()` | Scale factor |
-| `foldArrowMode` | FoldArrowMode | ALWAYS | `setFoldArrowMode(mode)` | `getFoldArrowMode()` | Fold arrow display mode |
-| `wrapMode` | WrapMode | NONE | `setWrapMode(mode)` | `getWrapMode()` | Auto-wrap mode |
-| `compositionEnabled` | boolean | Platform-dependent | `setCompositionEnabled(enabled)` | `isCompositionEnabled()` | Whether IME composition mode is enabled |
-| `lineSpacingAdd` | float | 0 | `setLineSpacing(add, mult)` | `getLineSpacingAdd()` | Line spacing extra (pixels) |
-| `lineSpacingMult` | float | 1.0 | *(same as above)* | `getLineSpacingMult()` | Line spacing multiplier |
-| `contentStartPadding` | float | 0 | `setContentStartPadding(padding)` | `getContentStartPadding()` | Extra horizontal padding between gutter split and text rendering start (pixels) |
-| `showSplitLine` | boolean | true | `setShowSplitLine(show)` | `isShowSplitLine()` | Whether to render the gutter split line |
-| `gutterSticky` | boolean | true | `setGutterSticky(sticky)` | `isGutterSticky()` | Whether gutter stays fixed during horizontal scroll (true=fixed, false=scrolls with content) |
-| `gutterVisible` | boolean | true | `setGutterVisible(visible)` | `isGutterVisible()` | Whether gutter area is visible (false=hide line numbers, icons, fold arrows) |
-| `currentLineRenderMode` | CurrentLineRenderMode | BACKGROUND | `setCurrentLineRenderMode(mode)` | `getCurrentLineRenderMode()` | Current line render mode |
-| `autoIndentMode` | AutoIndentMode | NONE | `setAutoIndentMode(mode)` | `getAutoIndentMode()` | Auto indent mode |
-| `readOnly` | boolean | false | `setReadOnly(readOnly)` | `isReadOnly()` | Read-only mode, blocks all edit operations |
-| `maxGutterIcons` | int | 0 | `setMaxGutterIcons(count)` | `getMaxGutterIcons()` | Maximum gutter icon count |
-| `decorationScrollRefreshMinIntervalMs` | long | 16 | `setDecorationScrollRefreshMinIntervalMs(ms)` | `getDecorationScrollRefreshMinIntervalMs()` | Decoration scroll refresh minimum interval (ms) |
-| `decorationOverscanViewportMultiplier` | float | 1.5 | `setDecorationOverscanViewportMultiplier(mult)` | `getDecorationOverscanViewportMultiplier()` | Decoration overscan viewport multiplier |
+| Field | Type | Default | setter | getter | Effect | Description |
+|---|---|---|---|---|---|---|
+| `editorTextSize` | float | Platform-dependent | `setEditorTextSize(size)` | `getEditorTextSize()` | `relayout` | Editor text size |
+| `typeface` / `fontFamily` | Platform font type | `monospace` | `setTypeface(typeface)` / `setFontFamily(family)` | `getTypeface()` / `getFontFamily()` | `relayout` | Font family |
+| `scale` | float | 1.0 | `setScale(scale)` | `getScale()` | `relayout` | Scale factor |
+| `foldArrowMode` | FoldArrowMode | ALWAYS | `setFoldArrowMode(mode)` | `getFoldArrowMode()` | `repaint` | Fold arrow display mode |
+| `wrapMode` | WrapMode | NONE | `setWrapMode(mode)` | `getWrapMode()` | `relayout` | Auto-wrap mode |
+| `compositionEnabled` | boolean | Platform-dependent | `setCompositionEnabled(enabled)` | `isCompositionEnabled()` | `runtime-transition` | Whether IME composition mode is enabled |
+| `lineSpacingAdd` | float | 0 | `setLineSpacing(add, mult)` | `getLineSpacingAdd()` | `relayout` | Line spacing extra (pixels) |
+| `lineSpacingMult` | float | 1.0 | *(same as above)* | `getLineSpacingMult()` | `relayout` | Line spacing multiplier |
+| `contentStartPadding` | float | 0 | `setContentStartPadding(padding)` | `getContentStartPadding()` | `relayout` | Extra horizontal padding between gutter split and text rendering start (pixels) |
+| `showSplitLine` | boolean | true | `setShowSplitLine(show)` | `isShowSplitLine()` | `repaint` | Whether to render the gutter split line |
+| `gutterSticky` | boolean | true | `setGutterSticky(sticky)` | `isGutterSticky()` | `repaint` | Whether gutter stays fixed during horizontal scroll (true=fixed, false=scrolls with content) |
+| `gutterVisible` | boolean | true | `setGutterVisible(visible)` | `isGutterVisible()` | `relayout` | Whether gutter area is visible (false=hide line numbers, icons, fold arrows) |
+| `currentLineRenderMode` | CurrentLineRenderMode | BACKGROUND | `setCurrentLineRenderMode(mode)` | `getCurrentLineRenderMode()` | `repaint` | Current line render mode |
+| `autoIndentMode` | AutoIndentMode | NONE | `setAutoIndentMode(mode)` | `getAutoIndentMode()` | `repaint` | Auto indent mode |
+| `readOnly` | boolean | false | `setReadOnly(readOnly)` | `isReadOnly()` | `runtime-transition` | Read-only mode, blocks all edit operations |
+| `maxGutterIcons` | int | 0 | `setMaxGutterIcons(count)` | `getMaxGutterIcons()` | `relayout` | Maximum gutter icon count |
+| `decorationScrollRefreshMinIntervalMs` | long | 16 | `setDecorationScrollRefreshMinIntervalMs(ms)` | `getDecorationScrollRefreshMinIntervalMs()` | `repaint` | Decoration scroll refresh minimum interval (ms) |
+| `decorationOverscanViewportMultiplier` | float | 1.5 | `setDecorationOverscanViewportMultiplier(mult)` | `getDecorationOverscanViewportMultiplier()` | `repaint` | Decoration overscan viewport multiplier |
 
-> All setter calls MUST take effect immediately (i.e. internally call `flush()` or an equivalent mechanism).
+> All setter calls MUST take effect immediately.
+>
+> Effect classification:
+> - `repaint`: MUST trigger an immediate repaint or equivalent visual refresh, without requiring text relayout.
+> - `relayout`: MUST trigger layout invalidation and rebuild the render model or an equivalent relayout path immediately.
+> - `runtime-transition`: MUST apply immediately and safely handle active runtime state transitions required by the setting.
+>
+> `compositionEnabled` is the canonical example of `runtime-transition`: when switching from enabled to disabled while an IME composition is active, the platform MUST cancel or otherwise safely terminate the active composition before the new setting takes effect.
 
 ---
 
@@ -1042,6 +1049,26 @@ ContextMenuEvent      // desktop (macOS/Windows/Linux) & cross-platform UI frame
 
 Platform-specific events (e.g. `SelectionMenuItemClickEvent` on mobile) MAY be added.
 
+### 11.3 Event Payload Contract
+
+Event payloads MUST be defined per-event. Platforms MUST NOT assume or require a shared base payload schema beyond the event type itself.
+
+| Event | Fields | Description |
+|---|---|---|
+| `TextChangedEvent` | `action: TextChangeAction`, `changeRange: TextRange?`, `text: String?` | Text change action, changed range before the operation, and inserted/replaced text |
+| `CursorChangedEvent` | `cursorPosition: TextPosition` | Current cursor position |
+| `SelectionChangedEvent` | `hasSelection: boolean`, `selection: TextRange?`, `cursorPosition: TextPosition` | Current selection state and cursor position |
+| `ScrollChangedEvent` | `scrollX: float`, `scrollY: float` | Current view scroll offset |
+| `ScaleChangedEvent` | `scale: float` | Current editor scale |
+| `DocumentLoadedEvent` | — | No payload fields are required |
+| `FoldToggleEvent` | `line: int`, `isGutter: boolean`, `screenPoint: PointF` | Toggled fold line, whether the click came from gutter, and screen position |
+| `GutterIconClickEvent` | `line: int`, `iconId: int`, `screenPoint: PointF` | Clicked gutter icon line, icon id, and screen position |
+| `InlayHintClickEvent` | `line: int`, `column: int`, `type: InlayType`, `intValue: int`, `screenPoint: PointF` | Clicked inlay hint position, inlay type, type-specific value, optional text payload, and screen position |
+| `LongPressEvent` | `cursorPosition: TextPosition`, `screenPoint: PointF` | Long-press target position and screen position |
+| `DoubleTapEvent` | `cursorPosition: TextPosition`, `hasSelection: boolean`, `selection: TextRange?`, `screenPoint: PointF` | Double-tap target position, resulting selection state, and screen position |
+| `ContextMenuEvent` | `cursorPosition: TextPosition`, `screenPoint: PointF` | Context-menu target position and screen position |
+| `SelectionMenuItemClickEvent` *(platform-specific)* | `item: SelectionMenuItem` | Clicked custom selection-menu item |
+
 ---
 
 ## 12. Enumeration and Constant Values (MUST)
@@ -1051,19 +1078,19 @@ Enum and enum-like constant values MUST match the C++ core definitions. The foll
 | Enum | Values |
 |---|---|
 | `WrapMode` | NONE=0, CHAR_BREAK=1, WORD_BREAK=2 |
-| `FoldArrowMode` | MOUSE_OVER=0, ALWAYS=1 |
-| `AutoIndentMode` | NONE=0, KEEP=1 |
-| `CurrentLineRenderMode` | NONE=0, LINE=1, GUTTER=2 |
-| `ScrollBehavior` | SMOOTH=0, INSTANT=1 |
+| `FoldArrowMode` | AUTO=0, ALWAYS=1, HIDDEN=2 |
+| `AutoIndentMode` | NONE=0, KEEP_INDENT=1 |
+| `CurrentLineRenderMode` | BACKGROUND=0, BORDER=1, NONE=2 |
+| `ScrollBehavior` | TOP=0, CENTER=1, BOTTOM=2 |
 | `SpanLayer` | SYNTAX=0, SEMANTIC=1 |
-| `InlayType` | TEXT=0, ICON=1, COLOR_BLOCK=2 |
-| `VisualRunType` | TEXT=0, WHITESPACE=1, INLAY_HINT=2, PHANTOM_TEXT=3, FOLD_PLACEHOLDER=4, NEWLINE=5 |
-| `FoldState` | NONE=0, COLLAPSED=1, EXPANDED=2 |
+| `InlayType` | TEXT=0, ICON=1, COLOR=2 |
+| `VisualRunType` | TEXT=0, WHITESPACE=1, NEWLINE=2, INLAY_HINT=3, PHANTOM_TEXT=4, FOLD_PLACEHOLDER=5, TAB=6 |
+| `FoldState` | NONE=0, EXPANDED=1, COLLAPSED=2 |
 | `DecorationType` | SYNTAX_HIGHLIGHT, SEMANTIC_HIGHLIGHT, INLAY_HINT, DIAGNOSTIC, FOLD_REGION, INDENT_GUIDE, BRACKET_GUIDE, FLOW_GUIDE, SEPARATOR_GUIDE, GUTTER_ICON, PHANTOM_TEXT |
 | `GuideType` | INDENT=0, BRACKET=1, FLOW=2, SEPARATOR=3 |
 | `GuideDirection` | (platform-aligned with C++ core) |
-| `GuideStyle` | SOLID=0, DASHED=1 |
-| `SeparatorStyle` | SOLID=0, DASHED=1 |
+| `GuideStyle` | SOLID=0, DASHED=1, DOUBLE=2 |
+| `SeparatorStyle` | SINGLE=0, DOUBLE=1 |
 | `KeyCode` | NONE=0, BACKSPACE=8, TAB=9, ENTER=13, ESCAPE=27, DELETE_KEY=46, LEFT=37, UP=38, RIGHT=39, DOWN=40, HOME=36, END=35, PAGE_UP=33, PAGE_DOWN=34, A=65, C=67, D=68, V=86, X=88, Y=89, Z=90, K=75, SPACE=32 |
 | `KeyModifier` | NONE=0, SHIFT=1, CTRL=2, ALT=4, META=8 |
 | `EditorCommand` | NONE=0, CURSOR_LEFT=1, CURSOR_RIGHT=2, CURSOR_UP=3, CURSOR_DOWN=4, CURSOR_LINE_START=5, CURSOR_LINE_END=6, CURSOR_PAGE_UP=7, CURSOR_PAGE_DOWN=8, SELECT_LEFT=9, SELECT_RIGHT=10, SELECT_UP=11, SELECT_DOWN=12, SELECT_LINE_START=13, SELECT_LINE_END=14, SELECT_PAGE_UP=15, SELECT_PAGE_DOWN=16, SELECT_ALL=17, BACKSPACE=18, DELETE_FORWARD=19, INSERT_TAB=20, INSERT_NEWLINE=21, INSERT_LINE_ABOVE=22, INSERT_LINE_BELOW=23, UNDO=24, REDO=25, MOVE_LINE_UP=26, MOVE_LINE_DOWN=27, COPY_LINE_UP=28, COPY_LINE_DOWN=29, DELETE_LINE=30, COPY=31, PASTE=32, CUT=33, TRIGGER_COMPLETION=34 |
@@ -1243,10 +1270,10 @@ The Core layer defines numerous decoration data types. All platforms MUST implem
 
 | Field | Type | MUST/MAY | Description |
 |---|---|---|---|
-| `type` | InlayType | **MUST** | Type: TEXT=0, ICON=1, COLOR_BLOCK=2 |
+| `type` | InlayType | **MUST** | Type: TEXT=0, ICON=1, COLOR=2 |
 | `column` | int | **MUST** | Insertion column (0-based, UTF-16 offset) |
 | `text` | String? | **MUST** | Text content (MUST be non-null for TEXT type; MAY be null for other types) |
-| `intValue` | int | **MUST** | Integer value (iconId for ICON type; ARGB color for COLOR_BLOCK type; 0 for TEXT type) |
+| `intValue` | int | **MUST** | Integer value (iconId for ICON type; ARGB color for COLOR type; 0 for TEXT type) |
 
 > Platforms SHOULD provide convenience factory methods: `TextHint(column, text)`, `IconHint(column, iconId)`, `ColorHint(column, color)`.
 
@@ -1263,7 +1290,7 @@ The Core layer defines numerous decoration data types. All platforms MUST implem
 |---|---|---|---|
 | `iconId` | int | **MUST** | Icon resource ID (resolved and rendered by the platform's `EditorIconProvider`) |
 
-**`DiagnosticItem`** — Diagnostic information
+**`Diagnostic`** — Diagnostic information
 
 | Field | Type | MUST/MAY | Description |
 |---|---|---|---|
