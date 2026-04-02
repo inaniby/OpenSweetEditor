@@ -17,6 +17,7 @@ abstract class EditorSettingsHost {
   void applyCurrentLineRenderMode(core.CurrentLineRenderMode mode);
   void applyAutoIndentMode(core.AutoIndentMode mode);
   void applyReadOnly(bool readOnly);
+  void applyCompositionEnabled(bool enabled);
   void applyMaxGutterIcons(int count);
   void requestDecorationRefresh();
   void flushEditor();
@@ -41,6 +42,7 @@ class EditorSettings {
       core.CurrentLineRenderMode.background;
   core.AutoIndentMode _autoIndentMode = core.AutoIndentMode.none;
   bool _readOnly = false;
+  bool _compositionEnabled = false;
   int _maxGutterIcons = 0;
   int _decorationScrollRefreshMinIntervalMs = 16;
   double _decorationOverscanViewportMultiplier = 1.5;
@@ -187,6 +189,14 @@ class EditorSettings {
 
   bool isReadOnly() => _readOnly;
 
+  void setCompositionEnabled(bool enabled) {
+    _compositionEnabled = enabled;
+    _host?.applyCompositionEnabled(enabled);
+    _host?.flushEditor();
+  }
+
+  bool isCompositionEnabled() => _compositionEnabled;
+
   void setMaxGutterIcons(int count) {
     _maxGutterIcons = count;
     _host?.applyMaxGutterIcons(count);
@@ -229,6 +239,7 @@ class EditorSettings {
     host.applyCurrentLineRenderMode(_currentLineRenderMode);
     host.applyAutoIndentMode(_autoIndentMode);
     host.applyReadOnly(_readOnly);
+    host.applyCompositionEnabled(_compositionEnabled);
     host.applyMaxGutterIcons(_maxGutterIcons);
     host.requestDecorationRefresh();
     host.flushEditor();

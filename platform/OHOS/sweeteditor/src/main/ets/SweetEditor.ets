@@ -436,7 +436,7 @@ export struct SweetEditor {
   private editorGlobalY: number = 0;
   private controllerApi: SweetEditorExternalApi | null = null;
   private readonly onImeInsertText = (text: string): void => {
-    if (this.editorCore && this.editorCore.isComposing()) {
+    if (this.editorCore && this.isCompositionEnabled() && this.editorCore.isComposing()) {
       this.commitComposition(text);
       return;
     }
@@ -942,6 +942,7 @@ export struct SweetEditor {
     this.registerImeCallbacks();
 
     this.settings = new EditorSettings(this);
+    this.editorCore.setCompositionEnabled(this.settings.isCompositionEnabled());
     this.settings.setContentStartPadding(DEFAULT_CONTENT_START_PADDING_DP);
     this.settings.setGutterSticky(false);
 
@@ -1882,6 +1883,10 @@ export struct SweetEditor {
     this.flush();
   }
 
+  isCompositionEnabled(): boolean {
+    return this.settings ? this.settings.isCompositionEnabled() : this.editorCore?.isCompositionEnabled() ?? true;
+  }
+
   commitComposition(text: string): void {
     if (!this.editorCore) {
       return;
@@ -2751,7 +2756,7 @@ export struct SweetEditor {
   }
 
   private handleImePreviewText(text: string, range: inputMethod.Range): void {
-    if (!this.editorCore) {
+    if (!this.editorCore || !this.isCompositionEnabled()) {
       return;
     }
     this.selectRangeByIme(range);
@@ -2759,7 +2764,7 @@ export struct SweetEditor {
   }
 
   private finishImePreviewText(): void {
-    if (!this.editorCore || !this.editorCore.isComposing()) {
+    if (!this.editorCore || !this.isCompositionEnabled() || !this.editorCore.isComposing()) {
       return;
     }
     this.editorCore.compositionCancel();

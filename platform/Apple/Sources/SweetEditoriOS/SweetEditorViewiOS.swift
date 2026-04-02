@@ -79,7 +79,7 @@ class IOSEditorView: UIView, UIKeyInput, UITextInput, UITextInputTraits, UIPoint
 
         editorCore = SweetEditorCore(fontSize: 14.0, fontName: "Menlo")
         editorCore.setScrollbarConfig(scrollbarPolicy.defaultConfig())
-        editorCore.setCompositionEnabled(true)
+        editorCore.setCompositionEnabled(settings.compositionEnabled)
         EditorRenderer.applyTheme(EditorRenderer.theme, core: editorCore)
         decorationProviderManager = DecorationProviderManager(
             core: editorCore,
@@ -537,6 +537,7 @@ class IOSEditorView: UIView, UIKeyInput, UITextInput, UITextInputTraits, UIPoint
     func applyEditorSettings(_ settings: EditorSettings) {
         editorCore.setScale(settings.scale)
         editorCore.syncPlatformScale(settings.scale)
+        editorCore.setCompositionEnabled(settings.compositionEnabled)
         editorCore.setFoldArrowMode(SweetEditorCore.FoldArrowMode(settings.foldArrowMode))
         editorCore.setWrapMode(SweetEditorCore.WrapMode(settings.wrapMode))
         editorCore.setLineSpacing(add: settings.lineSpacingAdd, mult: settings.lineSpacingMult)

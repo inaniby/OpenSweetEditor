@@ -1515,7 +1515,7 @@ public class SweetEditor extends View {
     // ==================== IME Internal Methods (package-private) ====================
 
     boolean isCompositionEnabled() {
-        return mEditorCore.isCompositionEnabled();
+        return mSettings != null ? mSettings.isCompositionEnabled() : mEditorCore.isCompositionEnabled();
     }
 
     boolean isComposing() {
@@ -1842,6 +1842,7 @@ public class SweetEditor extends View {
         mEditorCore.registerBatchTextStyles(mTheme.textStyles);
 
         mSettings = new EditorSettings(this);
+        mEditorCore.setCompositionEnabled(mSettings.isCompositionEnabled());
         mKeyMap = createDefaultKeyMap();
         mSettings.setContentStartPadding(DEFAULT_CONTENT_START_PADDING_DP * density);
         mSettings.setTypeface(Typeface.create(Typeface.MONOSPACE, Typeface.NORMAL));

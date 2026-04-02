@@ -66,8 +66,8 @@ class InlineSuggestionController implements InlineSuggestionActionCallback {
     _injectPhantomText(suggestion);
 
     final cursor = _session.renderModel.cursor;
-    _cachedCursorX = cursor.position.x - _session.renderModel.scrollX;
-    _cachedCursorY = cursor.position.y - _session.renderModel.scrollY;
+    _cachedCursorX = cursor.position.x;
+    _cachedCursorY = cursor.position.y;
     _cachedCursorHeight = cursor.height;
 
     _showing = true;

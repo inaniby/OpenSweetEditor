@@ -32,6 +32,7 @@ public class EditorSettings {
     private CurrentLineRenderMode mCurrentLineRenderMode = CurrentLineRenderMode.BACKGROUND;
     private AutoIndentMode mAutoIndentMode = AutoIndentMode.NONE;
     private boolean mReadOnly = false;
+    private boolean mCompositionEnabled = false;
     private int mMaxGutterIcons = 0;
     private long mDecorationScrollRefreshMinIntervalMs = 16L;
     private float mDecorationOverscanViewportMultiplier = 1.5f;
@@ -174,6 +175,16 @@ public class EditorSettings {
 
     public boolean isReadOnly() {
         return mReadOnly;
+    }
+
+    public void setCompositionEnabled(boolean enabled) {
+        mCompositionEnabled = enabled;
+        mEditor.getEditorCore().setCompositionEnabled(enabled);
+        mEditor.flush();
+    }
+
+    public boolean isCompositionEnabled() {
+        return mCompositionEnabled;
     }
 
     public void setMaxGutterIcons(int count) {

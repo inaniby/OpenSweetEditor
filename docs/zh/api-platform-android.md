@@ -323,7 +323,7 @@ public void cancelLinkedEditing()
   - `setBracketPairs(int[] openChars, int[] closeChars)`
   - `setMatchedBrackets(int openLine, int openCol, int closeLine, int closeCol)`
   - `clearMatchedBrackets()`
-- `setCompositionEnabled/isCompositionEnabled` 目前在控件层不是公开 API（`SweetEditor` 内部可访问）。
+- IME 组合开关通过 `EditorSettings.setCompositionEnabled(...)` / `EditorSettings.isCompositionEnabled()` 配置。
 - Android 主路径虽不经过 `c_api.h`，但复杂返回仍走统一的 binary payload 解码流程。
 - 装饰相关接口同时提供 `ByteBuffer payload` 重载（`EditorCore` 层），可用于绕过对象装箱并减少 JNI 往返。
 

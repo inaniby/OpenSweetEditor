@@ -17,6 +17,7 @@ export class EditorSettings {
   private currentLineRenderMode: CurrentLineRenderMode = CurrentLineRenderMode.BACKGROUND;
   private autoIndentMode: AutoIndentMode = AutoIndentMode.NONE;
   private readOnly: boolean = false;
+  private compositionEnabled: boolean = true;
   private maxGutterIcons: number = 0;
   private decorationScrollRefreshMinIntervalMs: number = 16;
   private decorationOverscanViewportMultiplier: number = 1.5;
@@ -192,6 +193,20 @@ export class EditorSettings {
 
   isReadOnly(): boolean {
     return this.readOnly;
+  }
+
+  setCompositionEnabled(enabled: boolean): void {
+    this.compositionEnabled = enabled;
+    const core = this.editor.getEditorCore();
+    if (!core) {
+      return;
+    }
+    core.setCompositionEnabled(enabled);
+    this.editor.flush();
+  }
+
+  isCompositionEnabled(): boolean {
+    return this.compositionEnabled;
   }
 
   setMaxGutterIcons(count: number): void {

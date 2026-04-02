@@ -212,6 +212,11 @@ class EditorSession implements EditorSettingsHost {
   }
 
   @override
+  void applyCompositionEnabled(bool enabled) {
+    _editorCore?.setCompositionEnabled(enabled);
+  }
+
+  @override
   void applyMaxGutterIcons(int count) {
     _editorCore?.setMaxGutterIcons(count);
   }

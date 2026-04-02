@@ -1498,6 +1498,12 @@ namespace SweetEditor {
 		[DllImport(LibraryName, EntryPoint = "editor_is_composing", CallingConvention = CallingConvention.Cdecl)]
 		internal static extern int IsComposing(IntPtr handle);
 
+		[DllImport(LibraryName, EntryPoint = "editor_set_composition_enabled", CallingConvention = CallingConvention.Cdecl)]
+		internal static extern void SetCompositionEnabled(IntPtr handle, int enabled);
+
+		[DllImport(LibraryName, EntryPoint = "editor_is_composition_enabled", CallingConvention = CallingConvention.Cdecl)]
+		internal static extern int IsCompositionEnabled(IntPtr handle);
+
 		[DllImport(LibraryName, EntryPoint = "editor_set_read_only", CallingConvention = CallingConvention.Cdecl)]
 		internal static extern void SetReadOnly(IntPtr handle, int readOnly);
 
@@ -2165,6 +2171,16 @@ namespace SweetEditor {
 		/// <returns>Returns <c>true</c> when IME composition is active.</returns>
 		public bool IsComposing() {
 			return NativeMethods.IsComposing(nativeHandle) != 0;
+		}
+
+		/// <summary>Enables or disables IME composition.</summary>
+		public void SetCompositionEnabled(bool enabled) {
+			NativeMethods.SetCompositionEnabled(nativeHandle, enabled ? 1 : 0);
+		}
+
+		/// <summary>Returns whether IME composition is enabled.</summary>
+		public bool IsCompositionEnabled() {
+			return NativeMethods.IsCompositionEnabled(nativeHandle) != 0;
 		}
 
 		#endregion

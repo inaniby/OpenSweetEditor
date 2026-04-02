@@ -401,6 +401,8 @@ public class EditorCore implements AutoCloseable {
 
     public void compositionCancel() { EditorNative.compositionCancel(nativeHandle); }
     public boolean isComposing() { return EditorNative.isComposing(nativeHandle); }
+    public void setCompositionEnabled(boolean enabled) { EditorNative.setCompositionEnabled(nativeHandle, enabled); }
+    public boolean isCompositionEnabled() { return EditorNative.isCompositionEnabled(nativeHandle); }
 
     // ===================== Read-only =====================
 

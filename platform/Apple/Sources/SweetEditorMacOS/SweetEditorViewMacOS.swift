@@ -102,7 +102,7 @@ public class SweetEditorViewMacOS: NSView, NSTextInputClient, CompletionEditorAc
         layer?.backgroundColor = EditorRenderer.theme.backgroundColor
         editorCore = SweetEditorCore(fontSize: 14.0, fontName: "Menlo")
         editorCore.setScrollbarConfig(scrollbarPolicy.defaultConfig())
-        editorCore.setCompositionEnabled(true)
+        editorCore.setCompositionEnabled(settings.compositionEnabled)
         editorCore.setReadOnly(false)
         // Sync current theme to Core first so syntax styles are registered immediately.
         EditorRenderer.applyTheme(EditorRenderer.theme, core: editorCore)
@@ -658,6 +658,7 @@ public class SweetEditorViewMacOS: NSView, NSTextInputClient, CompletionEditorAc
     public func applyEditorSettings(_ settings: EditorSettings) {
         editorCore.setScale(settings.scale)
         editorCore.syncPlatformScale(settings.scale)
+        editorCore.setCompositionEnabled(settings.compositionEnabled)
         editorCore.setFoldArrowMode(SweetEditorCore.FoldArrowMode(settings.foldArrowMode))
         editorCore.setWrapMode(SweetEditorCore.WrapMode(settings.wrapMode))
         editorCore.setLineSpacing(add: settings.lineSpacingAdd, mult: settings.lineSpacingMult)

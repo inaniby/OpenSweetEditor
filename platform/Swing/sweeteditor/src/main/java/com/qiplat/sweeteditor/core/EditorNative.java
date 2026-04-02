@@ -350,6 +350,10 @@ public final class EditorNative {
 
     private static final MethodHandle IS_COMPOSING = downcall("editor_is_composing",
             FunctionDescriptor.of(ValueLayout.JAVA_INT, ValueLayout.JAVA_LONG));
+    private static final MethodHandle SET_COMPOSITION_ENABLED = downcall("editor_set_composition_enabled",
+            FunctionDescriptor.ofVoid(ValueLayout.JAVA_LONG, ValueLayout.JAVA_INT));
+    private static final MethodHandle IS_COMPOSITION_ENABLED = downcall("editor_is_composition_enabled",
+            FunctionDescriptor.of(ValueLayout.JAVA_INT, ValueLayout.JAVA_LONG));
 
     private static final MethodHandle SET_READ_ONLY = downcall("editor_set_read_only",
             FunctionDescriptor.ofVoid(ValueLayout.JAVA_LONG, ValueLayout.JAVA_INT));
@@ -933,6 +937,16 @@ public final class EditorNative {
 
     public static boolean isComposing(long handle) {
         return invokeBoolean(() -> (int) IS_COMPOSING.invokeExact(handle));
+    }
+
+    public static void setCompositionEnabled(long handle, boolean enabled) {
+        invokeVoid(() -> {
+            SET_COMPOSITION_ENABLED.invokeExact(handle, enabled ? 1 : 0);
+        });
+    }
+
+    public static boolean isCompositionEnabled(long handle) {
+        return invokeValue(() -> (int) IS_COMPOSITION_ENABLED.invokeExact(handle)) != 0;
     }
 
     // ===================== Read-only =====================

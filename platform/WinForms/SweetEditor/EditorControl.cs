@@ -1064,6 +1064,7 @@ namespace SweetEditor {
 			editorCore.registerBatchTextStyles(currentTheme.TextStyles);
 
 			settings = new EditorSettings(this);
+			editorCore.SetCompositionEnabled(settings.IsCompositionEnabled());
 			settings.SetContentStartPadding(DpToPx(DefaultContentStartPaddingDp));
 		}
 
@@ -1212,23 +1213,28 @@ namespace SweetEditor {
 				case WM_IME_COMPOSITION: {
 					using var perf = StartInputPerf("WndProc(IME_COMPOSITION)");
 					int imeFlags = (int)m.LParam;
+					bool compositionEnabled = settings?.IsCompositionEnabled() ?? true;
 					IntPtr hIMC = ImmGetContext(this.Handle);
 					if (hIMC != IntPtr.Zero) {
 						// Final committed IME text.
 						if ((imeFlags & GCS_RESULTSTR) != 0) {
 							string resultStr = GetImmCompositionString(hIMC, GCS_RESULTSTR);
-							if (!string.IsNullOrEmpty(resultStr)) {
+							if (compositionEnabled && !string.IsNullOrEmpty(resultStr)) {
 								var editResult = editorCore.CompositionEnd(resultStr);
 								FireTextChanged(TextChangeAction.Composition, editResult);
 								Flush();
-							} else if (editorCore.IsComposing()) {
+							} else if (compositionEnabled && editorCore.IsComposing()) {
 								var editResult = editorCore.CompositionEnd("");
 								FireTextChanged(TextChangeAction.Composition, editResult);
+								Flush();
+							} else if (!string.IsNullOrEmpty(resultStr)) {
+								var editResult = editorCore.InsertText(resultStr);
+								FireTextChanged(TextChangeAction.Insert, editResult);
 								Flush();
 							}
 						}
 						// IME composition text update.
-						else if ((imeFlags & GCS_COMPSTR) != 0) {
+						else if (compositionEnabled && (imeFlags & GCS_COMPSTR) != 0) {
 							if (!editorCore.IsComposing()) {
 								editorCore.CompositionStart();
 							}
@@ -1244,7 +1250,7 @@ namespace SweetEditor {
 				case WM_IME_ENDCOMPOSITION: {
 					using var perf = StartInputPerf("WndProc(IME_END)");
 					// In some cases this arrives after GCS_RESULTSTR.
-					if (editorCore.IsComposing()) {
+					if ((settings?.IsCompositionEnabled() ?? true) && editorCore.IsComposing()) {
 						var editResult = editorCore.CompositionEnd("");
 						FireTextChanged(TextChangeAction.Composition, editResult);
 						Flush();

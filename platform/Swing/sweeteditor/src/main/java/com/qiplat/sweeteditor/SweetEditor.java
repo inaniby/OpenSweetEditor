@@ -110,6 +110,7 @@ public class SweetEditor extends JPanel {
         completionPopupController.setConfirmListener(this::applyCompletionItem);
 
         settings = new EditorSettings(this);
+        editorCore.setCompositionEnabled(settings.isCompositionEnabled());
         settings.setContentStartPadding(dpToPx(DEFAULT_CONTENT_START_PADDING_DP));
 
         inlineSuggestionController = new InlineSuggestionController(this);
@@ -696,7 +697,7 @@ public class SweetEditor extends JPanel {
 
                     if (committed.length() > 0) {
                         TextEditResult editResult;
-                        if (editorCore.isComposing()) {
+                        if (settings.isCompositionEnabled() && editorCore.isComposing()) {
                             editResult = editorCore.compositionEnd(committed.toString());
                             dispatchTextChanged(TextChangeAction.COMPOSITION, editResult);
                         } else {
@@ -707,12 +708,14 @@ public class SweetEditor extends JPanel {
                         flush();
                     }
                     if (composed.length() > 0) {
-                        if (!editorCore.isComposing()) {
+                        if (settings.isCompositionEnabled() && !editorCore.isComposing()) {
                             editorCore.compositionStart();
                         }
-                        editorCore.compositionUpdate(composed.toString());
-                        flush();
-                    } else if (editorCore.isComposing() && committed.length() == 0) {
+                        if (settings.isCompositionEnabled()) {
+                            editorCore.compositionUpdate(composed.toString());
+                            flush();
+                        }
+                    } else if (settings.isCompositionEnabled() && editorCore.isComposing() && committed.length() == 0) {
                         editorCore.compositionCancel();
                         flush();
                     }

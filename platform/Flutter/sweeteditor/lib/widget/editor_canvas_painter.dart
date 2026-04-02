@@ -46,23 +46,21 @@ class EditorCanvasPainter extends ChangeNotifier implements CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final m = _model;
-    final sx = m.scrollX;
-    final sy = m.scrollY;
 
     canvas.drawRect(
       Offset.zero & size,
       Paint()..color = Color(_theme.backgroundColor),
     );
 
-    _drawCurrentLineHighlight(canvas, m, sy, 0, size.width);
+    _drawCurrentLineHighlight(canvas, m, 0, size.width);
 
-    _drawSelectionRects(canvas, m, sx, sy);
+    _drawSelectionRects(canvas, m);
 
     for (final rect in m.bracketHighlightRects) {
       canvas.drawRect(
         Rect.fromLTWH(
-          rect.origin.x - sx,
-          rect.origin.y - sy,
+          rect.origin.x,
+          rect.origin.y,
           rect.width,
           rect.height,
         ),
@@ -76,8 +74,8 @@ class EditorCanvasPainter extends ChangeNotifier implements CustomPainter {
           : _theme.linkedEditingInactiveColor;
       canvas.drawRect(
         Rect.fromLTWH(
-          rect.origin.x - sx,
-          rect.origin.y - sy,
+          rect.origin.x,
+          rect.origin.y,
           rect.width,
           rect.height,
         ),
@@ -85,18 +83,18 @@ class EditorCanvasPainter extends ChangeNotifier implements CustomPainter {
       );
     }
 
-    _drawVisualLines(canvas, m, sx, sy);
+    _drawVisualLines(canvas, m);
 
-    _drawGuideSegments(canvas, m, sx, sy);
+    _drawGuideSegments(canvas, m);
 
-    _drawDiagnostics(canvas, m, sx, sy);
+    _drawDiagnostics(canvas, m);
 
     if (m.compositionDecoration.active) {
       final cd = m.compositionDecoration;
-      final y = cd.origin.y - sy + cd.height;
+      final y = cd.origin.y + cd.height;
       canvas.drawLine(
-        Offset(cd.origin.x - sx, y),
-        Offset(cd.origin.x - sx + cd.width, y),
+        Offset(cd.origin.x, y),
+        Offset(cd.origin.x + cd.width, y),
         Paint()
           ..color = Color(_theme.compositionColor)
           ..strokeWidth = 2,
@@ -106,19 +104,19 @@ class EditorCanvasPainter extends ChangeNotifier implements CustomPainter {
     if (_cursorVisible && m.cursor.visible) {
       final c = m.cursor;
       canvas.drawRect(
-        Rect.fromLTWH(c.position.x - sx, c.position.y - sy, 2, c.height),
+        Rect.fromLTWH(c.position.x, c.position.y, 2, c.height),
         Paint()..color = Color(_theme.cursorColor),
       );
     }
 
     if (m.splitX > 0 && m.gutterVisible) {
-      final splitScreenX = m.gutterSticky ? m.splitX : m.splitX - sx;
+      final splitScreenX = m.splitX;
       if (splitScreenX > 0) {
         canvas.drawRect(
           Rect.fromLTWH(0, 0, splitScreenX, size.height),
           Paint()..color = Color(_theme.backgroundColor),
         );
-        _drawCurrentLineHighlight(canvas, m, sy, 0, splitScreenX);
+        _drawCurrentLineHighlight(canvas, m, 0, splitScreenX);
         if (m.splitLineVisible) {
           canvas.drawLine(
             Offset(splitScreenX, 0),
@@ -131,20 +129,20 @@ class EditorCanvasPainter extends ChangeNotifier implements CustomPainter {
       }
     }
 
-    _drawLineNumbers(canvas, m, sx, sy);
+    _drawLineNumbers(canvas, m);
 
-    _drawGutterIcons(canvas, m, sx, sy);
+    _drawGutterIcons(canvas, m);
 
-    _drawFoldMarkers(canvas, m, sx, sy);
+    _drawFoldMarkers(canvas, m);
 
-    _drawSelectionHandles(canvas, m, sx, sy);
+    _drawSelectionHandles(canvas, m);
 
     // Bracket highlight borders
     for (final rect in m.bracketHighlightRects) {
       canvas.drawRect(
         Rect.fromLTWH(
-          rect.origin.x - sx,
-          rect.origin.y - sy,
+          rect.origin.x,
+          rect.origin.y,
           rect.width,
           rect.height,
         ),
@@ -162,8 +160,8 @@ class EditorCanvasPainter extends ChangeNotifier implements CustomPainter {
           : _theme.linkedEditingInactiveColor;
       canvas.drawRect(
         Rect.fromLTWH(
-          rect.origin.x - sx,
-          rect.origin.y - sy,
+          rect.origin.x,
+          rect.origin.y,
           rect.width,
           rect.height,
         ),
@@ -180,13 +178,12 @@ class EditorCanvasPainter extends ChangeNotifier implements CustomPainter {
   void _drawCurrentLineHighlight(
     Canvas canvas,
     core.EditorRenderModel m,
-    double sy,
     double left,
     double right,
   ) {
     if (right <= left) return;
     if (m.currentLineRenderMode == 2) return; // none
-    final y = m.currentLine.y - sy;
+    final y = m.currentLine.y;
     final lineH = m.cursor.visible ? m.cursor.height : _measurer.getFontMetrics().lineHeight;
 
     if (m.currentLineRenderMode == 0) {
@@ -207,41 +204,31 @@ class EditorCanvasPainter extends ChangeNotifier implements CustomPainter {
     }
   }
 
-  void _drawSelectionRects(
-    Canvas canvas,
-    core.EditorRenderModel m,
-    double sx,
-    double sy,
-  ) {
+  void _drawSelectionRects(Canvas canvas, core.EditorRenderModel m) {
     if (m.selectionRects.isEmpty) return;
     final paint = Paint()..color = Color(_theme.selectionColor);
     for (final r in m.selectionRects) {
       canvas.drawRect(
-        Rect.fromLTWH(r.origin.x - sx, r.origin.y - sy, r.width, r.height),
+        Rect.fromLTWH(r.origin.x, r.origin.y, r.width, r.height),
         paint,
       );
     }
   }
 
-  void _drawVisualLines(
-    Canvas canvas,
-    core.EditorRenderModel m,
-    double sx,
-    double sy,
-  ) {
+  void _drawVisualLines(Canvas canvas, core.EditorRenderModel m) {
     for (final line in m.visualLines) {
       for (final run in line.runs) {
         switch (run.type) {
           case core.VisualRunType.text:
           case core.VisualRunType.whitespace:
           case core.VisualRunType.tab:
-            _drawTextRun(canvas, run, sx, sy);
+            _drawTextRun(canvas, run);
           case core.VisualRunType.phantomText:
-            _drawPhantomTextRun(canvas, run, sx, sy);
+            _drawPhantomTextRun(canvas, run);
           case core.VisualRunType.inlayHint:
-            _drawInlayHintRun(canvas, run, sx, sy);
+            _drawInlayHintRun(canvas, run);
           case core.VisualRunType.foldPlaceholder:
-            _drawFoldPlaceholderRun(canvas, run, sx, sy);
+            _drawFoldPlaceholderRun(canvas, run);
           case core.VisualRunType.newline:
             break;
         }
@@ -249,10 +236,10 @@ class EditorCanvasPainter extends ChangeNotifier implements CustomPainter {
     }
   }
 
-  void _drawTextRun(Canvas canvas, core.VisualRun run, double sx, double sy) {
+  void _drawTextRun(Canvas canvas, core.VisualRun run) {
     if (run.text.isEmpty) return;
-    final screenX = run.x - sx;
-    final baselineY = run.y - sy;
+    final screenX = run.x;
+    final baselineY = run.y;
 
     final style = _measurer.buildRunStyle(run.style, _theme.textColor);
     final fontMetrics = _measurer.getFontMetrics(run.style.fontStyle);
@@ -282,12 +269,7 @@ class EditorCanvasPainter extends ChangeNotifier implements CustomPainter {
     );
   }
 
-  void _drawPhantomTextRun(
-    Canvas canvas,
-    core.VisualRun run,
-    double sx,
-    double sy,
-  ) {
+  void _drawPhantomTextRun(Canvas canvas, core.VisualRun run) {
     if (run.text.isEmpty) return;
     final style = _measurer.buildPhantomTextStyle(_theme.phantomTextColor);
     final fontMetrics = _measurer.getFontMetrics();
@@ -298,20 +280,15 @@ class EditorCanvasPainter extends ChangeNotifier implements CustomPainter {
     _paintTextAtBaseline(
       canvas,
       painter,
-      run.x - sx,
-      run.y - sy,
+      run.x,
+      run.y,
       fontMetrics.ascent,
     );
   }
 
-  void _drawInlayHintRun(
-    Canvas canvas,
-    core.VisualRun run,
-    double sx,
-    double sy,
-  ) {
-    final screenX = run.x - sx + run.margin;
-    final baselineY = run.y - sy;
+  void _drawInlayHintRun(Canvas canvas, core.VisualRun run) {
+    final screenX = run.x + run.margin;
+    final baselineY = run.y;
     final fontMetrics = _measurer.getInlayHintFontMetrics();
 
     // Color swatch inlay hint
@@ -364,11 +341,9 @@ class EditorCanvasPainter extends ChangeNotifier implements CustomPainter {
   void _drawFoldPlaceholderRun(
     Canvas canvas,
     core.VisualRun run,
-    double sx,
-    double sy,
   ) {
-    final screenX = run.x - sx;
-    final baselineY = run.y - sy;
+    final screenX = run.x;
+    final baselineY = run.y;
     final text = run.text.isNotEmpty ? run.text : '...';
     final fontMetrics = _measurer.getFontMetrics();
     final style = TextStyle(
@@ -407,8 +382,6 @@ class EditorCanvasPainter extends ChangeNotifier implements CustomPainter {
   void _drawGuideSegments(
     Canvas canvas,
     core.EditorRenderModel m,
-    double sx,
-    double sy,
   ) {
     for (final seg in m.guideSegments) {
       final isSeparator = seg.type == core.GuideType.separator;
@@ -418,10 +391,10 @@ class EditorCanvasPainter extends ChangeNotifier implements CustomPainter {
         ..strokeWidth = 1
         ..style = PaintingStyle.stroke;
 
-      final startX = seg.start.x - sx;
-      final startY = seg.start.y - sy;
-      final endX = seg.end.x - sx;
-      final endY = seg.end.y - sy;
+      final startX = seg.start.x;
+      final startY = seg.start.y;
+      final endX = seg.end.x;
+      final endY = seg.end.y;
 
       if (seg.style == core.GuideStyle.double_) {
         const offset = 1.5;
@@ -532,12 +505,10 @@ class EditorCanvasPainter extends ChangeNotifier implements CustomPainter {
   void _drawDiagnostics(
     Canvas canvas,
     core.EditorRenderModel m,
-    double sx,
-    double sy,
   ) {
     for (final diag in m.diagnosticDecorations) {
-      final x = diag.origin.x - sx;
-      final y = diag.origin.y - sy + diag.height;
+      final x = diag.origin.x;
+      final y = diag.origin.y + diag.height;
       final w = diag.width;
       final color = Color(
         diag.color != 0 ? diag.color : _theme.diagnosticErrorColor,
@@ -597,8 +568,6 @@ class EditorCanvasPainter extends ChangeNotifier implements CustomPainter {
   void _drawLineNumbers(
     Canvas canvas,
     core.EditorRenderModel m,
-    double sx,
-    double sy,
   ) {
     if (!m.gutterVisible) return;
     final activeLogicalLine = m.cursor.textPosition.line;
@@ -610,8 +579,8 @@ class EditorCanvasPainter extends ChangeNotifier implements CustomPainter {
           ? _theme.currentLineNumberColor
           : _theme.lineNumberColor;
       final pos = line.lineNumberPosition;
-      final numX = m.gutterSticky ? pos.x : pos.x - sx;
-      final baselineY = pos.y - sy;
+      final numX = pos.x;
+      final baselineY = pos.y;
       final fontMetrics = _measurer.getFontMetrics();
       final painter = TextPainter(
         text: TextSpan(
@@ -648,15 +617,12 @@ class EditorCanvasPainter extends ChangeNotifier implements CustomPainter {
   void _drawGutterIcons(
     Canvas canvas,
     core.EditorRenderModel m,
-    double sx,
-    double sy,
   ) {
     // Gutter icons require an EditorIconProvider to resolve icon images.
     // For now, draw a placeholder colored rect for each icon.
     for (final icon in m.gutterIcons) {
-      final x = m.gutterSticky ? icon.origin.x : icon.origin.x - sx;
       canvas.drawRect(
-        Rect.fromLTWH(x, icon.origin.y - sy, icon.width, icon.height),
+        Rect.fromLTWH(icon.origin.x, icon.origin.y, icon.width, icon.height),
         Paint()..color = Color(_theme.inlayHintIconColor),
       );
     }
@@ -665,16 +631,14 @@ class EditorCanvasPainter extends ChangeNotifier implements CustomPainter {
   void _drawFoldMarkers(
     Canvas canvas,
     core.EditorRenderModel m,
-    double sx,
-    double sy,
   ) {
     final activeLogicalLine = m.cursor.textPosition.line;
     final activeColor = _theme.currentLineNumberColor != 0
         ? _theme.currentLineNumberColor
         : _theme.lineNumberColor;
     for (final marker in m.foldMarkers) {
-      final x = m.gutterSticky ? marker.origin.x : marker.origin.x - sx;
-      final y = marker.origin.y - sy;
+      final x = marker.origin.x;
+      final y = marker.origin.y;
       final cx = x + marker.width / 2;
       final cy = y + marker.height / 2;
       final halfSize = math.min(marker.width, marker.height) * 0.28;
@@ -706,15 +670,13 @@ class EditorCanvasPainter extends ChangeNotifier implements CustomPainter {
   void _drawSelectionHandles(
     Canvas canvas,
     core.EditorRenderModel m,
-    double sx,
-    double sy,
   ) {
     final paint = Paint()..color = Color(_theme.cursorColor);
     if (m.selectionStartHandle.visible) {
-      _drawHandle(canvas, m.selectionStartHandle, sx, sy, true, paint);
+      _drawHandle(canvas, m.selectionStartHandle, true, paint);
     }
     if (m.selectionEndHandle.visible) {
-      _drawHandle(canvas, m.selectionEndHandle, sx, sy, false, paint);
+      _drawHandle(canvas, m.selectionEndHandle, false, paint);
     }
   }
 
@@ -725,13 +687,11 @@ class EditorCanvasPainter extends ChangeNotifier implements CustomPainter {
   void _drawHandle(
     Canvas canvas,
     core.SelectionHandle handle,
-    double sx,
-    double sy,
     bool isStart,
     Paint paint,
   ) {
-    final x = handle.position.x - sx;
-    final y = handle.position.y - sy;
+    final x = handle.position.x;
+    final y = handle.position.y;
     final h = handle.height;
 
     final lineWidth = _handleLineWidth;

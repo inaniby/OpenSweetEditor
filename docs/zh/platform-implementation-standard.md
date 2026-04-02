@@ -946,7 +946,7 @@ interface SelectionMenuListener {
 
 ## 9. EditorSettings（MUST）
 
-所有编辑器外观和行为配置 MUST 通过 `EditorSettings` 对象统一收拢管理。`SweetEditor` 本身 MUST NOT 直接暴露任何配置 setter（如 `setWrapMode`、`setScale` 等），而是通过 `getSettings()` 返回 `EditorSettings` 实例，由调用方在该实例上进行配置。
+所有编辑器外观和行为配置 MUST 通过 `EditorSettings` 对象统一收拢管理。`SweetEditor` 本身 MUST NOT 直接暴露任何配置 setter（如 `setWrapMode`、`setScale`、`setCompositionEnabled` 等），而是通过 `getSettings()` 返回 `EditorSettings` 实例，由调用方在该实例上进行配置。这个 widget 层规则不改变第 3.1 节定义的 `EditorCore` Public API。
 
 所有平台 MUST 通过 getter/setter 对（或属性）暴露以下设置：
 
@@ -957,6 +957,7 @@ interface SelectionMenuListener {
 | `scale` | float | 1.0 | `setScale(scale)` | `getScale()` | 缩放比例 |
 | `foldArrowMode` | FoldArrowMode | ALWAYS | `setFoldArrowMode(mode)` | `getFoldArrowMode()` | 折叠箭头显示模式 |
 | `wrapMode` | WrapMode | NONE | `setWrapMode(mode)` | `getWrapMode()` | 自动换行模式 |
+| `compositionEnabled` | boolean | 平台相关 | `setCompositionEnabled(enabled)` | `isCompositionEnabled()` | 是否启用 IME 组合输入模式 |
 | `lineSpacingAdd` | float | 0 | `setLineSpacing(add, mult)` | `getLineSpacingAdd()` | 行间距附加值（像素） |
 | `lineSpacingMult` | float | 1.0 | *(同上)* | `getLineSpacingMult()` | 行间距倍数 |
 | `contentStartPadding` | float | 0 | `setContentStartPadding(padding)` | `getContentStartPadding()` | gutter 分割线与文本渲染起始之间的额外水平内边距（像素） |

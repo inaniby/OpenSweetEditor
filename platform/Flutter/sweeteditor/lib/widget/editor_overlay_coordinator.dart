@@ -48,16 +48,16 @@ class EditorOverlayCoordinator {
   void onRenderModelUpdated(core.EditorRenderModel model) {
     if (_session.completionPopupController.isShowing && model.cursor.visible) {
       _session.completionPopupController.updateCursorPosition(
-        model.cursor.position.x - model.scrollX,
-        model.cursor.position.y - model.scrollY,
+        model.cursor.position.x,
+        model.cursor.position.y,
         model.cursor.height,
       );
     }
 
     if (_session.inlineSuggestionController.isShowing && model.cursor.visible) {
       _session.inlineSuggestionController.updatePosition(
-        model.cursor.position.x - model.scrollX,
-        model.cursor.position.y - model.scrollY,
+        model.cursor.position.x,
+        model.cursor.position.y,
         model.cursor.height,
       );
     }
@@ -65,8 +65,6 @@ class EditorOverlayCoordinator {
 
   Offset computeSelectionMenuPosition(Size viewportSize) {
     final model = _session.renderModel;
-    final sx = model.scrollX;
-    final sy = model.scrollY;
     final start = model.selectionStartHandle;
     final end = model.selectionEndHandle;
 
@@ -74,11 +72,11 @@ class EditorOverlayCoordinator {
     double topY;
     double bottomY;
     if (start.visible) {
-      final startX = start.position.x - sx;
-      final startY = start.position.y - sy;
+      final startX = start.position.x;
+      final startY = start.position.y;
       final startBottom = startY + start.height;
-      final endX = end.visible ? end.position.x - sx : startX;
-      final endY = end.visible ? end.position.y - sy : startY;
+      final endX = end.visible ? end.position.x : startX;
+      final endY = end.visible ? end.position.y : startY;
       final endBottom = end.visible ? endY + end.height : startBottom;
       anchorX = (startX + endX) * 0.5;
       topY = math.min(startY, endY);

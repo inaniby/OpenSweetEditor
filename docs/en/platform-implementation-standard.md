@@ -945,7 +945,7 @@ Every `EditorTheme` MUST contain a `textStyles` map (`Map<int, TextStyle>`) and 
 
 ## 9. EditorSettings (MUST)
 
-All editor appearance and behavior configuration MUST be centralized through the `EditorSettings` object. `SweetEditor` itself MUST NOT directly expose any configuration setters (e.g. `setWrapMode`, `setScale`). Instead, it exposes a `getSettings()` method that returns an `EditorSettings` instance, and callers configure the editor through that instance.
+All editor appearance and behavior configuration MUST be centralized through the `EditorSettings` object. `SweetEditor` itself MUST NOT directly expose any configuration setters (e.g. `setWrapMode`, `setScale`, `setCompositionEnabled`). Instead, it exposes a `getSettings()` method that returns an `EditorSettings` instance, and callers configure the editor through that instance. This widget-layer rule does not change the `EditorCore` public API defined in Section 3.1.
 
 All platforms MUST expose the following settings through getter/setter pairs (or properties):
 
@@ -956,6 +956,7 @@ All platforms MUST expose the following settings through getter/setter pairs (or
 | `scale` | float | 1.0 | `setScale(scale)` | `getScale()` | Scale factor |
 | `foldArrowMode` | FoldArrowMode | ALWAYS | `setFoldArrowMode(mode)` | `getFoldArrowMode()` | Fold arrow display mode |
 | `wrapMode` | WrapMode | NONE | `setWrapMode(mode)` | `getWrapMode()` | Auto-wrap mode |
+| `compositionEnabled` | boolean | Platform-dependent | `setCompositionEnabled(enabled)` | `isCompositionEnabled()` | Whether IME composition mode is enabled |
 | `lineSpacingAdd` | float | 0 | `setLineSpacing(add, mult)` | `getLineSpacingAdd()` | Line spacing extra (pixels) |
 | `lineSpacingMult` | float | 1.0 | *(same as above)* | `getLineSpacingMult()` | Line spacing multiplier |
 | `contentStartPadding` | float | 0 | `setContentStartPadding(padding)` | `getContentStartPadding()` | Extra horizontal padding between gutter split and text rendering start (pixels) |

@@ -324,7 +324,7 @@ public void cancelLinkedEditing()
   - `setBracketPairs(int[] openChars, int[] closeChars)`
   - `setMatchedBrackets(int openLine, int openCol, int closeLine, int closeCol)`
   - `clearMatchedBrackets()`
-- `setCompositionEnabled/isCompositionEnabled` is currently not a public control-layer API (`SweetEditor` can access it internally).
+- IME composition enablement is configured through `EditorSettings.setCompositionEnabled(...)` / `EditorSettings.isCompositionEnabled()`.
 - Android main path does not go through `c_api.h`, but complex return data still uses the shared binary payload decoding flow.
 - Decoration APIs also provide `ByteBuffer payload` overloads (`EditorCore` layer), which can skip object boxing and reduce JNI round trips.
 
