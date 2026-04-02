@@ -114,16 +114,6 @@ namespace NS_SWEETEDITOR {
     U8String dump() const;
   };
 
-  /// Single-line highlight rectangle for selection area
-  struct SelectionRect {
-    /// Top-left corner of rectangle
-    PointF origin;
-    /// Rectangle width
-    float width {0};
-    /// Rectangle height
-    float height {0};
-  };
-
   /// Selection handle (drag handle), used by platform to draw the droplet-style control
   struct SelectionHandle {
     /// Handle position (bottom-center of cursor vertical line; platform draws handle using this anchor)
@@ -167,88 +157,35 @@ namespace NS_SWEETEDITOR {
 
   /// Render decoration for composition input area (underline)
   struct CompositionDecoration {
-    /// Whether composition decoration needs to be drawn
     bool active {false};
-    /// Start screen coordinate of composition text area
-    PointF origin;
-    /// Width of composition text area
-    float width {0};
-    /// Line height
-    float height {0};
+    Rect rect;
   };
 
   /// Render primitive for diagnostic decoration (wavy underline / underline)
   struct DiagnosticDecoration {
-    /// Start screen coordinate of wavy underline area (below baseline)
-    PointF origin;
-    /// Wavy underline width
-    float width {0};
-    /// Line height (used to locate baseline offset)
-    float height {0};
-    /// Severity level (0=ERROR, 1=WARNING, 2=INFO, 3=HINT)
+    Rect rect;
     int32_t severity {0};
-    /// Color value (ARGB); 0 means use default color by severity
     int32_t color {0};
-  };
-
-  /// Bracket-pair highlight rectangle (bracket near cursor + matching bracket)
-  struct BracketHighlightRect {
-    /// Top-left corner of rectangle
-    PointF origin;
-    /// Rectangle width
-    float width {0};
-    /// Rectangle height
-    float height {0};
   };
 
   /// Gutter icon render item (fully resolved geometry for one icon)
   struct GutterIconRenderItem {
-    /// Logical line index this icon belongs to
     size_t logical_line {0};
-    /// Icon resource ID
     int32_t icon_id {0};
-    /// Top-left corner of icon bounds
-    PointF origin;
-    /// Icon width
-    float width {0};
-    /// Icon height
-    float height {0};
+    Rect rect;
   };
 
   /// Fold marker render item (one gutter fold toggle marker)
   struct FoldMarkerRenderItem {
-    /// Logical line index this marker belongs to
     size_t logical_line {0};
-    /// Fold state on this line (EXPANDED / COLLAPSED)
     FoldState fold_state {FoldState::NONE};
-    /// Top-left corner of marker bounds
-    PointF origin;
-    /// Marker width
-    float width {0};
-    /// Marker height
-    float height {0};
+    Rect rect;
   };
 
   /// Linked-editing highlight rectangle (visual marker for Tab Stop placeholder)
   struct LinkedEditingRect {
-    /// Top-left corner of rectangle
-    PointF origin;
-    /// Rectangle width
-    float width {0};
-    /// Rectangle height
-    float height {0};
-    /// Whether this is the current active tab stop
+    Rect rect;
     bool is_active {false};
-  };
-
-  /// Scrollbar rectangle (track/thumb geometry in screen coordinates)
-  struct ScrollbarRect {
-    /// Top-left corner of rectangle
-    PointF origin;
-    /// Rectangle width
-    float width {0};
-    /// Rectangle height
-    float height {0};
   };
 
   /// Scrollbar render model (one axis)
@@ -260,19 +197,9 @@ namespace NS_SWEETEDITOR {
     /// Whether the thumb is currently being dragged
     bool thumb_active {false};
     /// Scrollbar track rectangle
-    ScrollbarRect track;
+    Rect track;
     /// Scrollbar thumb rectangle
-    ScrollbarRect thumb;
-  };
-
-  /// Current line render mode
-  enum struct CurrentLineRenderMode {
-    /// Fill full line background
-    BACKGROUND = 0,
-    /// Draw line border only
-    BORDER = 1,
-    /// Disable current-line decoration
-    NONE = 2,
+    Rect thumb;
   };
 
   /// Editor render model
@@ -298,7 +225,7 @@ namespace NS_SWEETEDITOR {
     /// Cursor
     Cursor cursor;
     /// Selection highlight rectangle list
-    Vector<SelectionRect> selection_rects;
+    Vector<Rect> selection_rects;
     /// Selection start handle (anchor side)
     SelectionHandle selection_start_handle;
     /// Selection end handle (active side / cursor side)
@@ -314,7 +241,7 @@ namespace NS_SWEETEDITOR {
     /// Linked-editing highlight rectangle list (Tab Stop placeholders)
     Vector<LinkedEditingRect> linked_editing_rects;
     /// Bracket-pair highlight rectangle list (bracket near cursor + matching bracket, usually 0 or 2)
-    Vector<BracketHighlightRect> bracket_highlight_rects;
+    Vector<Rect> bracket_highlight_rects;
     /// Gutter icon render list (fully resolved, visible region only)
     Vector<GutterIconRenderItem> gutter_icons;
     /// Fold marker render list (fully resolved, visible region only)
@@ -453,7 +380,7 @@ namespace NS_SWEETEDITOR {
   })
   NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(VisualLine, logical_line, wrap_index, line_number_position, runs, is_phantom_line, fold_state)
   NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Cursor, text_position, position, height, visible, show_dragger)
-  NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(SelectionRect, origin, width, height)
+  NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Rect, origin, width, height)
   NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(SelectionHandle, position, height, visible)
   NLOHMANN_JSON_SERIALIZE_ENUM(GuideDirection, {
     {GuideDirection::VERTICAL, "VERTICAL"},
@@ -470,14 +397,12 @@ namespace NS_SWEETEDITOR {
     {GuideStyle::DASHED, "DASHED"},
     {GuideStyle::DOUBLE, "DOUBLE"},
   })
-  NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(CompositionDecoration, active, origin, width, height)
-  NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(DiagnosticDecoration, origin, width, height, severity, color)
+  NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(CompositionDecoration, active, rect)
+  NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(DiagnosticDecoration, rect, severity, color)
   NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(GuideSegment, direction, type, style, start, end, arrow_end)
-  NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(LinkedEditingRect, origin, width, height, is_active)
-  NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(BracketHighlightRect, origin, width, height)
-  NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(GutterIconRenderItem, logical_line, icon_id, origin, width, height)
-  NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(FoldMarkerRenderItem, logical_line, fold_state, origin, width, height)
-  NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(ScrollbarRect, origin, width, height)
+  NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(LinkedEditingRect, rect, is_active)
+  NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(GutterIconRenderItem, logical_line, icon_id, rect)
+  NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(FoldMarkerRenderItem, logical_line, fold_state, rect)
   NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(ScrollbarModel, visible, alpha, thumb_active, track, thumb)
   NLOHMANN_JSON_SERIALIZE_ENUM(CurrentLineRenderMode, {
     {CurrentLineRenderMode::BACKGROUND, "BACKGROUND"},

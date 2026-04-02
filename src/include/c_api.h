@@ -239,8 +239,8 @@ EDITOR_API void editor_set_scrollbar_config(intptr_t editor_handle,
 ///            - i32 visible
 ///            - i32 show_dragger
 ///         16. i32 selection_rect_count
-///         17. SelectionRect[selection_rect_count] selection_rects
-///             SelectionRect layout:
+///         17. Rect[selection_rect_count] selection_rects
+///             Rect layout:
 ///             - PointF origin
 ///             - f32 width
 ///             - f32 height
@@ -281,8 +281,8 @@ EDITOR_API void editor_set_scrollbar_config(intptr_t editor_handle,
 ///             - f32 height
 ///             - i32 is_active
 ///         28. i32 bracket_highlight_rect_count
-///         29. BracketHighlightRect[bracket_highlight_rect_count] bracket_highlight_rects
-///             BracketHighlightRect layout:
+///         29. Rect[bracket_highlight_rect_count] bracket_highlight_rects
+///             Rect layout:
 ///             - PointF origin
 ///             - f32 width
 ///             - f32 height
@@ -291,9 +291,9 @@ EDITOR_API void editor_set_scrollbar_config(intptr_t editor_handle,
 ///             ScrollbarModel layout:
 ///             - i32 visible
 ///             - f32 alpha (0~1)
-///             - ScrollbarRect track
-///             - ScrollbarRect thumb
-///             ScrollbarRect layout:
+///             - Rect track
+///             - Rect thumb
+///             Rect layout:
 ///             - PointF origin
 ///             - f32 width
 ///             - f32 height

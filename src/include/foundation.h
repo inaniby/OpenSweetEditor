@@ -41,6 +41,13 @@ namespace NS_SWEETEDITOR {
     U8String dump() const;
   };
 
+  /// Axis-aligned rectangle (origin + size)
+  struct Rect {
+    PointF origin;
+    float width {0};
+    float height {0};
+  };
+
   /// Offset rectangle relative to a reference point
   struct OffsetRect {
     float left {0};
@@ -48,9 +55,7 @@ namespace NS_SWEETEDITOR {
     float right {0};
     float bottom {0};
 
-    bool contains(float dx, float dy) const {
-      return dx >= left && dx <= right && dy >= top && dy <= bottom;
-    }
+    bool contains(float dx, float dy) const;
   };
 
   /// Editor viewport
@@ -86,7 +91,7 @@ namespace NS_SWEETEDITOR {
     KeyModifier modifiers {KeyModifier::NONE};
 
     /// Whether this is plain text input (no special key code, text only)
-    bool isTextInput() const { return key_code == KeyCode::NONE && !text.empty(); }
+    bool isTextInput() const;
   };
 
   enum struct ScrollBehavior {
@@ -107,25 +112,9 @@ namespace NS_SWEETEDITOR {
     /// Whether there is an active selection
     bool has_selection {false};
 
-    /// Set selection range (also updates cursor to range.end)
-    void setSelection(const TextRange& range) {
-      selection = range;
-      has_selection = !(range.start == range.end);
-      cursor = range.end;
-    }
-
-    /// Clear selection (cursor unchanged)
-    void clearSelection() {
-      selection = {};
-      has_selection = false;
-    }
-
-    /// Get normalized selection (start < end)
-    TextRange normalizedSelection() const {
-      TextRange r = selection;
-      if (r.end < r.start) std::swap(r.start, r.end);
-      return r;
-    }
+    void setSelection(const TextRange& range);
+    void clearSelection();
+    TextRange normalizedSelection() const;
   };
 
   /// Auto-indent modes
@@ -134,6 +123,26 @@ namespace NS_SWEETEDITOR {
     NONE = 0,
     /// Keep previous line indent (copy leading whitespace)
     KEEP_INDENT = 1,
+  };
+
+  /// Auto-wrap modes
+  enum struct WrapMode {
+    /// No wrapping
+    NONE,
+    /// Character-level wrapping
+    CHAR_BREAK,
+    /// Word-level wrapping
+    WORD_BREAK,
+  };
+
+  /// Current line render modes
+  enum struct CurrentLineRenderMode {
+    /// Fill full line background
+    BACKGROUND = 0,
+    /// Draw line border only
+    BORDER = 1,
+    /// Disable current-line decoration
+    NONE = 2,
   };
 }
 

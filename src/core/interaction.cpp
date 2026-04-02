@@ -5,14 +5,13 @@
 #include <chrono>
 #include <cmath>
 #include <interaction.h>
-#include <editor_core.h>
 #include <layout.h>
 #include <utility.h>
 #include "logging.h"
 
 namespace NS_SWEETEDITOR {
 
-  static bool pointInScrollbarRect(const PointF& point, const ScrollbarRect& rect, float expand = 0.0f) {
+  static bool pointInRect(const PointF& point, const Rect& rect, float expand = 0.0f) {
     if (rect.width <= 0.0f || rect.height <= 0.0f) return false;
     const float left = rect.origin.x - expand;
     const float right = rect.origin.x + rect.width + expand;
@@ -573,7 +572,7 @@ namespace NS_SWEETEDITOR {
 
       if (vertical.visible
           && m_context_.settings->scrollbar.thumb_draggable
-          && pointInScrollbarRect(point, vertical.thumb, thumb_hit_padding)) {
+          && pointInRect(point, vertical.thumb, thumb_hit_padding)) {
         m_dragging_scrollbar_ = ScrollbarDragTarget::VERTICAL;
         m_scrollbar_drag_start_point_ = point;
         m_scrollbar_drag_start_scroll_y_ = m_context_.view_state->scroll_y;
@@ -587,7 +586,7 @@ namespace NS_SWEETEDITOR {
 
       if (horizontal.visible
           && m_context_.settings->scrollbar.thumb_draggable
-          && pointInScrollbarRect(point, horizontal.thumb, thumb_hit_padding)) {
+          && pointInRect(point, horizontal.thumb, thumb_hit_padding)) {
         m_dragging_scrollbar_ = ScrollbarDragTarget::HORIZONTAL;
         m_scrollbar_drag_start_point_ = point;
         m_scrollbar_drag_start_scroll_x_ = m_context_.view_state->scroll_x;
@@ -601,7 +600,7 @@ namespace NS_SWEETEDITOR {
 
       if (vertical.visible
           && m_context_.settings->scrollbar.track_tap_mode == ScrollbarTrackTapMode::JUMP
-          && pointInScrollbarRect(point, vertical.track)) {
+          && pointInRect(point, vertical.track)) {
         if (vertical.track.height > 0.0f && bounds.max_scroll_y > 0.0f) {
           const float travel = std::max(0.0f, vertical.track.height - vertical.thumb.height);
           const float ratio = travel <= 0.0f
@@ -619,7 +618,7 @@ namespace NS_SWEETEDITOR {
 
       if (horizontal.visible
           && m_context_.settings->scrollbar.track_tap_mode == ScrollbarTrackTapMode::JUMP
-          && pointInScrollbarRect(point, horizontal.track)) {
+          && pointInRect(point, horizontal.track)) {
         if (horizontal.track.width > 0.0f && bounds.max_scroll_x > 0.0f) {
           const float travel = std::max(0.0f, horizontal.track.width - horizontal.thumb.width);
           const float ratio = travel <= 0.0f

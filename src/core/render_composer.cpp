@@ -7,18 +7,12 @@
 
 namespace NS_SWEETEDITOR {
 
-  RenderComposer::RenderComposer(TextLayout* text_layout,
-                                 DecorationManager* decorations,
-                                 EditorSettings* settings)
-      : m_text_layout_(text_layout),
-        m_decorations_(decorations),
-        m_settings_(settings) {
+  RenderComposer::RenderComposer(TextLayout* text_layout, DecorationManager* decorations, EditorSettings* settings)
+      : m_text_layout_(text_layout), m_decorations_(decorations), m_settings_(settings) {
   }
 
-  void RenderComposer::buildCursorModel(EditorRenderModel& model,
-                                        const TextPosition& cursor_position,
-                                        bool has_selection,
-                                        float line_height) const {
+  void RenderComposer::buildCursorModel(EditorRenderModel& model, const TextPosition& cursor_position,
+                                        bool has_selection, float line_height) const {
     PointF cursor_screen = m_text_layout_->getPositionScreenCoord(cursor_position);
     model.cursor.text_position = cursor_position;
     model.cursor.position = cursor_screen;
@@ -28,8 +22,7 @@ namespace NS_SWEETEDITOR {
     model.current_line = {0, cursor_screen.y};
   }
 
-  void RenderComposer::buildCompositionDecoration(EditorRenderModel& model,
-                                                  const CompositionState& composition,
+  void RenderComposer::buildCompositionDecoration(EditorRenderModel& model, const CompositionState& composition,
                                                   float line_height) const {
     if (!composition.is_composing || composition.composing_columns == 0) return;
 
@@ -42,19 +35,15 @@ namespace NS_SWEETEDITOR {
         composition.start_position.column + composition.composing_columns,
         x_start, x_end, comp_y);
     model.composition_decoration.active = true;
-    model.composition_decoration.origin = {x_start, comp_y + top_padding};
-    model.composition_decoration.width = x_end - x_start;
-    model.composition_decoration.height = font_height;
+    model.composition_decoration.rect = {{x_start, comp_y + top_padding}, x_end - x_start, font_height};
     LOGD("buildRenderModel: composition_decoration active=true, origin=(%.1f, %.1f), w=%.1f, h=%.1f, composing_cols=%zu, start_pos=(%zu,%zu)",
          x_start, comp_y + top_padding, x_end - x_start, font_height,
          composition.composing_columns,
          composition.start_position.line, composition.start_position.column);
   }
 
-  void RenderComposer::buildSelectionRects(EditorRenderModel& model,
-                                           Document* document,
-                                           const CaretState& caret,
-                                           float line_height) const {
+  void RenderComposer::buildSelectionRects(EditorRenderModel& model, Document* document,
+                                           const CaretState& caret, float line_height) const {
     if (!caret.has_selection || document == nullptr) {
       return;
     }
@@ -86,7 +75,7 @@ namespace NS_SWEETEDITOR {
 
       if (col_begin >= col_end_val && line != sel_end.line) {
         PointF coord = m_text_layout_->getPositionScreenCoord({line, col_begin});
-        SelectionRect rect;
+        Rect rect;
         rect.origin = coord;
         rect.width = m_text_layout_->getLineHeight() * 0.3f;
         rect.height = line_height;
@@ -110,8 +99,7 @@ namespace NS_SWEETEDITOR {
     model.selection_end_handle.visible = true;
   }
 
-  void RenderComposer::buildLinkedEditingRects(EditorRenderModel& model,
-                                               Document* document,
+  void RenderComposer::buildLinkedEditingRects(EditorRenderModel& model, Document* document,
                                                const LinkedEditingSession* linked_editing_session,
                                                float line_height) const {
     if (linked_editing_session == nullptr || !linked_editing_session->isActive()) return;
@@ -128,19 +116,15 @@ namespace NS_SWEETEDITOR {
         float x_start, x_end, y;
         m_text_layout_->getColumnScreenRange(line, col_begin, col_end, x_start, x_end, y);
         LinkedEditingRect rect;
-        rect.origin = {x_start, y};
-        rect.width = x_end - x_start;
-        rect.height = line_height;
+        rect.rect = {{x_start, y}, x_end - x_start, line_height};
         rect.is_active = hl.is_active;
         model.linked_editing_rects.push_back(rect);
       }
     }
   }
 
-  void RenderComposer::buildGuideSegments(EditorRenderModel& model,
-                                          Document* document,
-                                          TextMeasurer& measurer,
-                                          float line_height) const {
+  void RenderComposer::buildGuideSegments(EditorRenderModel& model, Document* document,
+                                          TextMeasurer& measurer, float line_height) const {
     if (m_decorations_ == nullptr || document == nullptr) return;
 
     const LayoutMetrics& params = m_text_layout_->getLayoutMetrics();
@@ -260,8 +244,7 @@ namespace NS_SWEETEDITOR {
     }
   }
 
-  void RenderComposer::buildDiagnosticDecorations(EditorRenderModel& model,
-                                                  Document* document,
+  void RenderComposer::buildDiagnosticDecorations(EditorRenderModel& model, Document* document,
                                                   float line_height) const {
     if (m_decorations_ == nullptr || document == nullptr) return;
 
@@ -285,9 +268,7 @@ namespace NS_SWEETEDITOR {
             x_end,
             y);
         DiagnosticDecoration dd;
-        dd.origin = {x_start, y + top_padding};
-        dd.width = x_end - x_start;
-        dd.height = font_height;
+        dd.rect = {{x_start, y + top_padding}, x_end - x_start, font_height};
         dd.severity = static_cast<int32_t>(ds.severity);
         dd.color = ds.color;
         model.diagnostic_decorations.push_back(dd);
@@ -295,14 +276,10 @@ namespace NS_SWEETEDITOR {
     }
   }
 
-  void RenderComposer::buildBracketHighlightRects(EditorRenderModel& model,
-                                                  const Document* document,
-                                                  const TextPosition& cursor_position,
-                                                  const Vector<BracketPair>& bracket_pairs,
-                                                  const TextPosition& external_bracket_open,
-                                                  const TextPosition& external_bracket_close,
-                                                  bool has_external_brackets,
-                                                  float line_height) const {
+  void RenderComposer::buildBracketHighlightRects(EditorRenderModel& model, const Document* document,
+                                                  const TextPosition& cursor_position, const Vector<BracketPair>& bracket_pairs,
+                                                  const TextPosition& external_bracket_open, const TextPosition& external_bracket_close,
+                                                  bool has_external_brackets, float line_height) const {
     if (document == nullptr || bracket_pairs.empty()) return;
 
     TextPosition open_pos, close_pos;
@@ -397,7 +374,7 @@ namespace NS_SWEETEDITOR {
       if (pos.line >= document->getLineCount()) return;
       float x_start, x_end, y;
       m_text_layout_->getColumnScreenRange(pos.line, pos.column, pos.column + 1, x_start, x_end, y);
-      BracketHighlightRect rect;
+      Rect rect;
       rect.origin = {x_start, y};
       rect.width = x_end - x_start;
       rect.height = line_height;
@@ -408,8 +385,7 @@ namespace NS_SWEETEDITOR {
     addRect(close_pos);
   }
 
-  void RenderComposer::buildScrollbarModel(EditorRenderModel& model,
-                                           const EditorInteraction& interaction) const {
+  void RenderComposer::buildScrollbarModel(EditorRenderModel& model, const EditorInteraction& interaction) const {
     interaction.computeScrollbarModels(model.vertical_scrollbar, model.horizontal_scrollbar);
   }
 }

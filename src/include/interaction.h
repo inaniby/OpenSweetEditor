@@ -2,15 +2,12 @@
 #define SWEETEDITOR_INTERACTION_H
 
 #include <macro.h>
+#include <editor_types.h>
 #include <visual.h>
 #include <gesture.h>
 
 namespace NS_SWEETEDITOR {
   class TextLayout;
-  struct EditorSettings;
-  struct ViewState;
-  struct Viewport;
-  struct CaretState;
 
   struct InteractionContext {
     TouchConfig touch_config;

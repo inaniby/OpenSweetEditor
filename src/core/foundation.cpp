@@ -50,6 +50,12 @@ namespace NS_SWEETEDITOR {
   }
 #pragma endregion
 
+#pragma region [Class: OffsetRect]
+  bool OffsetRect::contains(float dx, float dy) const {
+    return dx >= left && dx <= right && dy >= top && dy <= bottom;
+  }
+#pragma endregion
+
 #pragma region [Class: Viewport]
   bool Viewport::valid() const {
     return width > 1 && height > 1;
@@ -63,6 +69,31 @@ namespace NS_SWEETEDITOR {
 #pragma region [Class: ViewState]
   U8String ViewState::dump() const {
     return "ViewState {scale = " + std::to_string(scale) + ", scroll_x = " + std::to_string(scroll_x) + ", scroll_y = " + std::to_string(scroll_y) + "}";
+  }
+#pragma endregion
+
+#pragma region [Class: KeyEvent]
+  bool KeyEvent::isTextInput() const {
+    return key_code == KeyCode::NONE && !text.empty();
+  }
+#pragma endregion
+
+#pragma region [Class: CaretState]
+  void CaretState::setSelection(const TextRange& range) {
+    selection = range;
+    has_selection = !(range.start == range.end);
+    cursor = range.end;
+  }
+
+  void CaretState::clearSelection() {
+    selection = {};
+    has_selection = false;
+  }
+
+  TextRange CaretState::normalizedSelection() const {
+    TextRange r = selection;
+    if (r.end < r.start) std::swap(r.start, r.end);
+    return r;
   }
 #pragma endregion
 

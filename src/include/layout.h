@@ -11,15 +11,6 @@
 #include <gesture.h>
 
 namespace NS_SWEETEDITOR {
-  /// Auto-wrap mode enum
-  enum struct WrapMode {
-    /// No wrapping
-    NONE,
-    /// Character-level wrapping
-    CHAR_BREAK,
-    /// Word-level wrapping
-    WORD_BREAK,
-  };
 
   /// Font metric info
   struct FontMetrics {
@@ -133,7 +124,7 @@ namespace NS_SWEETEDITOR {
     /// @param rect_height Height of each selection rectangle
     /// @param out_rects Output vector to append selection rects to
     void getColumnSelectionRects(size_t line, size_t col_start, size_t col_end,
-                                 float rect_height, Vector<SelectionRect>& out_rects);
+                                 float rect_height, Vector<Rect>& out_rects);
 
     /// Get line height
     float getLineHeight() const;
