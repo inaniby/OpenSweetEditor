@@ -4,7 +4,7 @@ SHELL := /bin/bash
 
 help:
 	@echo "make all              # native-if-needed + swift build + swift test"
-	@echo "make native           # force rebuild SweetNativeCore.xcframework"
+	@echo "make native           # force rebuild SweetEditorCoreIOS.xcframework and SweetEditorCoreOSX.xcframework"
 	@echo "make native-if-needed # rebuild only when sources are newer"
 	@echo "make xcode-prebuild   # alias for native-if-needed"
 	@echo "make build            # swift build"
@@ -53,4 +53,12 @@ demo-macos-run-swiftui:
 clean:
 	rm -rf .build
 	rm -rf ../../build/apple-macos
+	rm -rf ../../build/apple-ios-device
+	rm -rf ../../build/apple-ios-simulator
+	rm -rf ../../build/apple-macos-x86_64
+	rm -rf ../../build/apple-macos-universal
+	rm -rf binaries/SweetEditorCoreIOS.xcframework
+	rm -rf binaries/SweetEditorCoreOSX.xcframework
+	rm -rf binaries/SweetNativeCoreIOS.xcframework
+	rm -rf binaries/SweetNativeCoreOSX.xcframework
 	rm -rf binaries/SweetNativeCore.xcframework

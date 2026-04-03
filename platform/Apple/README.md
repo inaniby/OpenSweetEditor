@@ -12,7 +12,7 @@ This directory is the Apple SPM workspace root.
 ## Local commands
 
 - `make all` runs native prebuild + `swift build` + `swift test`
-- `make native` builds `binaries/SweetNativeCore.xcframework`
+- `make native` builds `binaries/SweetEditorCoreIOS.xcframework` and `binaries/SweetEditorCoreOSX.xcframework`
 - `make native-if-needed` only rebuilds native when inputs changed
 - `make build` builds SPM targets
 - `make test` runs SPM tests
@@ -23,8 +23,8 @@ This directory is the Apple SPM workspace root.
 
 ## Native artifact layout
 
-- `platform/Apple/binaries/SweetNativeCore.xcframework` is the only packaged binary artifact consumed by `Package.swift`.
-- The XCFramework now contains dynamic `SweetNativeCore.framework` slices for macOS, iOS device (`arm64`), and iOS simulator (`arm64`).
+- `platform/Apple/binaries/SweetEditorCoreIOS.xcframework` and `platform/Apple/binaries/SweetEditorCoreOSX.xcframework` are the packaged binary artifacts consumed by `Package.swift`.
+- The XCFrameworks contain dynamic `SweetEditorCore.framework` slices for macOS, iOS device (`arm64`), and iOS simulator (`arm64`).
 - Intermediate build outputs remain under `build/apple-*`. Those build directories may contain the underlying dynamic-library binaries used by the framework bundles, but only the XCFramework in `binaries/` is treated as a stable distributable artifact.
 
 ### Consumer note

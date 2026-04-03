@@ -13,12 +13,12 @@ let package = Package(
     ],
     targets: [
         .binaryTarget(
-            name: "SweetNativeCoreIOS",
-            path: "binaries/SweetNativeCoreIOS.xcframework"
+            name: "SweetEditorCoreIOS",
+            path: "binaries/SweetEditorCoreIOS.xcframework"
         ),
         .binaryTarget(
-            name: "SweetNativeCoreOSX",
-            path: "binaries/SweetNativeCoreOSX.xcframework"
+            name: "SweetEditorCoreOSX",
+            path: "binaries/SweetEditorCoreOSX.xcframework"
         ),
         .target(
             name: "SweetEditorBridge",
@@ -30,14 +30,14 @@ let package = Package(
         ),
         .target(
             name: "SweetEditoriOS",
-            dependencies: ["SweetEditorCoreInternal", "SweetNativeCoreIOS"],
+            dependencies: ["SweetEditorCoreInternal", "SweetEditorCoreIOS"],
             swiftSettings: [
                 .unsafeFlags(["-Xfrontend", "-disable-access-control"]),
             ]
         ),
         .target(
             name: "SweetEditorMacOS",
-            dependencies: ["SweetEditorCoreInternal", "SweetNativeCoreOSX"],
+            dependencies: ["SweetEditorCoreInternal", "SweetEditorCoreOSX"],
             swiftSettings: [
                 .unsafeFlags(["-Xfrontend", "-disable-access-control"]),
             ]

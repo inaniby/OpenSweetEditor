@@ -56,8 +56,8 @@ set -- "${POSITIONAL_ARGS[@]}"
 
 TARGET_NAME=sweeteditor
 WASM_TARGET_NAME=libsweeteditor
-APPLE_XCFRAMEWORK_IOS="SweetNativeCoreIOS.xcframework"
-APPLE_XCFRAMEWORK_OSX="SweetNativeCoreOSX.xcframework"
+APPLE_XCFRAMEWORK_IOS="SweetEditorCoreIOS.xcframework"
+APPLE_XCFRAMEWORK_OSX="SweetEditorCoreOSX.xcframework"
 echo "============================= Start building: $PLATFORM ============================="
 
 function resolve_android_strip_tool() {
@@ -125,14 +125,14 @@ function copy_apple_dylib() {
   fi
 
   local framework_candidates=(
-    "$build_dir/lib/Release/SweetNativeCore.framework/SweetNativeCore"
-    "$build_dir/lib/Release/SweetNativeCore.framework/Versions/A/SweetNativeCore"
-    "$build_dir/lib/SweetNativeCore.framework/SweetNativeCore"
-    "$build_dir/lib/SweetNativeCore.framework/Versions/A/SweetNativeCore"
-    "$build_dir/Release/SweetNativeCore.framework/SweetNativeCore"
-    "$build_dir/Release/SweetNativeCore.framework/Versions/A/SweetNativeCore"
-    "$build_dir/Release-iphoneos/SweetNativeCore.framework/SweetNativeCore"
-    "$build_dir/Release-iphonesimulator/SweetNativeCore.framework/SweetNativeCore"
+    "$build_dir/lib/Release/SweetEditorCore.framework/SweetEditorCore"
+    "$build_dir/lib/Release/SweetEditorCore.framework/Versions/A/SweetEditorCore"
+    "$build_dir/lib/SweetEditorCore.framework/SweetEditorCore"
+    "$build_dir/lib/SweetEditorCore.framework/Versions/A/SweetEditorCore"
+    "$build_dir/Release/SweetEditorCore.framework/SweetEditorCore"
+    "$build_dir/Release/SweetEditorCore.framework/Versions/A/SweetEditorCore"
+    "$build_dir/Release-iphoneos/SweetEditorCore.framework/SweetEditorCore"
+    "$build_dir/Release-iphonesimulator/SweetEditorCore.framework/SweetEditorCore"
   )
 
   for framework_binary_path in "${framework_candidates[@]}"; do
@@ -142,7 +142,7 @@ function copy_apple_dylib() {
     fi
   done
 
-  framework_binary_path="$(find "$build_dir" -type f \( -path "*SweetNativeCore.framework/SweetNativeCore" -o -path "*SweetNativeCore.framework/Versions/A/SweetNativeCore" \) | head -n 1 || true)"
+  framework_binary_path="$(find "$build_dir" -type f \( -path "*SweetEditorCore.framework/SweetEditorCore" -o -path "*SweetEditorCore.framework/Versions/A/SweetEditorCore" \) | head -n 1 || true)"
   if [ -n "$framework_binary_path" ]; then
     cp -f "$framework_binary_path" "$dest_dir/libsweeteditor.dylib"
     return 0

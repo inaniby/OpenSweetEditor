@@ -6,6 +6,10 @@ let package = Package(
     platforms: [
         .macOS(.v14),
     ],
+    products: [
+        .executable(name: "SweetEditorMacDemo", targets: ["SweetEditorMacDemo"]),
+        .executable(name: "SweetEditorMacDemoSwiftUI", targets: ["SweetEditorMacDemoSwiftUI"]),
+    ],
     dependencies: [
         // The demo imports the SDK package that lives one level up.
         .package(name: "Apple", path: ".."),
