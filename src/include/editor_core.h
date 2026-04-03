@@ -311,6 +311,10 @@ namespace NS_SWEETEDITOR {
     /// Get current auto indent mode
     AutoIndentMode getAutoIndentMode() const;
 
+    /// Set backspace unindent behavior
+    /// @param enabled true = backspace on leading whitespace unindents or merges blank line
+    void setBackspaceUnindent(bool enabled);
+
     /// Insert VSCode snippet template and enter linked editing mode (helper method)
     /// @param snippet_template VSCode snippet syntax template
     /// @return Exact change info (changes from inserting template text)

@@ -1140,6 +1140,13 @@ class SweetEditorCore {
         }
     }
 
+    /// Sets backspace unindent behavior.
+    func setBackspaceUnindent(_ enabled: Bool) {
+        performCoreCall {
+            editor_set_backspace_unindent(handle, enabled ? 1 : 0)
+        }
+    }
+
     struct ScrollbarConfig {
         enum ScrollbarMode: Int32 {
             case ALWAYS = 0

@@ -216,6 +216,11 @@ class EditorSession implements EditorSettingsHost {
   }
 
   @override
+  void applyBackspaceUnindent(bool enabled) {
+    _editorCore?.setBackspaceUnindent(enabled);
+  }
+
+  @override
   void applyReadOnly(bool readOnly) {
     _editorCore?.setReadOnly(readOnly);
   }

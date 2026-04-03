@@ -16,6 +16,7 @@ abstract class EditorSettingsHost {
   void applyGutterVisible(bool visible);
   void applyCurrentLineRenderMode(core.CurrentLineRenderMode mode);
   void applyAutoIndentMode(core.AutoIndentMode mode);
+  void applyBackspaceUnindent(bool enabled);
   void applyReadOnly(bool readOnly);
   void applyCompositionEnabled(bool enabled);
   void applyMaxGutterIcons(int count);
@@ -41,6 +42,7 @@ class EditorSettings {
   core.CurrentLineRenderMode _currentLineRenderMode =
       core.CurrentLineRenderMode.background;
   core.AutoIndentMode _autoIndentMode = core.AutoIndentMode.none;
+  bool _backspaceUnindent = true;
   bool _readOnly = false;
   bool _compositionEnabled = false;
   int _maxGutterIcons = 0;
@@ -191,6 +193,13 @@ class EditorSettings {
 
   core.AutoIndentMode getAutoIndentMode() => _autoIndentMode;
 
+  void setBackspaceUnindent(bool enabled) {
+    _backspaceUnindent = enabled;
+    _host?.applyBackspaceUnindent(enabled);
+  }
+
+  bool isBackspaceUnindent() => _backspaceUnindent;
+
   void setReadOnly(bool readOnly) {
     _readOnly = readOnly;
     _host?.applyReadOnly(readOnly);
@@ -247,6 +256,7 @@ class EditorSettings {
     host.applyGutterVisible(_gutterVisible);
     host.applyCurrentLineRenderMode(_currentLineRenderMode);
     host.applyAutoIndentMode(_autoIndentMode);
+    host.applyBackspaceUnindent(_backspaceUnindent);
     host.applyReadOnly(_readOnly);
     host.applyCompositionEnabled(_compositionEnabled);
     host.applyMaxGutterIcons(_maxGutterIcons);

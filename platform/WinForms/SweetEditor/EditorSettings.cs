@@ -20,6 +20,7 @@ namespace SweetEditor {
 		private bool gutterVisible = true;
 		private CurrentLineRenderMode currentLineRenderMode = CurrentLineRenderMode.BACKGROUND;
 		private AutoIndentMode autoIndentMode = AutoIndentMode.NONE;
+		private bool backspaceUnindent = true;
 		private bool readOnly = false;
 		private bool compositionEnabled = true;
 		private int maxGutterIcons = 0;
@@ -132,6 +133,15 @@ namespace SweetEditor {
 
 		/// <summary>Gets auto indent mode.</summary>
 		public AutoIndentMode GetAutoIndentMode() => autoIndentMode;
+
+		/// <summary>Sets backspace unindent behavior.</summary>
+		public void SetBackspaceUnindent(bool enabled) {
+			backspaceUnindent = enabled;
+			editor.EditorCoreInternal.SetBackspaceUnindent(enabled);
+		}
+
+		/// <summary>Gets backspace unindent behavior.</summary>
+		public bool IsBackspaceUnindent() => backspaceUnindent;
 
 		/// <summary>Sets read-only mode.</summary>
 		public void SetReadOnly(bool readOnly) {

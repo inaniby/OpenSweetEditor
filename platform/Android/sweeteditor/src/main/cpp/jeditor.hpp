@@ -461,6 +461,10 @@ public:
     return static_cast<jint>(editor_get_auto_indent_mode(static_cast<intptr_t>(handle)));
   }
 
+  static void setBackspaceUnindent(jlong handle, jboolean enabled) {
+    editor_set_backspace_unindent(static_cast<intptr_t>(handle), enabled ? 1 : 0);
+  }
+
   static void setHandleConfig(jlong handle,
       jfloat startLeft, jfloat startTop, jfloat startRight, jfloat startBottom,
       jfloat endLeft, jfloat endTop, jfloat endRight, jfloat endBottom) {
@@ -967,6 +971,7 @@ public:
       {"nativeIsReadOnly", "(J)Z", (void*) isReadOnly},
       {"nativeSetAutoIndentMode", "(JI)V", (void*) setAutoIndentMode},
       {"nativeGetAutoIndentMode", "(J)I", (void*) getAutoIndentMode},
+      {"nativeSetBackspaceUnindent", "(JZ)V", (void*) setBackspaceUnindent},
       {"nativeSetHandleConfig", "(JFFFFFFFF)V", (void*) setHandleConfig},
       {"nativeSetScrollbarConfig", "(JFFFIZIII)V", (void*) setScrollbarConfig},
       {"nativeGetPositionRect", "(JII)[F", (void*) getPositionRect},

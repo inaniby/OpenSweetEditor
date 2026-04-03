@@ -925,6 +925,11 @@ external void editor_set_auto_indent_mode(int editor_handle, int mode);
 @ffi.Native<ffi.Int Function(ffi.IntPtr)>(assetId: _sweeteditorAssetId)
 external int editor_get_auto_indent_mode(int editor_handle);
 
+/// Set backspace unindent behavior
+/// @param enabled 1=enabled, 0=disabled
+@ffi.Native<ffi.Void Function(ffi.IntPtr, ffi.Int)>(assetId: _sweeteditorAssetId)
+external void editor_set_backspace_unindent(int editor_handle, int enabled);
+
 /// Scroll to specified line
 /// @param line Line number(0-based)
 /// @param behavior Scroll behavior(0=GOTO_TOP, 1=GOTO_CENTER, 2=GOTO_BOTTOM)

@@ -283,6 +283,8 @@ controller.applyTheme(EditorTheme.dark());
 | 是否只读 | `isReadOnly()` | property: `isReadOnly` / `IsReadOnly { get; }` |
 | 设置自动缩进 | `setAutoIndentMode(mode)` | — |
 | 获取自动缩进 | `getAutoIndentMode()` | property: `autoIndentMode` / `AutoIndentMode { get; }` |
+| 设置退格反缩进 | `setBackspaceUnindent(enabled)` | — |
+| 是否退格反缩进 | `isBackspaceUnindent()` | property: `backspaceUnindent` / `IsBackspaceUnindent { get; }` |
 | **导航 / 滚动** | | |
 | 滚动到行 | `scrollToLine(line, behavior)` | — |
 | 跳转到位置 | `gotoPosition(line, col)` | — |
@@ -966,6 +968,7 @@ interface SelectionMenuListener {
 | `gutterVisible` | boolean | true | `setGutterVisible(visible)` | `isGutterVisible()` | `relayout` | gutter 区域是否可见（false=隐藏行号、图标、折叠箭头） |
 | `currentLineRenderMode` | CurrentLineRenderMode | BACKGROUND | `setCurrentLineRenderMode(mode)` | `getCurrentLineRenderMode()` | `repaint` | 当前行渲染模式 |
 | `autoIndentMode` | AutoIndentMode | KEEP_INDENT | `setAutoIndentMode(mode)` | `getAutoIndentMode()` | `runtime-transition` | 自动缩进模式 |
+| `backspaceUnindent` | boolean | true | `setBackspaceUnindent(enabled)` | `isBackspaceUnindent()` | `runtime-transition` | 退格键在行首是否按缩进级别删除空白 |
 | `readOnly` | boolean | false | `setReadOnly(readOnly)` | `isReadOnly()` | `runtime-transition` | 只读模式，阻止所有编辑操作 |
 | `maxGutterIcons` | int | 0 | `setMaxGutterIcons(count)` | `getMaxGutterIcons()` | `relayout` | gutter 图标最大数量 |
 | `decorationScrollRefreshMinIntervalMs` | long | 16 | `setDecorationScrollRefreshMinIntervalMs(ms)` | `getDecorationScrollRefreshMinIntervalMs()` | `runtime-transition` | 装饰滚动刷新最小间隔（毫秒） |

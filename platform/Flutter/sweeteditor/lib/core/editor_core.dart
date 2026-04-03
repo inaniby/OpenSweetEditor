@@ -454,6 +454,11 @@ class EditorCore {
     );
   }
 
+  void setBackspaceUnindent(bool enabled) {
+    _ensureOpen();
+    bindings.editor_set_backspace_unindent(_handle, enabled ? 1 : 0);
+  }
+
   void setHandleConfig(HandleConfig config) {
     _ensureOpen();
     bindings.editor_set_handle_config(

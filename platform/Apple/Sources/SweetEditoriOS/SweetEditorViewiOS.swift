@@ -545,6 +545,7 @@ class IOSEditorView: UIView, UIKeyInput, UITextInput, UITextInputTraits, UIPoint
         editorCore.setShowSplitLine(settings.showSplitLine)
         editorCore.setCurrentLineRenderMode(settings.currentLineRenderMode.rawValue)
         editorCore.setAutoIndentMode(SweetEditorCore.AutoIndentMode(settings.autoIndentMode))
+        editorCore.setBackspaceUnindent(settings.backspaceUnindent)
         editorCore.setReadOnly(settings.readOnly)
         editorCore.setMaxGutterIcons(settings.maxGutterIcons)
         rebuildAndRedraw()

@@ -27,6 +27,7 @@ public class EditorSettings {
     private boolean mGutterSticky = true;
     private CurrentLineRenderMode mCurrentLineRenderMode = CurrentLineRenderMode.BACKGROUND;
     private AutoIndentMode mAutoIndentMode = AutoIndentMode.NONE;
+    private boolean mBackspaceUnindent = true;
     private boolean mReadOnly = false;
     private boolean mCompositionEnabled = true;
     private int mMaxGutterIcons = 0;
@@ -159,6 +160,15 @@ public class EditorSettings {
 
     public AutoIndentMode getAutoIndentMode() {
         return mAutoIndentMode;
+    }
+
+    public void setBackspaceUnindent(boolean enabled) {
+        mBackspaceUnindent = enabled;
+        mEditor.getEditorCore().setBackspaceUnindent(enabled);
+    }
+
+    public boolean isBackspaceUnindent() {
+        return mBackspaceUnindent;
     }
 
     public void setReadOnly(boolean readOnly) {

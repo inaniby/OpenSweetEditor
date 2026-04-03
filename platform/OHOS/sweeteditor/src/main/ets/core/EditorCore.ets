@@ -575,6 +575,10 @@ export class EditorCore {
     return native.editorGetAutoIndentMode(this.handle);
   }
 
+  setBackspaceUnindent(enabled: boolean): void {
+    native.editorSetBackspaceUnindent(this.handle, enabled ? 1 : 0);
+  }
+
   // ==================== Handle Config ====================
 
   setHandleConfig(config: HandleConfig): void {

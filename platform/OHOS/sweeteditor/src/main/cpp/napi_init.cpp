@@ -102,6 +102,7 @@ static napi_value Init(napi_env env, napi_value exports)
         // Auto indent
         NAPI_METHOD("editorSetAutoIndentMode", EditorCoreNapi::setAutoIndentMode),
         NAPI_METHOD("editorGetAutoIndentMode", EditorCoreNapi::getAutoIndentMode),
+        NAPI_METHOD("editorSetBackspaceUnindent", EditorCoreNapi::setBackspaceUnindent),
 
         // Handle/scrollbar config
         NAPI_METHOD("editorSetHandleConfig", EditorCoreNapi::setHandleConfig),

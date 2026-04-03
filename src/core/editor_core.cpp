@@ -837,6 +837,64 @@ namespace NS_SWEETEDITOR {
     if (m_caret_.cursor.column > 0) {
       U16String line_text = m_document_->getLineU16Text(m_caret_.cursor.line);
       size_t col = m_caret_.cursor.column;
+
+      if (m_settings_.backspace_unindent && col > 0) {
+        bool prefix_all_whitespace = true;
+        for (size_t i = 0; i < col; ++i) {
+          if (line_text[i] != u' ' && line_text[i] != u'\t') {
+            prefix_all_whitespace = false;
+            break;
+          }
+        }
+        if (prefix_all_whitespace) {
+          bool entire_line_blank = true;
+          for (size_t i = col; i < line_text.size(); ++i) {
+            if (line_text[i] != u' ' && line_text[i] != u'\t') {
+              entire_line_blank = false;
+              break;
+            }
+          }
+          if (entire_line_blank && m_caret_.cursor.line > 0) {
+            size_t prev_line = m_caret_.cursor.line - 1;
+            uint32_t prev_cols = m_document_->getLineColumns(prev_line);
+            TextRange del_range = {{prev_line, prev_cols}, {m_caret_.cursor.line, (uint32_t)line_text.size()}};
+            auto result = applyEdit(del_range, "");
+            LOGD("EditorCore::backspace, cursor = %s", m_caret_.cursor.dump().c_str());
+            return result;
+          }
+          uint32_t tab_size = m_text_layout_->getTabSize();
+          uint32_t visual_col = 0;
+          for (size_t i = 0; i < col; ++i) {
+            if (line_text[i] == u'\t') {
+              visual_col = (visual_col / tab_size + 1) * tab_size;
+            } else {
+              visual_col++;
+            }
+          }
+          uint32_t target_visual = (visual_col > 0) ? ((visual_col - 1) / tab_size) * tab_size : 0;
+          uint32_t cur_visual = 0;
+          size_t target_col = 0;
+          for (size_t i = 0; i < col; ++i) {
+            if (cur_visual >= target_visual) {
+              target_col = i;
+              break;
+            }
+            if (line_text[i] == u'\t') {
+              cur_visual = (cur_visual / tab_size + 1) * tab_size;
+            } else {
+              cur_visual++;
+            }
+            target_col = i + 1;
+          }
+          if (target_col < col) {
+            TextRange del_range = {{m_caret_.cursor.line, (uint32_t)target_col}, {m_caret_.cursor.line, (uint32_t)col}};
+            auto result = applyEdit(del_range, "");
+            LOGD("EditorCore::backspace, cursor = %s", m_caret_.cursor.dump().c_str());
+            return result;
+          }
+        }
+      }
+
       size_t del_count = 1;
       if (col >= 2) {
         U16Char low = line_text[col - 1];
@@ -1731,6 +1789,11 @@ namespace NS_SWEETEDITOR {
 
   AutoIndentMode EditorCore::getAutoIndentMode() const {
     return m_settings_.auto_indent_mode;
+  }
+
+  void EditorCore::setBackspaceUnindent(bool enabled) {
+    m_settings_.backspace_unindent = enabled;
+    LOGD("EditorCore::setBackspaceUnindent, enabled = %s", enabled ? "true" : "false");
   }
   TextEditResult EditorCore::insertSnippet(const U8String& snippet_template) {
     if (m_document_ == nullptr || snippet_template.empty() || m_settings_.read_only) return {};

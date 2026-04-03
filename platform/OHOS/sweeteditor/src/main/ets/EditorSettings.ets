@@ -16,6 +16,7 @@ export class EditorSettings {
   private gutterVisible: boolean = true;
   private currentLineRenderMode: CurrentLineRenderMode = CurrentLineRenderMode.BACKGROUND;
   private autoIndentMode: AutoIndentMode = AutoIndentMode.NONE;
+  private backspaceUnindent: boolean = true;
   private readOnly: boolean = false;
   private compositionEnabled: boolean = true;
   private maxGutterIcons: number = 0;
@@ -180,6 +181,19 @@ export class EditorSettings {
 
   getAutoIndentMode(): AutoIndentMode {
     return this.autoIndentMode;
+  }
+
+  setBackspaceUnindent(enabled: boolean): void {
+    this.backspaceUnindent = enabled;
+    const core = this.editor.getEditorCore();
+    if (!core) {
+      return;
+    }
+    core.setBackspaceUnindent(enabled);
+  }
+
+  isBackspaceUnindent(): boolean {
+    return this.backspaceUnindent;
   }
 
   setReadOnly(readOnly: boolean): void {

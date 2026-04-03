@@ -364,6 +364,9 @@ public final class EditorNative {
     private static final MethodHandle SET_AUTO_INDENT_MODE = downcall("editor_set_auto_indent_mode",
             FunctionDescriptor.ofVoid(ValueLayout.JAVA_LONG, ValueLayout.JAVA_INT));
 
+    private static final MethodHandle SET_BACKSPACE_UNINDENT = downcall("editor_set_backspace_unindent",
+            FunctionDescriptor.ofVoid(ValueLayout.JAVA_LONG, ValueLayout.JAVA_INT));
+
     private static final MethodHandle GET_POSITION_RECT = downcall("editor_get_position_rect",
             FunctionDescriptor.ofVoid(ValueLayout.JAVA_LONG, ValueLayout.JAVA_LONG, ValueLayout.JAVA_LONG,
                     ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS));
@@ -971,6 +974,12 @@ public final class EditorNative {
 
     public static int getAutoIndentMode(long handle) {
         return invokeValue(() -> (int) GET_AUTO_INDENT_MODE.invokeExact(handle));
+    }
+
+    public static void setBackspaceUnindent(long handle, int enabled) {
+        invokeVoid(() -> {
+            SET_BACKSPACE_UNINDENT.invokeExact(handle, enabled);
+        });
     }
 
     // ===================== Handle Config =====================

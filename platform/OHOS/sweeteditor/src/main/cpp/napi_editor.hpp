@@ -698,6 +698,17 @@ public:
     return napi_create_int32_value(env, editor_get_auto_indent_mode(static_cast<intptr_t>(napi_get_handle(env, args[0]))));
   }
 
+  static napi_value setBackspaceUnindent(napi_env env, napi_callback_info info) {
+    size_t argc = 2;
+    napi_value args[2];
+    napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
+    editor_set_backspace_unindent(static_cast<intptr_t>(napi_get_handle(env, args[0])),
+                                  napi_get_int32(env, args[1]));
+    napi_value undefined;
+    napi_get_undefined(env, &undefined);
+    return undefined;
+  }
+
   static napi_value setHandleConfig(napi_env env, napi_callback_info info) {
     size_t argc = 9;
     napi_value args[9];

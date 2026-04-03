@@ -1516,6 +1516,9 @@ namespace SweetEditor {
 		[DllImport(LibraryName, EntryPoint = "editor_get_auto_indent_mode", CallingConvention = CallingConvention.Cdecl)]
 		internal static extern int GetAutoIndentMode(IntPtr handle);
 
+		[DllImport(LibraryName, EntryPoint = "editor_set_backspace_unindent", CallingConvention = CallingConvention.Cdecl)]
+		internal static extern void SetBackspaceUnindent(IntPtr handle, int enabled);
+
 		[DllImport(LibraryName, EntryPoint = "editor_set_handle_config", CallingConvention = CallingConvention.Cdecl)]
 		internal static extern void SetHandleConfig(IntPtr handle,
 			float startLeft, float startTop, float startRight, float startBottom,
@@ -2213,6 +2216,11 @@ namespace SweetEditor {
 		/// <returns>Auto-indent mode value (0=NONE, 1=KEEP_INDENT).</returns>
 		public int GetAutoIndentMode() {
 			return NativeMethods.GetAutoIndentMode(nativeHandle);
+		}
+
+		/// <summary>Sets backspace unindent behavior.</summary>
+		public void SetBackspaceUnindent(bool enabled) {
+			NativeMethods.SetBackspaceUnindent(nativeHandle, enabled ? 1 : 0);
 		}
 
 		#endregion

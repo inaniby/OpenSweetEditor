@@ -283,6 +283,8 @@ controller.applyTheme(EditorTheme.dark());
 | Is read-only | `isReadOnly()` | property: `isReadOnly` / `IsReadOnly { get; }` |
 | Set auto indent mode | `setAutoIndentMode(mode)` | — |
 | Get auto indent mode | `getAutoIndentMode()` | property: `autoIndentMode` / `AutoIndentMode { get; }` |
+| Set backspace unindent | `setBackspaceUnindent(enabled)` | — |
+| Is backspace unindent | `isBackspaceUnindent()` | property: `backspaceUnindent` / `IsBackspaceUnindent { get; }` |
 | **Navigation / Scroll** | | |
 | Scroll to line | `scrollToLine(line, behavior)` | — |
 | Go to position | `gotoPosition(line, col)` | — |
@@ -965,6 +967,7 @@ All platforms MUST expose the following settings through getter/setter pairs (or
 | `gutterVisible` | boolean | true | `setGutterVisible(visible)` | `isGutterVisible()` | `relayout` | Whether gutter area is visible (false=hide line numbers, icons, fold arrows) |
 | `currentLineRenderMode` | CurrentLineRenderMode | BACKGROUND | `setCurrentLineRenderMode(mode)` | `getCurrentLineRenderMode()` | `repaint` | Current line render mode |
 | `autoIndentMode` | AutoIndentMode | KEEP_INDENT | `setAutoIndentMode(mode)` | `getAutoIndentMode()` | `runtime-transition` | Auto indent mode |
+| `backspaceUnindent` | boolean | true | `setBackspaceUnindent(enabled)` | `isBackspaceUnindent()` | `runtime-transition` | Whether backspace key unindents at line start |
 | `readOnly` | boolean | false | `setReadOnly(readOnly)` | `isReadOnly()` | `runtime-transition` | Read-only mode, blocks all edit operations |
 | `maxGutterIcons` | int | 0 | `setMaxGutterIcons(count)` | `getMaxGutterIcons()` | `relayout` | Maximum gutter icon count |
 | `decorationScrollRefreshMinIntervalMs` | long | 16 | `setDecorationScrollRefreshMinIntervalMs(ms)` | `getDecorationScrollRefreshMinIntervalMs()` | `runtime-transition` | Decoration scroll refresh minimum interval (ms) |

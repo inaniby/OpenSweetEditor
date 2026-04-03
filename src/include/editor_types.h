@@ -88,6 +88,9 @@ namespace NS_SWEETEDITOR {
     bool read_only {false};
     /// Auto indent mode; default keeps previous line indent
     AutoIndentMode auto_indent_mode {AutoIndentMode::KEEP_INDENT};
+    /// When true, backspace on leading whitespace unindents to the previous tab stop,
+    /// or merges the line upward if the entire line is blank
+    bool backspace_unindent {true};
     /// Whether to enable IME composition; if off, compositionUpdate falls back to direct insertText
     bool enable_composition {false};
     /// Selection handle configuration

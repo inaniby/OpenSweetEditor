@@ -769,7 +769,17 @@ public class EditorCore {
         return nativeGetAutoIndentMode(mNativeHandle);
     }
 
-    // ==================== Handle Config ====================
+    /**
+     * Sets backspace unindent behavior.
+     *
+     * @param enabled true=enabled, false=disabled
+     */
+    public void setBackspaceUnindent(boolean enabled) {
+        if (mNativeHandle == 0) return;
+        nativeSetBackspaceUnindent(mNativeHandle, enabled);
+    }
+
+    // ==================== Handle Config ==
 
     /**
      * Sets the selection handle appearance and touch configuration.
@@ -2005,6 +2015,9 @@ public class EditorCore {
 
     @CriticalNative
     private static native int nativeGetAutoIndentMode(long handle);
+
+    @CriticalNative
+    private static native void nativeSetBackspaceUnindent(long handle, boolean enabled);
 
     @CriticalNative
     private static native void nativeSetHandleConfig(long handle,

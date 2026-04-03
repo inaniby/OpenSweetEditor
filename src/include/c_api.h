@@ -628,6 +628,10 @@ EDITOR_API void editor_set_auto_indent_mode(intptr_t editor_handle, int mode);
 /// @return 0=NONE, 1=KEEP_INDENT
 EDITOR_API int editor_get_auto_indent_mode(intptr_t editor_handle);
 
+/// Set backspace unindent behavior
+/// @param enabled 1=enabled, 0=disabled
+EDITOR_API void editor_set_backspace_unindent(intptr_t editor_handle, int enabled);
+
 #pragma endregion
 
 #pragma region [Navigation, Styles & Decorations]

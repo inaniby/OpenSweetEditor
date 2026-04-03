@@ -414,6 +414,8 @@ public class EditorCore implements AutoCloseable {
     public void setAutoIndentMode(int mode) { EditorNative.setAutoIndentMode(nativeHandle, mode); }
     public int getAutoIndentMode() { return EditorNative.getAutoIndentMode(nativeHandle); }
 
+    public void setBackspaceUnindent(boolean enabled) { EditorNative.setBackspaceUnindent(nativeHandle, enabled ? 1 : 0); }
+
     // ===================== Handle Config =====================
 
     /** Selection handle hit-test configuration */
