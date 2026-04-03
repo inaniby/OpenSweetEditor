@@ -146,6 +146,7 @@ export const editorClearGuides: (handle: number) => void;
 
 // Bracket pairs
 export const editorSetBracketPairs: (handle: number, openChars: number[], closeChars: number[]) => void;
+export const editorSetAutoClosingPairs: (handle: number, openChars: number[], closeChars: number[]) => void;
 export const editorSetMatchedBrackets: (handle: number, openLine: number, openCol: number, closeLine: number, closeCol: number) => void;
 export const editorClearMatchedBrackets: (handle: number) => void;
 

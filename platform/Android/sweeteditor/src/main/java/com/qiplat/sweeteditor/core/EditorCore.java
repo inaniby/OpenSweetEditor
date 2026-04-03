@@ -1293,6 +1293,16 @@ public class EditorCore {
     }
 
     /**
+     * Sets auto-closing pairs for automatic bracket completion.
+     * @param openChars Open bracket character code array
+     * @param closeChars Close bracket character code array
+     */
+    public void setAutoClosingPairs(int[] openChars, int[] closeChars) {
+        if (mNativeHandle == 0) return;
+        nativeSetAutoClosingPairs(mNativeHandle, openChars, closeChars);
+    }
+
+    /**
      * Sets exact bracket match result externally (overrides built-in character scan).
      */
     public void setMatchedBrackets(int openLine, int openCol, int closeLine, int closeCol) {
@@ -2106,6 +2116,9 @@ public class EditorCore {
 
     @FastNative
     private static native void nativeSetBracketPairs(long handle, int[] openChars, int[] closeChars);
+
+    @FastNative
+    private static native void nativeSetAutoClosingPairs(long handle, int[] openChars, int[] closeChars);
 
     @CriticalNative
     private static native void nativeSetMatchedBrackets(long handle, int openLine, int openCol, int closeLine, int closeCol);

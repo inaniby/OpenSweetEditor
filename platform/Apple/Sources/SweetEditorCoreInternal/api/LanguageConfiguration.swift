@@ -6,6 +6,8 @@ import Foundation
 /// When set on SweetEditorCore, bracket pairs are automatically synced to Core via `setBracketPairs`.
 public struct LanguageConfiguration {
 
+    public static let defaultTabSize = 4
+
     /// Bracket pair.
     public struct BracketPair {
         public let open: String
@@ -31,11 +33,11 @@ public struct LanguageConfiguration {
     /// Language identifier (for example: "swift", "java", "cpp").
     public let languageId: String
 
-    /// Bracket pair list (synced to Core `setBracketPairs`).
-    public let brackets: [BracketPair]
+    /// Bracket pair list (synced to Core `setBracketPairs`). nil means not configured.
+    public let brackets: [BracketPair]?
 
-    /// Auto-closing pair list (used by platform-side auto-closing logic).
-    public let autoClosingPairs: [BracketPair]
+    /// Auto-closing pair list (used by platform-side auto-closing logic). nil means not configured.
+    public let autoClosingPairs: [BracketPair]?
 
     /// Line-comment prefix (for example: "//").
     public let lineComment: String?
@@ -50,8 +52,8 @@ public struct LanguageConfiguration {
     public let insertSpaces: Bool?
 
     public init(languageId: String,
-                brackets: [BracketPair] = [],
-                autoClosingPairs: [BracketPair] = [],
+                brackets: [BracketPair]? = nil,
+                autoClosingPairs: [BracketPair]? = nil,
                 lineComment: String? = nil,
                 blockComment: BlockComment? = nil,
                 tabSize: Int? = nil,

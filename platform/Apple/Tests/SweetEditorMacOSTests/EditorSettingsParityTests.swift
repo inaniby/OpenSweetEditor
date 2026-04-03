@@ -103,8 +103,8 @@ final class EditorSettingsParityTests: XCTestCase {
         )
 
         XCTAssertEqual(config.languageId, "swift")
-        XCTAssertEqual(config.brackets.count, 1)
-        XCTAssertEqual(config.autoClosingPairs.count, 1)
+        XCTAssertEqual(config.brackets?.count, 1)
+        XCTAssertEqual(config.autoClosingPairs?.count, 1)
         XCTAssertEqual(config.lineComment, "//")
         XCTAssertEqual(config.blockComment?.open, "/*")
         XCTAssertEqual(config.blockComment?.close, "*/")

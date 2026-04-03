@@ -9,12 +9,10 @@
 #include <nlohmann/json.hpp>
 
 namespace NS_SWEETEDITOR {
-  /// Bracket pair definitions (for match highlight + TODO: auto close/surround selection)
+  /// Bracket pair definition (open/close character pair)
   struct BracketPair {
     char32_t open;            ///< Opening bracket char, like '('
     char32_t close;           ///< Closing bracket char, like ')'
-    bool auto_close {true};   ///< Auto insert closing char when typing open char (reserved)
-    bool surround {true};     ///< Use this pair to wrap selected text (reserved)
   };
 
   /// Construction-time immutable options for EditorCore

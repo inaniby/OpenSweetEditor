@@ -458,12 +458,17 @@ class IOSEditorView: UIView, UIKeyInput, UITextInput, UITextInputTraits, UIPoint
     /// Sets language configuration and syncs bracket pairs to the Core layer.
     func setLanguageConfiguration(_ config: LanguageConfiguration?) {
         self.languageConfiguration = config
-        if let config = config {
-            let opens = config.brackets.map { Int32(($0.open.unicodeScalars.first?.value ?? 0)) }
-            let closes = config.brackets.map { Int32(($0.close.unicodeScalars.first?.value ?? 0)) }
-            if !opens.isEmpty {
-                editorCore.setBracketPairs(openChars: opens, closeChars: closes)
-            }
+        guard let config = config else { return }
+
+        if let brackets = config.brackets {
+            let opens = brackets.map { Int32(($0.open.unicodeScalars.first?.value ?? 0)) }
+            let closes = brackets.map { Int32(($0.close.unicodeScalars.first?.value ?? 0)) }
+            editorCore.setBracketPairs(openChars: opens, closeChars: closes)
+        }
+        if let acPairs = config.autoClosingPairs {
+            let acOpens = acPairs.map { Int32(($0.open.unicodeScalars.first?.value ?? 0)) }
+            let acCloses = acPairs.map { Int32(($0.close.unicodeScalars.first?.value ?? 0)) }
+            editorCore.setAutoClosingPairs(openChars: acOpens, closeChars: acCloses)
         }
     }
 

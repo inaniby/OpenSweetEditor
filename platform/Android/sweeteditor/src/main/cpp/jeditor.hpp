@@ -609,6 +609,19 @@ public:
     env->ReleaseIntArrayElements(closeChars, closes, JNI_ABORT);
   }
 
+  static void setAutoClosingPairs(JNIEnv* env, jclass clazz, jlong handle, jintArray openChars, jintArray closeChars) {
+    if (openChars == nullptr || closeChars == nullptr) return;
+    jsize count = env->GetArrayLength(openChars);
+    jint* opens = env->GetIntArrayElements(openChars, nullptr);
+    jint* closes = env->GetIntArrayElements(closeChars, nullptr);
+    editor_set_auto_closing_pairs(static_cast<intptr_t>(handle),
+                             reinterpret_cast<const uint32_t*>(opens),
+                             reinterpret_cast<const uint32_t*>(closes),
+                             static_cast<size_t>(count));
+    env->ReleaseIntArrayElements(openChars, opens, JNI_ABORT);
+    env->ReleaseIntArrayElements(closeChars, closes, JNI_ABORT);
+  }
+
   static void setMatchedBrackets(jlong handle, jint openLine, jint openCol, jint closeLine, jint closeCol) {
     editor_set_matched_brackets(static_cast<intptr_t>(handle),
                                 static_cast<size_t>(openLine),
@@ -994,6 +1007,7 @@ public:
       {"nativeSetFlowGuides", "(JLjava/nio/ByteBuffer;I)V", (void*) setFlowGuides},
       {"nativeSetSeparatorGuides", "(JLjava/nio/ByteBuffer;I)V", (void*) setSeparatorGuides},
       {"nativeSetBracketPairs", "(J[I[I)V", (void*) setBracketPairs},
+      {"nativeSetAutoClosingPairs", "(J[I[I)V", (void*) setAutoClosingPairs},
       {"nativeSetMatchedBrackets", "(JIIII)V", (void*) setMatchedBrackets},
       {"nativeClearMatchedBrackets", "(J)V", (void*) clearMatchedBrackets},
       {"nativeSetLineDiagnostics", "(JLjava/nio/ByteBuffer;I)V", (void*) setLineDiagnostics},

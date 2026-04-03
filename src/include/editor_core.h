@@ -492,7 +492,11 @@ namespace NS_SWEETEDITOR {
 
     /// Set bracket pair list (override default (){}[])
     /// @param pairs Bracket pair list
-    void setBracketPairs(Vector<BracketPair> pairs);
+    void setBracketPairs(Vector<BracketPair>&& pairs);
+
+    /// Set auto-closing pair list (empty = disable auto-closing)
+    /// @param pairs Auto-closing pair list
+    void setAutoClosingPairs(Vector<BracketPair>&& pairs);
 
     /// Set exact bracket match result from outside (override built-in char scan)
     /// @param open Opening bracket position
@@ -532,10 +536,13 @@ namespace NS_SWEETEDITOR {
 
     /// Bracket pair list (default (){}[])
     Vector<BracketPair> m_bracket_pairs_ {
-      {U'(', U')', true, true},
-      {U'{', U'}', true, true},
-      {U'[', U']', true, true},
+      {U'(', U')'},
+      {U'{', U'}'},
+      {U'[', U']'},
     };
+
+    /// Auto-closing pair list (empty = disabled)
+    Vector<BracketPair> m_auto_closing_pairs_;
 
     /// Exact bracket match positions set from outside
     TextPosition m_external_bracket_open_;

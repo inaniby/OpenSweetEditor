@@ -21,61 +21,24 @@ class BracketPair {
 /// Language configuration describing brackets, comments,
 /// and indentation for a specific programming language.
 class LanguageConfiguration {
-  LanguageConfiguration._({
+  static const int defaultTabSize = 4;
+
+  const LanguageConfiguration({
     required this.languageId,
-    required this.brackets,
-    required this.autoClosingPairs,
-    required this.tabSize,
-    required this.insertSpaces,
+    this.brackets,
+    this.autoClosingPairs,
+    this.tabSize = defaultTabSize,
+    this.insertSpaces = true,
   });
 
   final String languageId;
-  final List<BracketPair> brackets;
-  final List<BracketPair> autoClosingPairs;
+  final List<BracketPair>? brackets;
+  final List<BracketPair>? autoClosingPairs;
   final int tabSize;
   final bool insertSpaces;
-
-  static LanguageConfigurationBuilder builder(String languageId) =>
-      LanguageConfigurationBuilder._(languageId);
 }
 
-class LanguageConfigurationBuilder {
-  LanguageConfigurationBuilder._(this.languageId);
 
-  final String languageId;
-  final List<BracketPair> _brackets = [];
-  final List<BracketPair> _autoClosingPairs = [];
-  int _tabSize = 4;
-  bool _insertSpaces = true;
-
-  LanguageConfigurationBuilder addBracket(String open, String close) {
-    _brackets.add(BracketPair(open: open, close: close));
-    return this;
-  }
-
-  LanguageConfigurationBuilder addAutoClosingPair(String open, String close) {
-    _autoClosingPairs.add(BracketPair(open: open, close: close));
-    return this;
-  }
-
-  LanguageConfigurationBuilder setTabSize(int tabSize) {
-    _tabSize = tabSize;
-    return this;
-  }
-
-  LanguageConfigurationBuilder setInsertSpaces(bool insertSpaces) {
-    _insertSpaces = insertSpaces;
-    return this;
-  }
-
-  LanguageConfiguration build() => LanguageConfiguration._(
-    languageId: languageId,
-    brackets: List.unmodifiable(_brackets),
-    autoClosingPairs: List.unmodifiable(_autoClosingPairs),
-    tabSize: _tabSize,
-    insertSpaces: _insertSpaces,
-  );
-}
 
 /// Editor theme with color definitions and text styles.
 class EditorTheme {

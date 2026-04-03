@@ -835,6 +835,10 @@ export class EditorCore {
     native.editorSetBracketPairs(this.handle, openChars, closeChars);
   }
 
+  setAutoClosingPairs(openChars: number[], closeChars: number[]): void {
+    native.editorSetAutoClosingPairs(this.handle, openChars, closeChars);
+  }
+
   setMatchedBrackets(openLine: number, openCol: number, closeLine: number, closeCol: number): void {
     native.editorSetMatchedBrackets(this.handle, openLine, openCol, closeLine, closeCol);
   }

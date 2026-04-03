@@ -404,6 +404,9 @@ public final class EditorNative {
     private static final MethodHandle SET_BRACKET_PAIRS = downcall("editor_set_bracket_pairs",
             FunctionDescriptor.ofVoid(ValueLayout.JAVA_LONG, ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.JAVA_LONG));
 
+    private static final MethodHandle SET_AUTO_CLOSING_PAIRS = downcall("editor_set_auto_closing_pairs",
+            FunctionDescriptor.ofVoid(ValueLayout.JAVA_LONG, ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.JAVA_LONG));
+
     private static final MethodHandle CLEAR_MATCHED_BRACKETS = downcall("editor_clear_matched_brackets",
             FunctionDescriptor.ofVoid(ValueLayout.JAVA_LONG));
 
@@ -1201,6 +1204,16 @@ public final class EditorNative {
             MemorySegment openSeg = arena.allocateFrom(ValueLayout.JAVA_INT, openChars);
             MemorySegment closeSeg = arena.allocateFrom(ValueLayout.JAVA_INT, closeChars);
             SET_BRACKET_PAIRS.invokeExact(handle, openSeg, closeSeg, (long) openChars.length);
+        } catch (Throwable t) {
+            throw new RuntimeException(t);
+        }
+    }
+
+    public static void setAutoClosingPairs(long handle, int[] openChars, int[] closeChars, Arena arena) {
+        try {
+            MemorySegment openSeg = arena.allocateFrom(ValueLayout.JAVA_INT, openChars);
+            MemorySegment closeSeg = arena.allocateFrom(ValueLayout.JAVA_INT, closeChars);
+            SET_AUTO_CLOSING_PAIRS.invokeExact(handle, openSeg, closeSeg, (long) openChars.length);
         } catch (Throwable t) {
             throw new RuntimeException(t);
         }

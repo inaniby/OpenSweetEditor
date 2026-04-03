@@ -998,6 +998,29 @@ public:
     return undefined;
   }
 
+  static napi_value setAutoClosingPairs(napi_env env, napi_callback_info info) {
+    size_t argc = 3;
+    napi_value args[3];
+    napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
+
+    int64_t handle = napi_get_handle(env, args[0]);
+    uint32_t count = 0;
+    napi_get_array_length(env, args[1], &count);
+
+    std::vector<uint32_t> opens(count), closes(count);
+    for (uint32_t i = 0; i < count; i++) {
+      napi_value elem;
+      napi_get_element(env, args[1], i, &elem);
+      opens[i] = static_cast<uint32_t>(napi_get_int32(env, elem));
+      napi_get_element(env, args[2], i, &elem);
+      closes[i] = static_cast<uint32_t>(napi_get_int32(env, elem));
+    }
+    editor_set_auto_closing_pairs(static_cast<intptr_t>(handle), opens.data(), closes.data(), count);
+    napi_value undefined;
+    napi_get_undefined(env, &undefined);
+    return undefined;
+  }
+
   static napi_value setMatchedBrackets(napi_env env, napi_callback_info info) {
     size_t argc = 5;
     napi_value args[5];

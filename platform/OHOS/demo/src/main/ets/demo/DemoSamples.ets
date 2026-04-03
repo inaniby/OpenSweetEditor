@@ -34,18 +34,14 @@ export function createDemoFileMetadata(fileName: string): DemoFileMetadata {
 }
 
 export function createLanguageConfiguration(fileName: string): LanguageConfiguration {
-  const builder = LanguageConfiguration.builder(resolveLanguageId(fileName))
-    .addBracket('(', ')')
-    .addBracket('[', ']')
-    .addBracket('{', '}')
-    .addAutoClosingPair('(', ')')
-    .addAutoClosingPair('[', ']')
-    .addAutoClosingPair('{', '}')
-    .addAutoClosingPair('"', '"')
-    .addAutoClosingPair('\'', '\'')
-    .setTabSize(isLuaFile(fileName) ? 2 : 4)
-    .setInsertSpaces(true);
-  return builder.build();
+  return new LanguageConfiguration(
+    resolveLanguageId(fileName),
+    [{ open: '(', close: ')' }, { open: '[', close: ']' }, { open: '{', close: '}' }],
+    [{ open: '(', close: ')' }, { open: '[', close: ']' }, { open: '{', close: '}' },
+     { open: '"', close: '"' }, { open: '\'', close: '\'' }],
+    isLuaFile(fileName) ? 2 : 4,
+    true,
+  );
 }
 
 function isLuaFile(fileName: string): boolean {

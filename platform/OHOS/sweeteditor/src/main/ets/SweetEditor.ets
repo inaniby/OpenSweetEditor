@@ -1721,19 +1721,28 @@ export struct SweetEditor {
 
   setLanguageConfiguration(config: LanguageConfiguration | null): void {
     this.languageConfiguration = config;
-    if (config && this.editorCore) {
-      if (config.brackets.length > 0) {
-        const opens: number[] = [];
-        const closes: number[] = [];
-        for (const pair of config.brackets) {
-          opens.push(pair.open.length > 0 ? pair.open.codePointAt(0)! : 0);
-          closes.push(pair.close.length > 0 ? pair.close.codePointAt(0)! : 0);
-        }
-        this.editorCore.setBracketPairs(opens, closes);
+    if (!config || !this.editorCore) return;
+
+    if (config.brackets) {
+      const opens: number[] = [];
+      const closes: number[] = [];
+      for (const pair of config.brackets) {
+        opens.push(pair.open.length > 0 ? pair.open.codePointAt(0)! : 0);
+        closes.push(pair.close.length > 0 ? pair.close.codePointAt(0)! : 0);
       }
-      if (config.tabSize > 0) {
-        this.editorCore.setTabSize(config.tabSize);
+      this.editorCore.setBracketPairs(opens, closes);
+    }
+    if (config.autoClosingPairs) {
+      const acOpens: number[] = [];
+      const acCloses: number[] = [];
+      for (const pair of config.autoClosingPairs) {
+        acOpens.push(pair.open.length > 0 ? pair.open.codePointAt(0)! : 0);
+        acCloses.push(pair.close.length > 0 ? pair.close.codePointAt(0)! : 0);
       }
+      this.editorCore.setAutoClosingPairs(acOpens, acCloses);
+    }
+    if (config.tabSize > 0) {
+      this.editorCore.setTabSize(config.tabSize);
     }
   }
 

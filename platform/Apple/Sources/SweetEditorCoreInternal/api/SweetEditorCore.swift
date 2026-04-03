@@ -1846,6 +1846,16 @@ class SweetEditorCore {
         }
     }
 
+    /// Sets auto-closing pairs for automatic bracket completion.
+    func setAutoClosingPairs(openChars: [Int32], closeChars: [Int32]) {
+        assert(openChars.count == closeChars.count, "open/close arrays must have same length")
+        var opens = openChars.map(UInt32.init(bitPattern:))
+        var closes = closeChars.map(UInt32.init(bitPattern:))
+        performCoreCall {
+            editor_set_auto_closing_pairs(handle, &opens, &closes, opens.count)
+        }
+    }
+
     /// Sets externally computed exact bracket-match positions (higher priority than built-in scan).
     func setMatchedBrackets(openLine: Int, openColumn: Int, closeLine: Int, closeColumn: Int) {
         performCoreCall {

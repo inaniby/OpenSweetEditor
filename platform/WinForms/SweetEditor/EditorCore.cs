@@ -1654,6 +1654,9 @@ namespace SweetEditor {
 		[DllImport(LibraryName, EntryPoint = "editor_set_bracket_pairs", CallingConvention = CallingConvention.Cdecl)]
 		internal static extern void SetBracketPairs(IntPtr handle, int[] openChars, int[] closeChars, nuint count);
 
+		[DllImport(LibraryName, EntryPoint = "editor_set_auto_closing_pairs", CallingConvention = CallingConvention.Cdecl)]
+		internal static extern void SetAutoClosingPairs(IntPtr handle, int[] openChars, int[] closeChars, nuint count);
+
 		[DllImport(LibraryName, EntryPoint = "editor_set_matched_brackets", CallingConvention = CallingConvention.Cdecl)]
 		internal static extern void SetMatchedBrackets(IntPtr handle, nuint openLine, nuint openCol, nuint closeLine, nuint closeCol);
 
@@ -2706,6 +2709,12 @@ namespace SweetEditor {
 		public void SetBracketPairs(int[] openChars, int[] closeChars) {
 			if (openChars.Length != closeChars.Length) throw new ArgumentException("open/close arrays must have same length");
 			NativeMethods.SetBracketPairs(nativeHandle, openChars, closeChars, (nuint)openChars.Length);
+		}
+
+		/// <summary>Sets auto-closing pairs for automatic bracket completion.</summary>
+		public void SetAutoClosingPairs(int[] openChars, int[] closeChars) {
+			if (openChars.Length != closeChars.Length) throw new ArgumentException("open/close arrays must have same length");
+			NativeMethods.SetAutoClosingPairs(nativeHandle, openChars, closeChars, (nuint)openChars.Length);
 		}
 
 		/// <summary>Sets externally computed exact bracket pair positions (takes priority over built-in scanning).</summary>

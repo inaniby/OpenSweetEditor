@@ -746,6 +746,86 @@ namespace NS_SWEETEDITOR {
       }
     }
 
+    if (!m_auto_closing_pairs_.empty() && text != "\n" && !isInLinkedEditing()) {
+      auto it = text.begin();
+      char32_t input_char = utf8::peek_next(it, text.end());
+      auto next_it = it;
+      utf8::advance(next_it, 1, text.end());
+      bool is_single_char = (next_it == text.end());
+
+      if (is_single_char) {
+        U16String line_text = m_document_->getLineU16Text(m_caret_.cursor.line);
+        size_t col = m_caret_.cursor.column;
+        char32_t right_char = (col < line_text.size()) ? static_cast<char32_t>(line_text[col]) : 0;
+
+        if (!hasSelection()) {
+          for (const auto& pair : m_auto_closing_pairs_) {
+            if (input_char == pair.close && right_char == pair.close) {
+              m_caret_.cursor.column++;
+              m_caret_.clearSelection();
+              ensureCursorVisible();
+              return {true, {}, m_caret_.cursor, m_caret_.cursor};
+            }
+          }
+          for (const auto& pair : m_auto_closing_pairs_) {
+            if (input_char == pair.open) {
+              if (pair.open == pair.close && right_char == pair.close) {
+                m_caret_.cursor.column++;
+                m_caret_.clearSelection();
+                ensureCursorVisible();
+                return {true, {}, m_caret_.cursor, m_caret_.cursor};
+              }
+              bool should_auto_close = false;
+              size_t scan_col = col;
+              while (scan_col < line_text.size() && (line_text[scan_col] == u' ' || line_text[scan_col] == u'\t')) {
+                scan_col++;
+              }
+              if (scan_col >= line_text.size()) {
+                should_auto_close = true;
+              } else {
+                char32_t next_ch = static_cast<char32_t>(line_text[scan_col]);
+                if (next_ch == u';' || next_ch == u',') {
+                  should_auto_close = true;
+                } else {
+                  for (const auto& p : m_auto_closing_pairs_) {
+                    if (next_ch == static_cast<char32_t>(p.close)) {
+                      should_auto_close = true;
+                      break;
+                    }
+                  }
+                }
+              }
+              if (should_auto_close) {
+                U8String pair_text;
+                utf8::append(pair.open, std::back_inserter(pair_text));
+                utf8::append(pair.close, std::back_inserter(pair_text));
+                TextRange range = {m_caret_.cursor, m_caret_.cursor};
+                auto result = applyEdit(range, pair_text);
+                m_caret_.cursor.column = static_cast<uint32_t>(col + 1);
+                m_caret_.clearSelection();
+                ensureCursorVisible();
+                return result;
+              }
+              break;
+            }
+          }
+        } else {
+          for (const auto& pair : m_auto_closing_pairs_) {
+            if (input_char == pair.open) {
+              TextRange sel = m_caret_.normalizedSelection();
+              U8String selected = m_document_->getU8Text(sel);
+              U8String surround_text;
+              utf8::append(pair.open, std::back_inserter(surround_text));
+              surround_text += selected;
+              utf8::append(pair.close, std::back_inserter(surround_text));
+              auto result = applyEdit(sel, surround_text);
+              return result;
+            }
+          }
+        }
+      }
+    }
+
     if (isInLinkedEditing()) {
       const TabStopGroup* group = m_linked_editing_session_->currentGroup();
       if (group == nullptr || group->ranges.empty()) return {};
@@ -837,6 +917,19 @@ namespace NS_SWEETEDITOR {
     if (m_caret_.cursor.column > 0) {
       U16String line_text = m_document_->getLineU16Text(m_caret_.cursor.line);
       size_t col = m_caret_.cursor.column;
+
+      if (!m_auto_closing_pairs_.empty() && col > 0 && col < line_text.size()) {
+        char32_t left_char = static_cast<char32_t>(line_text[col - 1]);
+        char32_t right_char = static_cast<char32_t>(line_text[col]);
+        for (const auto& pair : m_auto_closing_pairs_) {
+          if (left_char == static_cast<char32_t>(pair.open) && right_char == static_cast<char32_t>(pair.close)) {
+            TextRange del_range = {{m_caret_.cursor.line, static_cast<uint32_t>(col - 1)}, {m_caret_.cursor.line, static_cast<uint32_t>(col + 1)}};
+            auto result = applyEdit(del_range, "");
+            LOGD("EditorCore::backspace(auto-close-pair), cursor = %s", m_caret_.cursor.dump().c_str());
+            return result;
+          }
+        }
+      }
 
       if (m_settings_.backspace_unindent && col > 0) {
         bool prefix_all_whitespace = true;
@@ -2303,8 +2396,12 @@ namespace NS_SWEETEDITOR {
     markAllLinesDirty();
   }
 
-  void EditorCore::setBracketPairs(Vector<BracketPair> pairs) {
+  void EditorCore::setBracketPairs(Vector<BracketPair>&& pairs) {
     m_bracket_pairs_ = std::move(pairs);
+  }
+
+  void EditorCore::setAutoClosingPairs(Vector<BracketPair>&& pairs) {
+    m_auto_closing_pairs_ = std::move(pairs);
   }
 
   void EditorCore::setMatchedBrackets(const TextPosition& open, const TextPosition& close) {

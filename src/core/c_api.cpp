@@ -1850,6 +1850,19 @@ void editor_set_bracket_pairs(intptr_t editor_handle, const uint32_t* open_chars
   editor_core->setBracketPairs(std::move(pairs));
 }
 
+void editor_set_auto_closing_pairs(intptr_t editor_handle, const uint32_t* open_chars, const uint32_t* close_chars, size_t count) {
+  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  if (editor_core == nullptr) return;
+  Vector<BracketPair> pairs;
+  if (open_chars != nullptr && close_chars != nullptr) {
+    pairs.reserve(count);
+    for (size_t i = 0; i < count; ++i) {
+      pairs.push_back({static_cast<char32_t>(open_chars[i]), static_cast<char32_t>(close_chars[i])});
+    }
+  }
+  editor_core->setAutoClosingPairs(std::move(pairs));
+}
+
 void editor_set_matched_brackets(intptr_t editor_handle, size_t open_line, size_t open_col, size_t close_line, size_t close_col) {
   Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr) return;

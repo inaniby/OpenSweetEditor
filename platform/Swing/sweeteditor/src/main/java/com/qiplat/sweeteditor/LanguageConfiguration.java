@@ -10,6 +10,8 @@ import java.util.List;
  */
 public class LanguageConfiguration {
 
+    public static final int DEFAULT_TAB_SIZE = 4;
+
     /** Bracket pairs */
     public static class BracketPair {
         public final String open;
@@ -42,8 +44,8 @@ public class LanguageConfiguration {
 
     private LanguageConfiguration(Builder builder) {
         this.languageId = builder.languageId;
-        this.brackets = Collections.unmodifiableList(new ArrayList<>(builder.brackets));
-        this.autoClosingPairs = Collections.unmodifiableList(new ArrayList<>(builder.autoClosingPairs));
+        this.brackets = builder.brackets == null ? null : Collections.unmodifiableList(new ArrayList<>(builder.brackets));
+        this.autoClosingPairs = builder.autoClosingPairs == null ? null : Collections.unmodifiableList(new ArrayList<>(builder.autoClosingPairs));
         this.lineComment = builder.lineComment;
         this.blockComment = builder.blockComment;
         this.tabSize = builder.tabSize;
@@ -60,11 +62,11 @@ public class LanguageConfiguration {
 
     public static class Builder {
         private final String languageId;
-        private final List<BracketPair> brackets = new ArrayList<>();
-        private final List<BracketPair> autoClosingPairs = new ArrayList<>();
+        private List<BracketPair> brackets;
+        private List<BracketPair> autoClosingPairs;
         private String lineComment;
         private BlockComment blockComment;
-        private Integer tabSize;
+        private Integer tabSize = DEFAULT_TAB_SIZE;
         private Boolean insertSpaces;
 
         public Builder(String languageId) {
@@ -72,11 +74,13 @@ public class LanguageConfiguration {
         }
 
         public Builder addBracket(String open, String close) {
+            if (brackets == null) brackets = new ArrayList<>();
             brackets.add(new BracketPair(open, close));
             return this;
         }
 
         public Builder addAutoClosingPair(String open, String close) {
+            if (autoClosingPairs == null) autoClosingPairs = new ArrayList<>();
             autoClosingPairs.add(new BracketPair(open, close));
             return this;
         }

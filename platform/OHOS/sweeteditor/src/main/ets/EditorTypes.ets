@@ -22,27 +22,26 @@ export interface EditorIconProvider {
  * When set to SweetEditor, brackets will be automatically synced to Core layer's setBracketPairs.
  */
 export class LanguageConfiguration {
+  static readonly DEFAULT_TAB_SIZE: number = 4;
+
   readonly languageId: string;
-  readonly brackets: BracketPair[];
-  readonly autoClosingPairs: BracketPair[];
+  readonly brackets: BracketPair[] | null;
+  readonly autoClosingPairs: BracketPair[] | null;
   readonly tabSize: number;
   readonly insertSpaces: boolean;
 
-  private constructor(builder: LanguageConfigurationBuilder) {
-    this.languageId = builder.languageId;
-    this.brackets = [...builder.brackets];
-    this.autoClosingPairs = [...builder.autoClosingPairs];
-    this.tabSize = builder.tabSize;
-    this.insertSpaces = builder.insertSpaces;
-  }
-
-  static builder(languageId: string): LanguageConfigurationBuilder {
-    return new LanguageConfigurationBuilder(languageId);
-  }
-
-  /** @internal */
-  static fromBuilder(builder: LanguageConfigurationBuilder): LanguageConfiguration {
-    return new LanguageConfiguration(builder);
+  constructor(
+    languageId: string,
+    brackets: BracketPair[] | null = null,
+    autoClosingPairs: BracketPair[] | null = null,
+    tabSize: number = LanguageConfiguration.DEFAULT_TAB_SIZE,
+    insertSpaces: boolean = true,
+  ) {
+    this.languageId = languageId;
+    this.brackets = brackets ? [...brackets] : null;
+    this.autoClosingPairs = autoClosingPairs ? [...autoClosingPairs] : null;
+    this.tabSize = tabSize;
+    this.insertSpaces = insertSpaces;
   }
 }
 
@@ -51,41 +50,7 @@ export interface BracketPair {
   readonly close: string;
 }
 
-export class LanguageConfigurationBuilder {
-  readonly languageId: string;
-  readonly brackets: BracketPair[] = [];
-  readonly autoClosingPairs: BracketPair[] = [];
-  tabSize: number = 4;
-  insertSpaces: boolean = true;
 
-  constructor(languageId: string) {
-    this.languageId = languageId;
-  }
-
-  addBracket(open: string, close: string): LanguageConfigurationBuilder {
-    this.brackets.push({ open, close });
-    return this;
-  }
-
-  addAutoClosingPair(open: string, close: string): LanguageConfigurationBuilder {
-    this.autoClosingPairs.push({ open, close });
-    return this;
-  }
-
-  setTabSize(tabSize: number): LanguageConfigurationBuilder {
-    this.tabSize = tabSize;
-    return this;
-  }
-
-  setInsertSpaces(insertSpaces: boolean): LanguageConfigurationBuilder {
-    this.insertSpaces = insertSpaces;
-    return this;
-  }
-
-  build(): LanguageConfiguration {
-    return LanguageConfiguration.fromBuilder(this);
-  }
-}
 
 export class EditorTheme {
   static readonly STYLE_KEYWORD: number = 1;

@@ -835,6 +835,12 @@ EDITOR_API void editor_clear_guides(intptr_t editor_handle);
 /// @param count Bracket pair count
 EDITOR_API void editor_set_bracket_pairs(intptr_t editor_handle, const uint32_t* open_chars, const uint32_t* close_chars, size_t count);
 
+/// Set auto-closing pair list (empty count = disable auto-closing)
+/// @param open_chars Open char array (UTF-32)
+/// @param close_chars Close char array (UTF-32)
+/// @param count Pair count
+EDITOR_API void editor_set_auto_closing_pairs(intptr_t editor_handle, const uint32_t* open_chars, const uint32_t* close_chars, size_t count);
+
 /// Externally set exact bracket match result (override built-in char scan)
 /// @param open_line open bracket line number(0-based)
 /// @param open_col open bracket column number (0-based)

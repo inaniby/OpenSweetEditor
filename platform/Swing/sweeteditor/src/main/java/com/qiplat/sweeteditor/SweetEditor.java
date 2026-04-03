@@ -394,21 +394,34 @@ public class SweetEditor extends JPanel {
 
     public void setLanguageConfiguration(LanguageConfiguration config) {
         this.languageConfiguration = config;
-        if (config != null) {
-            if (!config.getBrackets().isEmpty()) {
-                int size = config.getBrackets().size();
-                int[] opens = new int[size];
-                int[] closes = new int[size];
-                for (int i = 0; i < size; i++) {
-                    LanguageConfiguration.BracketPair pair = config.getBrackets().get(i);
-                    opens[i] = pair.open.isEmpty() ? 0 : pair.open.codePointAt(0);
-                    closes[i] = pair.close.isEmpty() ? 0 : pair.close.codePointAt(0);
-                }
-                editorCore.setBracketPairs(opens, closes);
+        if (config == null) return;
+
+        List<LanguageConfiguration.BracketPair> brackets = config.getBrackets();
+        if (brackets != null && !brackets.isEmpty()) {
+            int size = brackets.size();
+            int[] opens = new int[size];
+            int[] closes = new int[size];
+            for (int i = 0; i < size; i++) {
+                LanguageConfiguration.BracketPair pair = brackets.get(i);
+                opens[i] = pair.open.isEmpty() ? 0 : pair.open.codePointAt(0);
+                closes[i] = pair.close.isEmpty() ? 0 : pair.close.codePointAt(0);
             }
-            if (config.getTabSize() != null && config.getTabSize() > 0) {
-                editorCore.setTabSize(config.getTabSize());
+            editorCore.setBracketPairs(opens, closes);
+        }
+        List<LanguageConfiguration.BracketPair> acPairs = config.getAutoClosingPairs();
+        if (acPairs != null && !acPairs.isEmpty()) {
+            int acSize = acPairs.size();
+            int[] acOpens = new int[acSize];
+            int[] acCloses = new int[acSize];
+            for (int i = 0; i < acSize; i++) {
+                LanguageConfiguration.BracketPair pair = acPairs.get(i);
+                acOpens[i] = pair.open.isEmpty() ? 0 : pair.open.codePointAt(0);
+                acCloses[i] = pair.close.isEmpty() ? 0 : pair.close.codePointAt(0);
             }
+            editorCore.setAutoClosingPairs(acOpens, acCloses);
+        }
+        if (config.getTabSize() != null && config.getTabSize() > 0) {
+            editorCore.setTabSize(config.getTabSize());
         }
     }
     public LanguageConfiguration getLanguageConfiguration() { return languageConfiguration; }

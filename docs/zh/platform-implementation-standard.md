@@ -326,6 +326,7 @@ controller.applyTheme(EditorTheme.dark());
 | 清除引导线 | `clearGuides()` | — |
 | **Bracket** | | |
 | 设置括号对 | `setBracketPairs(open, close)` | — |
+| 设置自动闭合对 | `setAutoClosingPairs(open, close)` | — |
 | 设置匹配括号 | `setMatchedBrackets(oL, oC, cL, cC)` | — |
 | 清除匹配括号 | `clearMatchedBrackets()` | — |
 | **折叠** | | |
@@ -1406,8 +1407,8 @@ Core 层定义了大量装饰数据类型，各平台 MUST 实现完全一致的
 | 字段 | 类型 | MUST/MAY | 说明 |
 |---|---|---|---|
 | `languageId` | String | **MUST** | 语言标识符（如 `"java"`、`"cpp"`、`"swift"`） |
-| `brackets` | List\<BracketPair\> | **MUST** | 括号对列表 |
-| `autoClosingPairs` | List\<BracketPair\> | **MUST** | 自动闭合括号对列表 |
+| `brackets` | List\<BracketPair\>? | **MAY** | 括号对列表（null 表示未配置；为 null 时平台 MUST NOT 同步到 Core） |
+| `autoClosingPairs` | List\<BracketPair\>? | **MAY** | 自动闭合括号对列表（null 表示未配置；为 null 时平台 MUST NOT 同步到 Core） |
 | `tabSize` | int? | **MAY** | Tab 宽度（null 表示使用编辑器默认值） |
 | `insertSpaces` | bool? | **MAY** | 是否用空格替代 Tab（null 表示使用编辑器默认值） |
 
@@ -1420,7 +1421,7 @@ Core 层定义了大量装饰数据类型，各平台 MUST 实现完全一致的
 
 | 规则 | 约束级别 | 说明 |
 |---|---|---|
-| 构造方式 | **SHOULD** | SHOULD 提供 Builder 模式构造（Java/Kotlin/ArkTS/Dart），MAY 使用直接构造函数（Swift/C#） |
+| 构造方式 | **SHOULD** | SHOULD 提供 Builder 模式构造（Java/Kotlin），MAY 使用直接构造函数或命名参数构造函数（Swift/C#/Dart/ArkTS） |
 | 不可变性 | **SHOULD** | 构造完成后 SHOULD 为不可变对象 |
 | 运行时效果 | **MUST** | 调用 `setLanguageConfiguration()` 后，编辑器可见的括号匹配和自动闭合行为 MUST 与新配置保持一致 |
 

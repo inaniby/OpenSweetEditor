@@ -105,7 +105,6 @@ public class SweetEditor extends View {
     private static final boolean ENABLE_PERF_LOG = true;
     private static final int PERF_LOG_INTERVAL = 60;
     private static final float DEFAULT_CONTENT_START_PADDING_DP = 3.0f;
-    private static final int DEFAULT_LANGUAGE_TAB_SIZE = 4;
 
     private EditorRenderer mRenderer;
     private int mPerfLogFrameCount = 0;
@@ -1305,27 +1304,37 @@ public class SweetEditor extends View {
     }
 
     private void syncLanguageConfigurationToCore(@Nullable LanguageConfiguration config) {
-        int[] opens = new int[0];
-        int[] closes = new int[0];
-        int tabSize = DEFAULT_LANGUAGE_TAB_SIZE;
+        if (config == null) return;
 
-        if (config != null) {
-            List<LanguageConfiguration.BracketPair> brackets = config.getBrackets();
+        List<LanguageConfiguration.BracketPair> brackets = config.getBrackets();
+        if (brackets != null) {
             int size = brackets.size();
-            opens = new int[size];
-            closes = new int[size];
+            int[] opens = new int[size];
+            int[] closes = new int[size];
             for (int i = 0; i < size; i++) {
                 LanguageConfiguration.BracketPair pair = brackets.get(i);
                 opens[i] = pair.open.isEmpty() ? 0 : pair.open.codePointAt(0);
                 closes[i] = pair.close.isEmpty() ? 0 : pair.close.codePointAt(0);
             }
-            if (config.getTabSize() > 0) {
-                tabSize = config.getTabSize();
-            }
+            mEditorCore.setBracketPairs(opens, closes);
         }
 
-        mEditorCore.setBracketPairs(opens, closes);
-        mEditorCore.setTabSize(tabSize);
+        List<LanguageConfiguration.BracketPair> acPairs = config.getAutoClosingPairs();
+        if (acPairs != null) {
+            int acSize = acPairs.size();
+            int[] acOpens = new int[acSize];
+            int[] acCloses = new int[acSize];
+            for (int i = 0; i < acSize; i++) {
+                LanguageConfiguration.BracketPair pair = acPairs.get(i);
+                acOpens[i] = pair.open.isEmpty() ? 0 : pair.open.codePointAt(0);
+                acCloses[i] = pair.close.isEmpty() ? 0 : pair.close.codePointAt(0);
+            }
+            mEditorCore.setAutoClosingPairs(acOpens, acCloses);
+        }
+
+        if (config.getTabSize() > 0) {
+            mEditorCore.setTabSize(config.getTabSize());
+        }
     }
 
     /**

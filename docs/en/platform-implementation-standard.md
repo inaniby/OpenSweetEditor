@@ -326,6 +326,7 @@ controller.applyTheme(EditorTheme.dark());
 | Clear guides | `clearGuides()` | — |
 | **Bracket** | | |
 | Set bracket pairs | `setBracketPairs(open, close)` | — |
+| Set auto-closing pairs | `setAutoClosingPairs(open, close)` | — |
 | Set matched brackets | `setMatchedBrackets(oL, oC, cL, cC)` | — |
 | Clear matched brackets | `clearMatchedBrackets()` | — |
 | **Folding** | | |
@@ -1401,8 +1402,8 @@ All platforms MUST support at least the following two construction methods:
 | Field | Type | MUST/MAY | Description |
 |---|---|---|---|
 | `languageId` | String | **MUST** | Language identifier (e.g. `"java"`, `"cpp"`, `"swift"`) |
-| `brackets` | List\<BracketPair\> | **MUST** | Bracket pair list |
-| `autoClosingPairs` | List\<BracketPair\> | **MUST** | Auto-closing bracket pair list |
+| `brackets` | List\<BracketPair\>? | **MAY** | Bracket pair list (null = not configured; platform MUST NOT sync to Core when null) |
+| `autoClosingPairs` | List\<BracketPair\>? | **MAY** | Auto-closing bracket pair list (null = not configured; platform MUST NOT sync to Core when null) |
 | `tabSize` | int? | **MAY** | Tab width (null means use editor default) |
 | `insertSpaces` | bool? | **MAY** | Whether to use spaces instead of tabs (null means use editor default) |
 
@@ -1415,7 +1416,7 @@ All platforms MUST support at least the following two construction methods:
 
 | Rule | Constraint | Description |
 |---|---|---|
-| Construction | **SHOULD** | SHOULD provide Builder pattern construction (Java/Kotlin/ArkTS/Dart); MAY use direct constructors (Swift/C#) |
+| Construction | **SHOULD** | SHOULD provide Builder pattern construction (Java/Kotlin); MAY use direct constructors or named-parameter constructors (Swift/C#/Dart/ArkTS) |
 | Immutability | **SHOULD** | SHOULD be immutable after construction |
 | Runtime effect | **MUST** | When `setLanguageConfiguration()` is called, bracket matching and auto-closing behavior visible to the editor MUST be updated consistently with the new configuration |
 ## 20. Performance Guidance & Reference Targets (SHOULD)

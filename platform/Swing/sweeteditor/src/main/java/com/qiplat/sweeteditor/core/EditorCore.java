@@ -814,6 +814,12 @@ public class EditorCore implements AutoCloseable {
         }
     }
 
+    public void setAutoClosingPairs(int[] openChars, int[] closeChars) {
+        try (Arena arena = Arena.ofConfined()) {
+            EditorNative.setAutoClosingPairs(nativeHandle, openChars, closeChars, arena);
+        }
+    }
+
     public void setMatchedBrackets(int openLine, int openCol, int closeLine, int closeCol) {
         EditorNative.setMatchedBrackets(nativeHandle, openLine, openCol, closeLine, closeCol);
     }
