@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 
@@ -7,23 +8,21 @@ import '../editor_types.dart';
 
 import 'editor_text_measurer.dart';
 
-/// CustomPainter that renders the full EditorRenderModel.
-///
-/// Drawing order (bottom → top):
-/// Background → gutter → current line → selection → bracket/linked editing fills →
-/// text runs → guides → diagnostics → composition → cursor → line numbers →
-/// gutter icons → fold markers → selection handles → split line → scrollbars
 class EditorCanvasPainter extends ChangeNotifier implements CustomPainter {
   EditorCanvasPainter({
     required EditorTheme theme,
     required EditorTextMeasurer measurer,
+    EditorIconProvider? iconProvider,
   }) : _theme = theme,
-       _measurer = measurer;
+       _measurer = measurer,
+       _iconProvider = iconProvider;
 
   core.EditorRenderModel _model = core.EditorRenderModel.empty;
   EditorTheme _theme;
   final EditorTextMeasurer _measurer;
   bool _cursorVisible = true;
+  EditorIconProvider? _iconProvider;
+  final Map<int, _ResolvedEditorIcon> _resolvedIcons = {};
 
   void updateModel(core.EditorRenderModel model, bool cursorVisible) {
     _model = model;
@@ -43,6 +42,19 @@ class EditorCanvasPainter extends ChangeNotifier implements CustomPainter {
     notifyListeners();
   }
 
+  void updateIconProvider(EditorIconProvider? provider) {
+    if (identical(_iconProvider, provider)) return;
+    _iconProvider = provider;
+    _disposeResolvedIcons();
+    notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _disposeResolvedIcons();
+    super.dispose();
+  }
+
   @override
   void paint(Canvas canvas, Size size) {
     final m = _model;
@@ -58,12 +70,7 @@ class EditorCanvasPainter extends ChangeNotifier implements CustomPainter {
 
     for (final rect in m.bracketHighlightRects) {
       canvas.drawRect(
-        Rect.fromLTWH(
-          rect.origin.x,
-          rect.origin.y,
-          rect.width,
-          rect.height,
-        ),
+        Rect.fromLTWH(rect.origin.x, rect.origin.y, rect.width, rect.height),
         Paint()..color = Color(_theme.bracketHighlightBgColor),
       );
     }
@@ -73,12 +80,7 @@ class EditorCanvasPainter extends ChangeNotifier implements CustomPainter {
           ? _theme.linkedEditingActiveColor
           : _theme.linkedEditingInactiveColor;
       canvas.drawRect(
-        Rect.fromLTWH(
-          rect.origin.x,
-          rect.origin.y,
-          rect.width,
-          rect.height,
-        ),
+        Rect.fromLTWH(rect.origin.x, rect.origin.y, rect.width, rect.height),
         Paint()..color = Color(color & 0x33FFFFFF),
       );
     }
@@ -140,12 +142,7 @@ class EditorCanvasPainter extends ChangeNotifier implements CustomPainter {
     // Bracket highlight borders
     for (final rect in m.bracketHighlightRects) {
       canvas.drawRect(
-        Rect.fromLTWH(
-          rect.origin.x,
-          rect.origin.y,
-          rect.width,
-          rect.height,
-        ),
+        Rect.fromLTWH(rect.origin.x, rect.origin.y, rect.width, rect.height),
         Paint()
           ..color = Color(_theme.bracketHighlightBorderColor)
           ..style = PaintingStyle.stroke
@@ -159,12 +156,7 @@ class EditorCanvasPainter extends ChangeNotifier implements CustomPainter {
           ? _theme.linkedEditingActiveColor
           : _theme.linkedEditingInactiveColor;
       canvas.drawRect(
-        Rect.fromLTWH(
-          rect.origin.x,
-          rect.origin.y,
-          rect.width,
-          rect.height,
-        ),
+        Rect.fromLTWH(rect.origin.x, rect.origin.y, rect.width, rect.height),
         Paint()
           ..color = Color(color)
           ..style = PaintingStyle.stroke
@@ -184,7 +176,9 @@ class EditorCanvasPainter extends ChangeNotifier implements CustomPainter {
     if (right <= left) return;
     if (m.currentLineRenderMode == 2) return; // none
     final y = m.currentLine.y;
-    final lineH = m.cursor.visible ? m.cursor.height : _measurer.getFontMetrics().lineHeight;
+    final lineH = m.cursor.visible
+        ? m.cursor.height
+        : _measurer.getFontMetrics().lineHeight;
 
     if (m.currentLineRenderMode == 0) {
       // background
@@ -277,19 +271,19 @@ class EditorCanvasPainter extends ChangeNotifier implements CustomPainter {
       text: TextSpan(text: run.text, style: style),
       textDirection: TextDirection.ltr,
     )..layout();
-    _paintTextAtBaseline(
-      canvas,
-      painter,
-      run.x,
-      run.y,
-      fontMetrics.ascent,
-    );
+    _paintTextAtBaseline(canvas, painter, run.x, run.y, fontMetrics.ascent);
   }
 
   void _drawInlayHintRun(Canvas canvas, core.VisualRun run) {
     final screenX = run.x + run.margin;
     final baselineY = run.y;
     final fontMetrics = _measurer.getInlayHintFontMetrics();
+    final iconRect = Rect.fromLTWH(
+      screenX + run.padding,
+      baselineY - fontMetrics.ascent + run.padding,
+      math.max(0, run.width - run.margin * 2 - run.padding * 2),
+      math.max(0, fontMetrics.lineHeight - run.padding * 2),
+    );
 
     // Color swatch inlay hint
     if (run.colorValue != 0) {
@@ -321,6 +315,18 @@ class EditorCanvasPainter extends ChangeNotifier implements CustomPainter {
     );
     canvas.drawRRect(bgRect, Paint()..color = Color(_theme.inlayHintBgColor));
 
+    if (run.iconId != 0) {
+      if (!_drawResolvedIcon(
+        canvas,
+        run.iconId,
+        iconRect,
+        _theme.inlayHintIconColor,
+      )) {
+        _drawIconPlaceholder(canvas, iconRect, _theme.inlayHintIconColor);
+      }
+      return;
+    }
+
     // Text
     if (run.text.isNotEmpty) {
       final style = pillStyle.copyWith(color: Color(_theme.inlayHintTextColor));
@@ -338,10 +344,7 @@ class EditorCanvasPainter extends ChangeNotifier implements CustomPainter {
     }
   }
 
-  void _drawFoldPlaceholderRun(
-    Canvas canvas,
-    core.VisualRun run,
-  ) {
+  void _drawFoldPlaceholderRun(Canvas canvas, core.VisualRun run) {
     final screenX = run.x;
     final baselineY = run.y;
     final text = run.text.isNotEmpty ? run.text : '...';
@@ -379,10 +382,7 @@ class EditorCanvasPainter extends ChangeNotifier implements CustomPainter {
     );
   }
 
-  void _drawGuideSegments(
-    Canvas canvas,
-    core.EditorRenderModel m,
-  ) {
+  void _drawGuideSegments(Canvas canvas, core.EditorRenderModel m) {
     for (final seg in m.guideSegments) {
       final isSeparator = seg.type == core.GuideType.separator;
       final color = isSeparator ? _theme.separatorColor : _theme.guideColor;
@@ -502,10 +502,7 @@ class EditorCanvasPainter extends ChangeNotifier implements CustomPainter {
     );
   }
 
-  void _drawDiagnostics(
-    Canvas canvas,
-    core.EditorRenderModel m,
-  ) {
+  void _drawDiagnostics(Canvas canvas, core.EditorRenderModel m) {
     for (final diag in m.diagnosticDecorations) {
       final x = diag.origin.x;
       final y = diag.origin.y + diag.height;
@@ -565,10 +562,7 @@ class EditorCanvasPainter extends ChangeNotifier implements CustomPainter {
     canvas.drawPath(path, paint);
   }
 
-  void _drawLineNumbers(
-    Canvas canvas,
-    core.EditorRenderModel m,
-  ) {
+  void _drawLineNumbers(Canvas canvas, core.EditorRenderModel m) {
     if (!m.gutterVisible) return;
     final activeLogicalLine = m.cursor.textPosition.line;
 
@@ -614,24 +608,161 @@ class EditorCanvasPainter extends ChangeNotifier implements CustomPainter {
     painter.paint(canvas, Offset(x, baselineY - ascent));
   }
 
-  void _drawGutterIcons(
-    Canvas canvas,
-    core.EditorRenderModel m,
-  ) {
-    // Gutter icons require an EditorIconProvider to resolve icon images.
-    // For now, draw a placeholder colored rect for each icon.
-    for (final icon in m.gutterIcons) {
-      canvas.drawRect(
-        Rect.fromLTWH(icon.origin.x, icon.origin.y, icon.width, icon.height),
-        Paint()..color = Color(_theme.inlayHintIconColor),
+  bool _drawResolvedIcon(Canvas canvas, int iconId, Rect rect, int color) {
+    if (rect.width <= 0 || rect.height <= 0) return false;
+    final resolved = _resolveIcon(iconId);
+    if (resolved == null) return false;
+
+    final iconData = resolved.iconData;
+    if (iconData != null) {
+      _drawIconData(canvas, rect, iconData, color);
+      return true;
+    }
+
+    final image = resolved.image;
+    if (image != null) {
+      paintImage(canvas: canvas, rect: rect, image: image, fit: BoxFit.contain);
+      return true;
+    }
+
+    return false;
+  }
+
+  void _drawIconData(Canvas canvas, Rect rect, IconData iconData, int color) {
+    final iconSize = math.min(rect.width, rect.height);
+    if (iconSize <= 0) return;
+    final painter = TextPainter(
+      text: TextSpan(
+        text: String.fromCharCode(iconData.codePoint),
+        style: TextStyle(
+          inherit: false,
+          color: Color(color),
+          fontSize: iconSize,
+          fontFamily: iconData.fontFamily,
+          package: iconData.fontPackage,
+          height: 1.0,
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    painter.paint(
+      canvas,
+      Offset(
+        rect.left + (rect.width - painter.width) / 2,
+        rect.top + (rect.height - painter.height) / 2,
+      ),
+    );
+  }
+
+  _ResolvedEditorIcon? _resolveIcon(int iconId) {
+    final iconProvider = _iconProvider;
+    if (iconProvider == null) return null;
+    final source = iconProvider.getIconImage(iconId);
+    final cached = _resolvedIcons[iconId];
+    if (cached != null && cached.matches(source)) {
+      return cached;
+    }
+
+    cached?.dispose();
+    final resolved = _ResolvedEditorIcon(source: source);
+    final iconData = _extractIconData(source);
+    if (iconData != null) {
+      resolved.iconData = iconData;
+      _resolvedIcons[iconId] = resolved;
+      return resolved;
+    }
+
+    final image = _extractUiImage(source);
+    if (image != null) {
+      resolved.image = image;
+      _resolvedIcons[iconId] = resolved;
+      return resolved;
+    }
+
+    final imageProvider = _extractImageProvider(source);
+    if (imageProvider != null) {
+      final stream = imageProvider.resolve(ImageConfiguration.empty);
+      late final ImageStreamListener listener;
+      listener = ImageStreamListener(
+        (imageInfo, _) {
+          resolved.image = imageInfo.image;
+          notifyListeners();
+        },
+        onError: (Object exception, StackTrace? stackTrace) {
+          notifyListeners();
+        },
       );
+      resolved.stream = stream;
+      resolved.listener = listener;
+      stream.addListener(listener);
+      _resolvedIcons[iconId] = resolved;
+      return resolved;
+    }
+
+    _resolvedIcons[iconId] = resolved;
+    return resolved;
+  }
+
+  IconData? _extractIconData(Object? source) {
+    if (source is IconData) return source;
+    if (source is Icon) return source.icon;
+    return null;
+  }
+
+  ui.Image? _extractUiImage(Object? source) {
+    if (source is ui.Image) return source;
+    return null;
+  }
+
+  ImageProvider? _extractImageProvider(Object? source) {
+    if (source is ImageProvider) return source;
+    if (source is Image) return source.image;
+    return null;
+  }
+
+  void _drawIconPlaceholder(Canvas canvas, Rect rect, int color) {
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(rect, const Radius.circular(3)),
+      Paint()
+        ..color = Color(_applyAlpha(color, 96))
+        ..style = PaintingStyle.fill,
+    );
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(rect, const Radius.circular(3)),
+      Paint()
+        ..color = Color(color)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1,
+    );
+  }
+
+  void _disposeResolvedIcons() {
+    for (final icon in _resolvedIcons.values) {
+      icon.dispose();
+    }
+    _resolvedIcons.clear();
+  }
+
+  void _drawGutterIcons(Canvas canvas, core.EditorRenderModel m) {
+    for (final icon in m.gutterIcons) {
+      final rect = Rect.fromLTWH(
+        icon.origin.x,
+        icon.origin.y,
+        icon.width,
+        icon.height,
+      );
+      if (!_drawResolvedIcon(
+        canvas,
+        icon.iconId,
+        rect,
+        _theme.inlayHintIconColor,
+      )) {
+        _drawIconPlaceholder(canvas, rect, _theme.inlayHintIconColor);
+      }
     }
   }
 
-  void _drawFoldMarkers(
-    Canvas canvas,
-    core.EditorRenderModel m,
-  ) {
+  void _drawFoldMarkers(Canvas canvas, core.EditorRenderModel m) {
     final activeLogicalLine = m.cursor.textPosition.line;
     final activeColor = _theme.currentLineNumberColor != 0
         ? _theme.currentLineNumberColor
@@ -667,10 +798,7 @@ class EditorCanvasPainter extends ChangeNotifier implements CustomPainter {
     }
   }
 
-  void _drawSelectionHandles(
-    Canvas canvas,
-    core.EditorRenderModel m,
-  ) {
+  void _drawSelectionHandles(Canvas canvas, core.EditorRenderModel m) {
     final paint = Paint()..color = Color(_theme.cursorColor);
     if (m.selectionStartHandle.visible) {
       _drawHandle(canvas, m.selectionStartHandle, true, paint);
@@ -783,4 +911,26 @@ class EditorCanvasPainter extends ChangeNotifier implements CustomPainter {
 
   @override
   bool shouldRebuildSemantics(covariant CustomPainter oldDelegate) => false;
+}
+
+class _ResolvedEditorIcon {
+  _ResolvedEditorIcon({required this.source});
+
+  final Object? source;
+  IconData? iconData;
+  ui.Image? image;
+  ImageStream? stream;
+  ImageStreamListener? listener;
+
+  bool matches(Object? other) => identical(source, other) || source == other;
+
+  void dispose() {
+    final imageStream = stream;
+    final imageListener = listener;
+    if (imageStream != null && imageListener != null) {
+      imageStream.removeListener(imageListener);
+    }
+    stream = null;
+    listener = null;
+  }
 }

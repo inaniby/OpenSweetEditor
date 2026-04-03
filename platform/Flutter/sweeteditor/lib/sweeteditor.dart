@@ -16,6 +16,7 @@ import 'editor_settings.dart';
 import 'editor_types.dart';
 import 'event/editor_event.dart';
 import 'event/editor_event_bus.dart';
+import 'keymap/editor_keymap.dart';
 import 'newline/newline_action_provider_manager.dart';
 import 'newline/newline_types.dart';
 import 'selection/selection_menu_controller.dart';
@@ -31,6 +32,7 @@ export 'decoration/decoration_types.dart';
 export 'editor_settings.dart';
 export 'editor_types.dart';
 export 'event/editor_event.dart';
+export 'keymap/editor_keymap.dart';
 export 'newline/newline_types.dart';
 export 'selection/selection_types.dart';
 

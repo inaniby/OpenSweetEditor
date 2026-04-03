@@ -117,11 +117,13 @@ enum KeyCode {
   pageDown(34),
   a(65),
   c(67),
+  d(68),
   v(86),
   x(88),
   z(90),
   y(89),
-  k(75);
+  k(75),
+  space(32);
 
   const KeyCode(this.value);
   final int value;
@@ -325,10 +327,6 @@ class GestureEvent {
   final double directScale;
 }
 
-// ---------------------------------------------------------------------------
-// EditorCore — high-level wrapper for the native editor engine
-// ---------------------------------------------------------------------------
-
 class EditorCore {
   /// Create an EditorCore with the given text measurer callbacks and options.
   EditorCore({
@@ -357,10 +355,6 @@ class EditorCore {
 
   int get handle => _handle;
 
-  // ---------------------------------------------------------------------------
-  // Document & Viewport
-  // ---------------------------------------------------------------------------
-
   void setDocument(Document document) {
     _ensureOpen();
     document._ensureOpen();
@@ -376,10 +370,6 @@ class EditorCore {
     _ensureOpen();
     bindings.editor_on_font_metrics_changed(_handle);
   }
-
-  // ---------------------------------------------------------------------------
-  // Configuration
-  // ---------------------------------------------------------------------------
 
   void setFoldArrowMode(FoldArrowMode mode) {
     _ensureOpen();
@@ -399,6 +389,16 @@ class EditorCore {
   void setInsertSpaces(bool enabled) {
     _ensureOpen();
     bindings.editor_set_insert_spaces(_handle, enabled ? 1 : 0);
+  }
+
+  void setKeyMap(KeyMap keyMap) {
+    _ensureOpen();
+    final bytes = keyMap.toBytes();
+    using((arena) {
+      final ptr = arena.allocate<ffi.Uint8>(bytes.length);
+      ptr.asTypedList(bytes.length).setAll(0, bytes);
+      bindings.editor_set_keymap(_handle, ptr, bytes.length);
+    });
   }
 
   void setScale(double scale) {
@@ -494,10 +494,6 @@ class EditorCore {
     );
   }
 
-  // ---------------------------------------------------------------------------
-  // Rendering
-  // ---------------------------------------------------------------------------
-
   /// Build render model. Returns parsed [EditorRenderModel].
   EditorRenderModel buildRenderModel() {
     _ensureOpen();
@@ -521,10 +517,6 @@ class EditorCore {
       return bytes;
     });
   }
-
-  // ---------------------------------------------------------------------------
-  // Gesture Events
-  // ---------------------------------------------------------------------------
 
   GestureResult handleGestureEvent(GestureEvent event) {
     _ensureOpen();
@@ -589,10 +581,6 @@ class EditorCore {
     );
   }
 
-  // ---------------------------------------------------------------------------
-  // Key Events
-  // ---------------------------------------------------------------------------
-
   KeyEventResult handleKeyEvent(
     KeyCode keyCode, {
     String? text,
@@ -620,10 +608,6 @@ class EditorCore {
       }
     });
   }
-
-  // ---------------------------------------------------------------------------
-  // Editing
-  // ---------------------------------------------------------------------------
 
   TextEditResult insertText(String text) {
     _ensureOpen();
@@ -725,10 +709,6 @@ class EditorCore {
     _ensureOpen();
     return bindings.editor_can_redo(_handle) != 0;
   }
-
-  // ---------------------------------------------------------------------------
-  // Cursor & Selection
-  // ---------------------------------------------------------------------------
 
   void setCursorPosition(int line, int column) {
     _ensureOpen();
@@ -838,10 +818,6 @@ class EditorCore {
     bindings.editor_move_cursor_to_line_end(_handle, extendSelection ? 1 : 0);
   }
 
-  // ---------------------------------------------------------------------------
-  // IME Composition
-  // ---------------------------------------------------------------------------
-
   void compositionStart() {
     _ensureOpen();
     bindings.editor_composition_start(_handle);
@@ -888,10 +864,6 @@ class EditorCore {
     return bindings.editor_is_composition_enabled(_handle) != 0;
   }
 
-  // ---------------------------------------------------------------------------
-  // Navigation
-  // ---------------------------------------------------------------------------
-
   void scrollToLine(
     int line, {
     ScrollBehavior behavior = ScrollBehavior.gotoCenter,
@@ -924,9 +896,34 @@ class EditorCore {
     );
   }
 
-  // ---------------------------------------------------------------------------
-  // Styles & Decorations
-  // ---------------------------------------------------------------------------
+  CursorRect getPositionRect(int line, int column) {
+    _ensureOpen();
+    return using((arena) {
+      final outX = arena.allocate<ffi.Float>(ffi.sizeOf<ffi.Float>());
+      final outY = arena.allocate<ffi.Float>(ffi.sizeOf<ffi.Float>());
+      final outHeight = arena.allocate<ffi.Float>(ffi.sizeOf<ffi.Float>());
+      bindings.editor_get_position_rect(
+        _handle,
+        line,
+        column,
+        outX,
+        outY,
+        outHeight,
+      );
+      return CursorRect(x: outX.value, y: outY.value, height: outHeight.value);
+    });
+  }
+
+  CursorRect getCursorRect() {
+    _ensureOpen();
+    return using((arena) {
+      final outX = arena.allocate<ffi.Float>(ffi.sizeOf<ffi.Float>());
+      final outY = arena.allocate<ffi.Float>(ffi.sizeOf<ffi.Float>());
+      final outHeight = arena.allocate<ffi.Float>(ffi.sizeOf<ffi.Float>());
+      bindings.editor_get_cursor_rect(_handle, outX, outY, outHeight);
+      return CursorRect(x: outX.value, y: outY.value, height: outHeight.value);
+    });
+  }
 
   void registerTextStyle(
     int styleId,
@@ -960,12 +957,28 @@ class EditorCore {
     );
   }
 
+  void setLineInlayHints(Uint8List data) {
+    _ensureOpen();
+    _callWithBinaryData(
+      data,
+      (ptr, len) => bindings.editor_set_line_inlay_hints(_handle, ptr, len),
+    );
+  }
+
   void setBatchLineInlayHints(Uint8List data) {
     _ensureOpen();
     _callWithBinaryData(
       data,
       (ptr, len) =>
           bindings.editor_set_batch_line_inlay_hints(_handle, ptr, len),
+    );
+  }
+
+  void setLinePhantomTexts(Uint8List data) {
+    _ensureOpen();
+    _callWithBinaryData(
+      data,
+      (ptr, len) => bindings.editor_set_line_phantom_texts(_handle, ptr, len),
     );
   }
 
@@ -978,12 +991,28 @@ class EditorCore {
     );
   }
 
+  void setLineGutterIcons(Uint8List data) {
+    _ensureOpen();
+    _callWithBinaryData(
+      data,
+      (ptr, len) => bindings.editor_set_line_gutter_icons(_handle, ptr, len),
+    );
+  }
+
   void setBatchLineGutterIcons(Uint8List data) {
     _ensureOpen();
     _callWithBinaryData(
       data,
       (ptr, len) =>
           bindings.editor_set_batch_line_gutter_icons(_handle, ptr, len),
+    );
+  }
+
+  void setLineDiagnostics(Uint8List data) {
+    _ensureOpen();
+    _callWithBinaryData(
+      data,
+      (ptr, len) => bindings.editor_set_line_diagnostics(_handle, ptr, len),
     );
   }
 
@@ -1121,10 +1150,6 @@ class EditorCore {
     });
   }
 
-  // ---------------------------------------------------------------------------
-  // Folding
-  // ---------------------------------------------------------------------------
-
   void setFoldRegions(Uint8List data) {
     _ensureOpen();
     _callWithBinaryData(
@@ -1163,10 +1188,6 @@ class EditorCore {
     return bindings.editor_is_line_visible(_handle, line) != 0;
   }
 
-  // ---------------------------------------------------------------------------
-  // Linked Editing
-  // ---------------------------------------------------------------------------
-
   TextEditResult insertSnippet(String snippetTemplate) {
     _ensureOpen();
     return using((arena) {
@@ -1200,10 +1221,6 @@ class EditorCore {
     bindings.editor_cancel_linked_editing(_handle);
   }
 
-  // ---------------------------------------------------------------------------
-  // Lifecycle
-  // ---------------------------------------------------------------------------
-
   void close() {
     if (_closed) return;
     _closed = true;
@@ -1216,10 +1233,6 @@ class EditorCore {
     if (_closed) throw StateError('EditorCore is already closed');
   }
 }
-
-// ---------------------------------------------------------------------------
-// Document — wrapper for the native document handle
-// ---------------------------------------------------------------------------
 
 class Document {
   /// Create a document from a Dart string.

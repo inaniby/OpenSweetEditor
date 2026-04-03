@@ -1,9 +1,5 @@
 part of '../editor_core.dart';
 
-// ---------------------------------------------------------------------------
-// BinaryReader — sequential little-endian reader over a native pointer
-// ---------------------------------------------------------------------------
-
 class _BinaryReader {
   _BinaryReader(this._ptr, this._size)
     : _data = ByteData.sublistView(_ptr.asTypedList(_size));
@@ -45,10 +41,6 @@ class _BinaryReader {
     return String.fromCharCodes(bytes);
   }
 }
-
-// ---------------------------------------------------------------------------
-// ProtocolEncoder — encode Dart models into binary payloads for the C API
-// ---------------------------------------------------------------------------
 
 class ProtocolEncoder {
   ProtocolEncoder._();
@@ -526,10 +518,6 @@ class ProtocolEncoder {
   }
 }
 
-// ---------------------------------------------------------------------------
-// ProtocolDecoder — decode binary payloads from the C API into Dart models
-// ---------------------------------------------------------------------------
-
 class ProtocolDecoder {
   ProtocolDecoder._();
 
@@ -779,8 +767,6 @@ class ProtocolDecoder {
     );
   }
 
-  // -- Private render model sub-readers --
-
   static VisualRun _readVisualRun(_BinaryReader r) {
     return VisualRun(
       type: VisualRunType.fromValue(r.readInt32()),
@@ -928,10 +914,6 @@ class ProtocolDecoder {
     );
   }
 }
-
-// ---------------------------------------------------------------------------
-// Top-level FFI helpers
-// ---------------------------------------------------------------------------
 
 ffi.Pointer<ffi.Char> _toNativeUtf8(String value, ffi.Allocator allocator) {
   return value.toNativeUtf8(allocator: allocator).cast<ffi.Char>();

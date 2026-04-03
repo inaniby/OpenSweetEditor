@@ -1,14 +1,11 @@
 part of '../sweeteditor.dart';
 
-/// Lightweight Flutter-style controller for [SweetEditorWidget].
-///
-/// Create this in your State, pass it to [SweetEditorWidget], and use it
-/// to interact with the editor. Methods are no-ops if the widget is not
-/// yet mounted (no deferred action queue — matches Flutter conventions).
 class SweetEditorController {
   _SweetEditorWidgetState? _state;
   final EditorEventBus _eventBus = EditorEventBus();
   final EditorSettings settings = EditorSettings();
+  EditorKeyMap _keyMap = EditorKeyMap.defaultKeyMap();
+  EditorIconProvider? _iconProvider;
   String? _pendingText;
   core.Document? _pendingDocument;
   EditorTheme? _pendingTheme;
@@ -32,6 +29,8 @@ class SweetEditorController {
       _pendingTheme = null;
       state._applyTheme(pendingTheme);
     }
+    state._applyIconProvider(_iconProvider);
+    state._applyKeyMap(_keyMap);
     final pendingDocument = _pendingDocument;
     if (pendingDocument != null) {
       _pendingDocument = null;
@@ -57,6 +56,15 @@ class SweetEditorController {
   }
 
   bool get isAttached => _state != null;
+
+  core.EditorCore? get _editorCore => _state?._editorCore;
+
+  void _withEditorCore(void Function(core.EditorCore editorCore) action) {
+    if (_closed) return;
+    final editorCore = _editorCore;
+    if (editorCore == null) return;
+    action(editorCore);
+  }
 
   void whenReady(VoidCallback callback) {
     if (_closed) return;
@@ -300,6 +308,32 @@ class SweetEditorController {
   core.ScrollMetrics getScrollMetrics() =>
       _state?._editorCore?.getScrollMetrics() ?? core.ScrollMetrics.empty;
 
+  void setScroll(double scrollX, double scrollY) {
+    _state?._editorCore?.setScroll(scrollX, scrollY);
+    _state?._flush();
+  }
+
+  core.CursorRect getPositionRect(int line, int column) =>
+      _state?._editorCore?.getPositionRect(line, column) ??
+      const core.CursorRect();
+
+  core.CursorRect getCursorRect() =>
+      _state?._editorCore?.getCursorRect() ?? const core.CursorRect();
+
+  ({int startLine, int endLine}) getVisibleLineRange() {
+    final visualLines = _state?._session.renderModel.visualLines;
+    if (visualLines == null || visualLines.isEmpty) {
+      return (startLine: 0, endLine: -1);
+    }
+    return (
+      startLine: visualLines.first.logicalLine,
+      endLine: visualLines.last.logicalLine,
+    );
+  }
+
+  int getTotalLineCount() =>
+      _state?._document?.lineCount ?? _pendingDocument?.lineCount ?? 0;
+
   void scrollToLine(
     int line, {
     core.ScrollBehavior behavior = core.ScrollBehavior.gotoCenter,
@@ -310,6 +344,22 @@ class SweetEditorController {
 
   bool isLineVisible(int line) =>
       _state?._editorCore?.isLineVisible(line) ?? true;
+
+  int get totalLineCount => getTotalLineCount();
+
+  EditorKeyMap getKeyMap() => _keyMap;
+
+  void setKeyMap(EditorKeyMap keyMap) {
+    if (_closed) return;
+    _keyMap = keyMap;
+    _state?._applyKeyMap(keyMap);
+  }
+
+  void setEditorIconProvider(EditorIconProvider? provider) {
+    if (_closed) return;
+    _iconProvider = provider;
+    _state?._applyIconProvider(provider);
+  }
 
   void applyTheme(EditorTheme theme) {
     if (_closed) return;
@@ -323,6 +373,189 @@ class SweetEditorController {
   void setTheme(EditorTheme theme) => applyTheme(theme);
 
   EditorTheme? getTheme() => _state?._theme ?? _pendingTheme;
+
+  void registerTextStyle(
+    int styleId,
+    int color, {
+    int backgroundColor = 0,
+    int fontStyle = 0,
+  }) {
+    _withEditorCore(
+      (editorCore) => editorCore.registerTextStyle(
+        styleId,
+        color,
+        backgroundColor: backgroundColor,
+        fontStyle: fontStyle,
+      ),
+    );
+  }
+
+  void registerBatchTextStyles(Map<int, core.TextStyle> stylesById) {
+    _withEditorCore((editorCore) {
+      editorCore.registerBatchTextStyles(
+        core.ProtocolEncoder.packBatchTextStyles(stylesById),
+      );
+    });
+  }
+
+  void setLineSpans(
+    int line,
+    core.SpanLayer layer,
+    List<core.StyleSpan> spans,
+  ) {
+    _withEditorCore((editorCore) {
+      editorCore.setLineSpans(
+        core.ProtocolEncoder.packLineSpans(line, layer.value, spans),
+      );
+    });
+  }
+
+  void setBatchLineSpans(
+    core.SpanLayer layer,
+    Map<int, List<core.StyleSpan>> spansByLine,
+  ) {
+    _withEditorCore((editorCore) {
+      editorCore.setBatchLineSpans(
+        core.ProtocolEncoder.packBatchLineSpans(layer.value, spansByLine),
+      );
+    });
+  }
+
+  void setLineInlayHints(int line, List<core.InlayHint> hints) {
+    _withEditorCore((editorCore) {
+      editorCore.setLineInlayHints(
+        core.ProtocolEncoder.packLineInlayHints(line, hints),
+      );
+    });
+  }
+
+  void setBatchLineInlayHints(Map<int, List<core.InlayHint>> hintsByLine) {
+    _withEditorCore((editorCore) {
+      editorCore.setBatchLineInlayHints(
+        core.ProtocolEncoder.packBatchLineInlayHints(hintsByLine),
+      );
+    });
+  }
+
+  void setLinePhantomTexts(int line, List<core.PhantomText> phantoms) {
+    _withEditorCore((editorCore) {
+      editorCore.setLinePhantomTexts(
+        core.ProtocolEncoder.packLinePhantomTexts(line, phantoms),
+      );
+    });
+  }
+
+  void setBatchLinePhantomTexts(
+    Map<int, List<core.PhantomText>> phantomsByLine,
+  ) {
+    _withEditorCore((editorCore) {
+      editorCore.setBatchLinePhantomTexts(
+        core.ProtocolEncoder.packBatchLinePhantomTexts(phantomsByLine),
+      );
+    });
+  }
+
+  void setLineGutterIcons(int line, List<core.GutterIcon> icons) {
+    _withEditorCore((editorCore) {
+      editorCore.setLineGutterIcons(
+        core.ProtocolEncoder.packLineGutterIcons(line, icons),
+      );
+    });
+  }
+
+  void setBatchLineGutterIcons(Map<int, List<core.GutterIcon>> iconsByLine) {
+    _withEditorCore((editorCore) {
+      editorCore.setBatchLineGutterIcons(
+        core.ProtocolEncoder.packBatchLineGutterIcons(iconsByLine),
+      );
+    });
+  }
+
+  void setLineDiagnostics(int line, List<core.DiagnosticItem> items) {
+    _withEditorCore((editorCore) {
+      editorCore.setLineDiagnostics(
+        core.ProtocolEncoder.packLineDiagnostics(line, items),
+      );
+    });
+  }
+
+  void setBatchLineDiagnostics(
+    Map<int, List<core.DiagnosticItem>> itemsByLine,
+  ) {
+    _withEditorCore((editorCore) {
+      editorCore.setBatchLineDiagnostics(
+        core.ProtocolEncoder.packBatchLineDiagnostics(itemsByLine),
+      );
+    });
+  }
+
+  void setIndentGuides(List<core.IndentGuide> guides) {
+    _withEditorCore((editorCore) {
+      editorCore.setIndentGuides(core.ProtocolEncoder.packIndentGuides(guides));
+    });
+  }
+
+  void setBracketGuides(List<core.BracketGuide> guides) {
+    _withEditorCore((editorCore) {
+      editorCore.setBracketGuides(
+        core.ProtocolEncoder.packBracketGuides(guides),
+      );
+    });
+  }
+
+  void setFlowGuides(List<core.FlowGuide> guides) {
+    _withEditorCore((editorCore) {
+      editorCore.setFlowGuides(core.ProtocolEncoder.packFlowGuides(guides));
+    });
+  }
+
+  void setSeparatorGuides(List<core.SeparatorGuide> guides) {
+    _withEditorCore((editorCore) {
+      editorCore.setSeparatorGuides(
+        core.ProtocolEncoder.packSeparatorGuides(guides),
+      );
+    });
+  }
+
+  void setFoldRegions(List<core.FoldRegion> regions) {
+    _withEditorCore((editorCore) {
+      editorCore.setFoldRegions(core.ProtocolEncoder.packFoldRegions(regions));
+    });
+  }
+
+  void clearHighlights([core.SpanLayer? layer]) {
+    _withEditorCore((editorCore) {
+      if (layer == null) {
+        editorCore.clearHighlights();
+      } else {
+        editorCore.clearHighlightsLayer(layer);
+      }
+    });
+  }
+
+  void clearInlayHints() {
+    _withEditorCore((editorCore) => editorCore.clearInlayHints());
+  }
+
+  void clearPhantomTexts() {
+    _withEditorCore((editorCore) => editorCore.clearPhantomTexts());
+  }
+
+  void clearGutterIcons() {
+    _withEditorCore((editorCore) => editorCore.clearGutterIcons());
+  }
+
+  void clearGuides() {
+    _withEditorCore((editorCore) => editorCore.clearGuides());
+  }
+
+  void clearDiagnostics() {
+    _withEditorCore((editorCore) => editorCore.clearDiagnostics());
+  }
+
+  void clearAllDecorations() {
+    _withEditorCore((editorCore) => editorCore.clearAllDecorations());
+  }
 
   void flush() => _state?._flush();
 

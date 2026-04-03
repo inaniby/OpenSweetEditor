@@ -21,9 +21,16 @@ class EditorSession implements EditorSettingsHost {
           controller.settings.getEditorTextSize() *
           controller.settings.getScale(),
     );
-    _painter = EditorCanvasPainter(theme: _theme, measurer: _measurer);
+    _iconProvider = controller._iconProvider;
+    _painter = EditorCanvasPainter(
+      theme: _theme,
+      measurer: _measurer,
+      iconProvider: _iconProvider,
+    );
     final nativeMeasurer = _measurer.buildNativeMeasurer();
     _editorCore = core.EditorCore(measurer: nativeMeasurer);
+    _keyMap = controller.getKeyMap();
+    _editorCore!.setKeyMap(_keyMap);
     completionProviderManager = CompletionProviderManager(session: this);
     decorationProviderManager = DecorationProviderManager(session: this);
     inlineSuggestionController = InlineSuggestionController(session: this);
@@ -46,6 +53,8 @@ class EditorSession implements EditorSettingsHost {
   bool _ownsDocument = false;
   core.EditorRenderModel _renderModel = core.EditorRenderModel.empty;
   EditorTheme _theme;
+  late EditorKeyMap _keyMap;
+  EditorIconProvider? _iconProvider;
   Size _viewportSize = Size.zero;
   bool _viewportReady = false;
   bool _cursorVisible = true;
@@ -62,6 +71,8 @@ class EditorSession implements EditorSettingsHost {
   core.Document? get document => _document;
   core.EditorRenderModel get renderModel => _renderModel;
   EditorTheme get theme => _theme;
+  EditorKeyMap get keyMap => _keyMap;
+  EditorIconProvider? get iconProvider => _iconProvider;
   EditorTextMeasurer get measurer => _measurer;
   EditorCanvasPainter get painter => _painter;
   Size get viewportSize => _viewportSize;
@@ -124,6 +135,16 @@ class EditorSession implements EditorSettingsHost {
       }
       ec.setInsertSpaces(config.insertSpaces);
     }
+  }
+
+  void applyKeyMap(EditorKeyMap keyMap) {
+    _keyMap = keyMap;
+    _editorCore?.setKeyMap(keyMap);
+  }
+
+  void applyIconProvider(EditorIconProvider? provider) {
+    _iconProvider = provider;
+    _painter.updateIconProvider(provider);
   }
 
   void setViewport(Size size) {

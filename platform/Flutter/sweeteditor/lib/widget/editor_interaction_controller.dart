@@ -96,35 +96,36 @@ class EditorInteractionController {
     }
 
     final logicalKey = event.logicalKey;
-    int modifiers = core.Modifier.none;
+    int modifiers = core.KeyModifier.none;
     if (HardwareKeyboard.instance.isShiftPressed) {
-      modifiers |= core.Modifier.shift;
+      modifiers |= core.KeyModifier.shift;
     }
     if (HardwareKeyboard.instance.isControlPressed) {
-      modifiers |= core.Modifier.ctrl;
+      modifiers |= core.KeyModifier.ctrl;
     }
-    if (HardwareKeyboard.instance.isAltPressed) modifiers |= core.Modifier.alt;
+    if (HardwareKeyboard.instance.isAltPressed) {
+      modifiers |= core.KeyModifier.alt;
+    }
     if (HardwareKeyboard.instance.isMetaPressed) {
-      modifiers |= core.Modifier.meta;
+      modifiers |= core.KeyModifier.meta;
     }
 
     var keyCode = _mapLogicalKey(logicalKey);
     String? text;
 
-    if (keyCode == core.KeyCode.none &&
-        event.character != null &&
-        event.character!.isNotEmpty) {
-      if (modifiers & core.Modifier.ctrl != 0 ||
-          modifiers & core.Modifier.meta != 0) {
-        keyCode = _mapCtrlChar(event.character!);
-      } else {
-        text = event.character;
-      }
+    if (event.character != null && event.character!.isNotEmpty) {
+      text = event.character;
     }
 
     if (keyCode == core.KeyCode.none && text == null) {
       return KeyEventResult.ignored;
     }
+
+    final resolvedCommand = keyCode == core.KeyCode.none
+        ? null
+        : _session.keyMap.resolve(
+            core.KeyChord(modifiers: modifiers, keyCode: keyCode),
+          );
 
     if (_session.inlineSuggestionController.isShowing) {
       final androidCode = keyCode.value;
@@ -143,21 +144,30 @@ class EditorInteractionController {
       }
     }
 
-    if (modifiers & (core.Modifier.ctrl | core.Modifier.meta) != 0) {
-      if (_handleCtrlShortcut(keyCode, modifiers)) {
-        return KeyEventResult.handled;
-      }
-    }
-
     if (keyCode == core.KeyCode.enter && _tryHandleNewLineAction()) {
       return KeyEventResult.handled;
     }
 
+    final suppressTextForCore =
+        resolvedCommand != null &&
+        resolvedCommand.status == KeyResolveStatus.matched &&
+        _isHostCommand(resolvedCommand.command);
     final result = editorCore.handleKeyEvent(
       keyCode,
-      text: text,
+      text: suppressTextForCore ? null : text,
       modifiers: modifiers,
     );
+    final handledByPlatformCommand =
+        resolvedCommand != null &&
+        resolvedCommand.status == KeyResolveStatus.matched &&
+        _handleResolvedCommand(resolvedCommand.command);
+
+    if (handledByPlatformCommand) {
+      _resetCursorBlink();
+      _flush();
+      return KeyEventResult.handled;
+    }
+
     _dispatchKeyEventResult(result, text);
     _resetCursorBlink();
     _flush();
@@ -230,6 +240,7 @@ class EditorInteractionController {
     final pos = result.cursorPosition;
     switch (result.type) {
       case core.GestureType.tap:
+        _publishHitTargetEvent(result.hitTarget, result.tapPoint);
         _session.eventBus.publish(CursorChangedEvent(cursorPosition: pos));
         _session.completionProviderManager.dismiss();
       case core.GestureType.doubleTap:
@@ -288,33 +299,87 @@ class EditorInteractionController {
     }
   }
 
-  bool _handleCtrlShortcut(core.KeyCode keyCode, int modifiers) {
-    switch (keyCode) {
-      case core.KeyCode.z:
-        if (modifiers & core.Modifier.shift != 0) {
-          redo();
-        } else {
-          undo();
-        }
-        return true;
-      case core.KeyCode.y:
-        redo();
-        return true;
-      case core.KeyCode.a:
-        selectAll();
-        return true;
-      case core.KeyCode.c:
+  void _publishHitTargetEvent(
+    core.HitTarget hitTarget,
+    core.PointF screenPoint,
+  ) {
+    switch (hitTarget.type) {
+      case core.HitTargetType.gutterIcon:
+        _session.eventBus.publish(
+          GutterIconClickEvent(
+            line: hitTarget.line,
+            iconId: hitTarget.iconId,
+            screenPoint: screenPoint,
+          ),
+        );
+      case core.HitTargetType.inlayHintText:
+        _session.eventBus.publish(
+          InlayHintClickEvent(
+            line: hitTarget.line,
+            column: hitTarget.column,
+            screenPoint: screenPoint,
+          ),
+        );
+      case core.HitTargetType.inlayHintIcon:
+        _session.eventBus.publish(
+          InlayHintClickEvent.icon(
+            line: hitTarget.line,
+            column: hitTarget.column,
+            iconId: hitTarget.iconId,
+            isIcon: true,
+            screenPoint: screenPoint,
+          ),
+        );
+      case core.HitTargetType.inlayHintColor:
+        _session.eventBus.publish(
+          InlayHintClickEvent.color(
+            line: hitTarget.line,
+            column: hitTarget.column,
+            colorValue: hitTarget.colorValue,
+            screenPoint: screenPoint,
+          ),
+        );
+      case core.HitTargetType.none:
+      case core.HitTargetType.foldPlaceholder:
+      case core.HitTargetType.foldGutter:
+        break;
+    }
+  }
+
+  bool _handleResolvedCommand(int command) {
+    if (command > core.EditorCommand.builtInMax) {
+      return _session.keyMap.invokeHandler(command);
+    }
+    if (!core.EditorCommand.isPlatformHandled(command)) {
+      return false;
+    }
+    if (_session.keyMap.invokeHandler(command)) {
+      return true;
+    }
+    switch (command) {
+      case core.EditorCommand.copy:
         _copyToClipboard();
         return true;
-      case core.KeyCode.x:
+      case core.EditorCommand.paste:
+        _pasteFromClipboard();
+        return true;
+      case core.EditorCommand.cut:
         _cutToClipboard();
         return true;
-      case core.KeyCode.v:
-        _pasteFromClipboard();
+      case core.EditorCommand.triggerCompletion:
+        _session.completionProviderManager.triggerCompletion(
+          CompletionTriggerKind.invoked,
+          null,
+        );
         return true;
       default:
         return false;
     }
+  }
+
+  bool _isHostCommand(int command) {
+    return command > core.EditorCommand.builtInMax ||
+        core.EditorCommand.isPlatformHandled(command);
   }
 
   void _copyToClipboard() {
@@ -606,27 +671,15 @@ class EditorInteractionController {
     if (key == LogicalKeyboardKey.end) return core.KeyCode.end;
     if (key == LogicalKeyboardKey.pageUp) return core.KeyCode.pageUp;
     if (key == LogicalKeyboardKey.pageDown) return core.KeyCode.pageDown;
+    if (key == LogicalKeyboardKey.keyA) return core.KeyCode.a;
+    if (key == LogicalKeyboardKey.keyC) return core.KeyCode.c;
+    if (key == LogicalKeyboardKey.keyD) return core.KeyCode.d;
+    if (key == LogicalKeyboardKey.keyK) return core.KeyCode.k;
+    if (key == LogicalKeyboardKey.keyV) return core.KeyCode.v;
+    if (key == LogicalKeyboardKey.keyX) return core.KeyCode.x;
+    if (key == LogicalKeyboardKey.keyY) return core.KeyCode.y;
+    if (key == LogicalKeyboardKey.keyZ) return core.KeyCode.z;
+    if (key == LogicalKeyboardKey.space) return core.KeyCode.space;
     return core.KeyCode.none;
-  }
-
-  static core.KeyCode _mapCtrlChar(String ch) {
-    switch (ch.toUpperCase()) {
-      case 'Z':
-        return core.KeyCode.z;
-      case 'Y':
-        return core.KeyCode.y;
-      case 'A':
-        return core.KeyCode.a;
-      case 'C':
-        return core.KeyCode.c;
-      case 'X':
-        return core.KeyCode.x;
-      case 'V':
-        return core.KeyCode.v;
-      case 'K':
-        return core.KeyCode.k;
-      default:
-        return core.KeyCode.none;
-    }
   }
 }

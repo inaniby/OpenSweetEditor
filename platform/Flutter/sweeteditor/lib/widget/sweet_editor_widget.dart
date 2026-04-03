@@ -243,6 +243,15 @@ class _SweetEditorWidgetState extends State<SweetEditorWidget>
     _flush();
   }
 
+  void _applyIconProvider(EditorIconProvider? provider) {
+    _session.applyIconProvider(provider);
+    _flush();
+  }
+
+  void _applyKeyMap(EditorKeyMap keyMap) {
+    _session.applyKeyMap(keyMap);
+  }
+
   void _applyLanguageConfiguration(LanguageConfiguration? config) {
     _session.applyLanguageConfiguration(config);
     _decorationProviderManager.requestRefresh();
