@@ -117,6 +117,8 @@ int  editor_is_read_only(intptr_t editor_handle);
 
 void editor_set_auto_indent_mode(intptr_t editor_handle, int mode);
 int  editor_get_auto_indent_mode(intptr_t editor_handle);
+void editor_set_backspace_unindent(intptr_t editor_handle, int enabled);
+void editor_set_insert_spaces(intptr_t editor_handle, int enabled);
 
 // ===================== Position Rect API =====================
 
@@ -157,6 +159,7 @@ void editor_clear_gutter_icons(intptr_t editor_handle);
 void editor_set_max_gutter_icons(intptr_t editor_handle, uint32_t count);
 void editor_set_fold_arrow_mode(intptr_t editor_handle, int mode);
 void editor_set_wrap_mode(intptr_t editor_handle, int mode);
+void editor_set_tab_size(intptr_t editor_handle, int tab_size);
 void editor_set_scale(intptr_t editor_handle, float scale);
 void editor_set_line_spacing(intptr_t editor_handle, float add, float mult);
 void editor_set_content_start_padding(intptr_t editor_handle, float padding);
