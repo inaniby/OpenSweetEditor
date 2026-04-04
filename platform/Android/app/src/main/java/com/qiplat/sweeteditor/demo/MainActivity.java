@@ -36,6 +36,7 @@ import com.qiplat.sweeteditor.core.Document;
 import com.qiplat.sweeteditor.core.adornment.InlayType;
 import com.qiplat.sweeteditor.core.foundation.CurrentLineRenderMode;
 import com.qiplat.sweeteditor.core.foundation.FoldArrowMode;
+import com.qiplat.sweeteditor.core.foundation.TextChange;
 import com.qiplat.sweeteditor.core.foundation.WrapMode;
 import com.qiplat.sweeteditor.event.CursorChangedEvent;
 import com.qiplat.sweeteditor.event.GutterIconClickEvent;
