@@ -1191,7 +1191,7 @@ Public APIs adopt defensive handling for invalid inputs without throwing excepti
 | Scenario | Constraint | Behavior |
 |---|---|---|
 | Line / column out of bounds | **MUST** | Automatically clamp to valid range `[0, max)`; MUST NOT throw exceptions |
-| null / empty parameters | **MUST** | For MUST-non-null parameters receiving null, MUST silently ignore (no-op) and log a warning; MUST NOT throw exceptions or crash |
+| null / empty parameters | **MUST** | For MUST-non-null parameters receiving null, MUST silently ignore (no-op); MUST NOT throw exceptions or crash. Platforms MAY log a warning, especially in debug builds |
 | Invalid enum values | **MUST** | Use default value (e.g. `WrapMode.NONE`); MUST NOT throw exceptions |
 | Calls when widget not mounted | **SHOULD** | Getters return null or default values; imperative methods SHOULD queue or silently ignore (consistent with Section 3.0.3) |
 
@@ -1225,6 +1225,8 @@ Resource creation and destruction follow explicit ordering constraints to preven
 | Post-release calls | **MUST** | If the platform exposes an explicit release API, or otherwise keeps the object reachable after internal release, any method call after release MUST be a no-op or throw an explicit "already destroyed" exception; MUST NOT access freed C++ memory |
 | Repeated release | **MUST** | If the platform exposes explicit release logic, multiple invocations MUST be idempotent (no-op); MUST NOT cause double-free |
 
+> The standard requires eventual native-resource release, but does **not** require every managed-language `Document` / bridge wrapper to expose an additional explicit release API beyond the platform's own lifecycle model.
+
 ### 16.2 Provider Lifecycle
 
 | Rule | Constraint | Description |
@@ -1242,19 +1244,19 @@ Resource creation and destruction follow explicit ordering constraints to preven
 | `dispose()` ordering | **MUST** | `dispose()` MUST first unbind the widget (if still bound), then release internal resources; any method call after `dispose()` MUST be a no-op |
 | Widget rebuild | **SHOULD** | In declarative frameworks, widgets may be rebuilt due to state changes; the Controller SHOULD seamlessly `bind()` to the new widget after the old one calls `unbind()`, without losing queued operations |
 
+> This section applies only to platforms that expose an independent controller object. It MUST NOT be interpreted as requiring every imperative `View` / `Control` / `Widget` / `Document` type to add a library-defined `dispose()` / `close()` method.
+
 ### 16.4 Resource Release Order
 
-When the platform performs editor release / dispose / close / final teardown, subsystems MUST be released in the following order:
+When the platform performs editor release / dispose / close / final teardown, it MUST satisfy the following safety constraints:
 
-```
-1. Cancel all in-flight async Provider requests
-2. Unregister all Providers (Decoration / Completion / NewLine)
-3. Clear all host-visible event subscriptions / listeners / observers
-4. Release EditorCore / native resources
-5. Release platform-specific resources (textures, canvases, timers, etc.)
-```
+- All in-flight async Provider requests MUST be cancelled or marked stale before their results can reach invalid native state
+- Provider registrations MUST be cleared before they can emit further callbacks into a destroyed editor
+- Host-visible event subscriptions / listeners / observers MUST be cleared before post-destruction callbacks can occur
+- `EditorCore` / native resources MUST be released exactly once and only after no further platform callbacks can legally use them
+- Platform-specific resources (textures, canvases, timers, etc.) MAY be released in platform-idiomatic order, as long as the constraints above are preserved
 
-> The internal order of steps 1-3 MAY be adjusted, but MUST complete before step 4. Step 4 MUST complete before step 5. The standard does not require step 4 to be tied to view detachment, widget unmount, or the specific moment when the widget is permanently removed from the view tree.
+> The standard defines dependency / safety ordering here, not a single mandatory cross-platform step sequence.
 
 ---
 
@@ -1401,7 +1403,7 @@ All platforms MUST support at least the following two construction methods:
 | Rule | Constraint | Description |
 |---|---|---|
 | Native document reference | **MUST** | `Document` MUST internally retain a bridge-layer reference to a C++ side document instance; whether this is represented as an opaque handle, pointer wrapper, object wrapper, or another mechanism is an implementation detail |
-| Resource release | **MUST** | When `Document` is destroyed / disposed according to the platform lifecycle, the bridge layer MUST eventually release the C++ side document memory; the exact cleanup mechanism is platform-specific |
+| Resource release | **MUST** | When `Document` reaches its terminal platform lifecycle state, the bridge layer MUST eventually release the C++ side document memory; the exact cleanup mechanism is platform-specific, and an explicit `dispose()` / `close()` API is optional |
 | Encoding model | **MUST** | Platform layers MUST NOT assume or expose a specific internal storage / layout encoding beyond the semantics guaranteed by the public APIs |
 | Line endings | **MUST** | C++ Core supports LF, CR, and CRLF line endings; text returned by `getLineText()` MUST NOT include line endings |
 
