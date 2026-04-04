@@ -203,7 +203,8 @@ controller.applyTheme(EditorTheme.dark());
 | Multiple bindings | **MUST** | The same Controller instance MAY be bound to a new widget after the previous one unbinds; MUST NOT be bound to multiple widgets simultaneously |
 | API consistency | **MUST** | Method signatures exposed on the Controller MUST match the Public API table in Section 3.2 and any implemented module-specific public API tables in later sections (method name, parameters, return type) |
 | Getter methods | **SHOULD** | When the widget is not mounted, getter methods (e.g. `getDocument()`, `getCursorPosition()`) SHOULD return null or default values; MUST NOT throw exceptions |
-| Resource disposal | **MUST** | Provide a `dispose()` method (naming MAY vary by platform, e.g. `close()`, `release()`) that releases internal resources and unbinds the widget |
+| Explicit teardown (if provided) | **MAY** | Platforms MAY provide an explicit controller teardown method such as `dispose()`, `close()`, or `release()`. For GC-managed languages, an extra explicit teardown API is not required when the controller can become inactive and collectible after `unbind()` |
+| Explicit teardown semantics | **MUST** | If the platform provides an explicit controller teardown method, it MUST release only controller-owned resources, unbind the widget, stop timers / listeners / receivers, and break reference chains. It MUST NOT assume ownership of the bound control and MUST NOT directly destroy the `View` / `Control` / `Widget` itself |
 
 #### 3.0.4 Platform Classification Reference
 
@@ -1240,10 +1241,11 @@ Resource creation and destruction follow explicit ordering constraints to preven
 |---|---|---|
 | Creation | **MUST** | Controller MUST be created by host code; lifecycle is managed by the host |
 | Binding | **MUST** | MUST call `bind()` on widget mount and `unbind()` on widget unmount (consistent with Section 3.0.3) |
-| `dispose()` ordering | **MUST** | `dispose()` MUST first unbind the widget (if still bound), then release internal resources; any method call after `dispose()` MUST be a no-op |
+| Explicit teardown (if provided) | **MAY** | Platforms MAY provide an explicit controller teardown method such as `dispose()`, `close()`, or `release()`; for GC-managed languages this is not required when the controller no longer retains active resources or reference chains after `unbind()` |
+| Teardown ordering and boundary | **MUST** | If the platform provides an explicit controller teardown method, it MUST first unbind the widget (if still bound), then release controller-owned internal resources; any method call after teardown MUST be a no-op. The controller MUST NOT assume ownership of the bound widget and MUST NOT directly destroy the `View` / `Control` / `Widget` itself |
 | Widget rebuild | **SHOULD** | In declarative frameworks, widgets may be rebuilt due to state changes; the Controller SHOULD seamlessly `bind()` to the new widget after the old one calls `unbind()`, without losing queued operations |
 
-> This section applies only to platforms that expose an independent controller object. It MUST NOT be interpreted as requiring every imperative `View` / `Control` / `Widget` / `Document` type to add a library-defined `dispose()` / `close()` method.
+> This section applies only to platforms that expose an independent controller object. It MUST NOT be interpreted as requiring every imperative `View` / `Control` / `Widget` / `Document` type to add a library-defined `dispose()` / `close()` method. Controller teardown means detachment and logical deactivation; it does not transfer ownership of, or destroy, the bound widget.
 
 ### 16.4 Resource Release Order
 
