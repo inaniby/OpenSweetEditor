@@ -30,9 +30,11 @@ typedef struct {
 intptr_t create_document_from_utf16(const SEU16Char* text);
 intptr_t create_document_from_file(const char* path);
 void     free_document(intptr_t document_handle);
-const char*     get_document_text(intptr_t document_handle);
+char*          get_document_utf8(intptr_t document_handle);
+SEU16Char*     get_document_utf16(intptr_t document_handle);
 size_t          get_document_line_count(intptr_t document_handle);
-const SEU16Char* get_document_line_text(intptr_t document_handle, size_t line);
+char*          get_document_line_utf8(intptr_t document_handle, size_t line);
+SEU16Char*     get_document_line_utf16(intptr_t document_handle, size_t line);
 
 // ===================== Editor API =====================
 
@@ -243,6 +245,7 @@ void editor_clear_matched_brackets(intptr_t editor_handle);
 
 // ===================== Memory Management =====================
 
+void free_u8_string(intptr_t string_ptr);
 void free_u16_string(intptr_t string_ptr);
 void free_binary_data(intptr_t data_ptr);
 

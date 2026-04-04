@@ -70,7 +70,7 @@ class SyntaxHighlighter {
 
     /// Highlight a single line, returns spans
     func highlightLine(document: SweetDocument, line: Int) -> [(column: UInt32, length: UInt32, styleId: UInt32)] {
-        guard let u16Ptr = get_document_line_text(document.handle, line) else { return [] }
+        guard let u16Ptr = get_document_line_utf16(document.handle, line) else { return [] }
         let text = stringFromU16Ptr(u16Ptr)
         free_u16_string(Int(bitPattern: u16Ptr))
         return tokenizeLine(text)

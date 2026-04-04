@@ -35,24 +35,42 @@ external int create_document_from_file(ffi.Pointer<ffi.Char> path);
 external void free_document(int document_handle);
 
 /// Get Document UTF8 text
-/// @return UTF8 text content
+/// @return UTF8 text content; caller owns returned buffer and must free it with free_u8_string
 @ffi.Native<ffi.Pointer<ffi.Char> Function(ffi.IntPtr)>(
   assetId: _sweeteditorAssetId,
 )
-external ffi.Pointer<ffi.Char> get_document_text(int document_handle);
+external ffi.Pointer<ffi.Char> get_document_utf8(int document_handle);
+
+/// Get Document UTF16 text
+/// @return UTF16 text content; caller owns returned buffer and must free it with free_u16_string
+@ffi.Native<ffi.Pointer<ffi.Uint16> Function(ffi.IntPtr)>(
+  assetId: _sweeteditorAssetId,
+)
+external ffi.Pointer<ffi.Uint16> get_document_utf16(int document_handle);
 
 /// Get total line count of Document
 /// @return total line count of Document
 @ffi.Native<ffi.Size Function(ffi.IntPtr)>(assetId: _sweeteditorAssetId)
 external int get_document_line_count(int document_handle);
 
-/// Get text of a specific Document line
+/// Get UTF8 text of a specific Document line
 /// @param line Line number
-/// @return UTF16 text content of the specified line
+/// @return UTF8 text content of the specified line; caller owns returned buffer and must free it with free_u8_string
+@ffi.Native<ffi.Pointer<ffi.Char> Function(ffi.IntPtr, ffi.Size)>(
+  assetId: _sweeteditorAssetId,
+)
+external ffi.Pointer<ffi.Char> get_document_line_utf8(
+  int document_handle,
+  int line,
+);
+
+/// Get UTF16 text of a specific Document line
+/// @param line Line number
+/// @return UTF16 text content of the specified line; caller owns returned buffer and must free it with free_u16_string
 @ffi.Native<ffi.Pointer<ffi.Uint16> Function(ffi.IntPtr, ffi.Size)>(
   assetId: _sweeteditorAssetId,
 )
-external ffi.Pointer<ffi.Uint16> get_document_line_text(
+external ffi.Pointer<ffi.Uint16> get_document_line_utf16(
   int document_handle,
   int line,
 );
@@ -1561,6 +1579,11 @@ external int editor_linked_editing_prev(int editor_handle);
 /// Cancel linked editing mode
 @ffi.Native<ffi.Void Function(ffi.IntPtr)>(assetId: _sweeteditorAssetId)
 external void editor_cancel_linked_editing(int editor_handle);
+
+/// Free UTF-8 string memory allocated on C++ side
+/// @param string_ptr String pointer
+@ffi.Native<ffi.Void Function(ffi.IntPtr)>(assetId: _sweeteditorAssetId)
+external void free_u8_string(int string_ptr);
 
 /// Free string memory allocated on C++ side
 /// @param string_ptr String pointer

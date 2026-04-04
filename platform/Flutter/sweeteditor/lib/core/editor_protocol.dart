@@ -932,17 +932,25 @@ ffi.Pointer<ffi.Uint16> _toNativeUtf16(String value, ffi.Allocator allocator) {
 
 String _readNativeUtf8(ffi.Pointer<ffi.Char> ptr) {
   if (ptr == ffi.nullptr) return '';
-  return ptr.cast<Utf8>().toDartString();
+  try {
+    return ptr.cast<Utf8>().toDartString();
+  } finally {
+    bindings.free_u8_string(ptr.address);
+  }
 }
 
 String _readNativeUtf16(ffi.Pointer<ffi.Uint16> ptr) {
   if (ptr == ffi.nullptr) return '';
-  var len = 0;
-  while (ptr[len] != 0) {
-    len++;
+  try {
+    var len = 0;
+    while (ptr[len] != 0) {
+      len++;
+    }
+    if (len == 0) return '';
+    return String.fromCharCodes(ptr.asTypedList(len));
+  } finally {
+    bindings.free_u16_string(ptr.address);
   }
-  if (len == 0) return '';
-  return String.fromCharCodes(ptr.asTypedList(len));
 }
 
 /// Call a native function that returns owned binary data + size,

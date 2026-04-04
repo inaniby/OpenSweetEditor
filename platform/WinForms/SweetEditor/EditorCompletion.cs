@@ -90,7 +90,11 @@ namespace SweetEditor {
 		bool IsCancelled { get; }
 	}
 
-	/// <summary>Completion provider interface.</summary>
+	/// <summary>
+	/// Completion provider interface.
+	/// ProvideCompletions is invoked from the UI thread by the WinForms editor.
+	/// Providers may start background work, but results delivered through ICompletionReceiver may arrive from any thread and are marshaled back to the UI thread before being applied to the editor.
+	/// </summary>
 	public interface ICompletionProvider {
 		bool IsTriggerCharacter(string ch);
 		void ProvideCompletions(CompletionContext context, ICompletionReceiver receiver);
@@ -103,7 +107,7 @@ namespace SweetEditor {
 	}
 
 	/// <summary>Completion provider manager.</summary>
-	internal sealed class CompletionProviderManager {
+	internal sealed class CompletionProviderManager : IDisposable {
 
 		public delegate void CompletionItemsUpdatedHandler(List<CompletionItem> items);
 		public delegate void CompletionDismissedHandler();
@@ -121,6 +125,7 @@ namespace SweetEditor {
 		private readonly List<CompletionItem> mergedItems = new();
 		private CompletionTriggerKind lastTriggerKind;
 		private string? lastTriggerChar;
+		private bool disposed;
 
 		public CompletionProviderManager(SweetEditorControl editor) {
 			this.editor = editor;
@@ -213,6 +218,20 @@ namespace SweetEditor {
 			activeReceivers.Clear();
 		}
 
+		public void Dispose() {
+			if (disposed) return;
+			disposed = true;
+			debounceTimer.Stop();
+			debounceTimer.Dispose();
+			generation++;
+			CancelAllReceivers();
+			mergedItems.Clear();
+			providers.Clear();
+			providerGates.Clear();
+			OnItemsUpdated = null;
+			OnDismissed = null;
+		}
+
 		private CompletionContext? BuildContext(CompletionTriggerKind kind, string? triggerChar) {
 			var cursor = editor.GetCursorPosition();
 			var doc = editor.GetDocument();
@@ -255,12 +274,18 @@ namespace SweetEditor {
 
 			public bool Accept(CompletionResult result) {
 				if (cancelled || receiverGeneration != manager.generation) return false;
-				if (manager.editor != null) {
+				if (manager.editor != null && !manager.editor.IsDisposed && manager.editor.IsHandleCreated) {
 					// Marshal to UI thread
-					manager.editor.BeginInvoke(new Action(() => {
-						if (cancelled || receiverGeneration != manager.generation) return;
-						manager.OnReceiverAccept(provider, result, receiverGeneration);
-					}));
+					try {
+						manager.editor.BeginInvoke(new Action(() => {
+							if (cancelled || receiverGeneration != manager.generation) return;
+							manager.OnReceiverAccept(provider, result, receiverGeneration);
+						}));
+					} catch (ObjectDisposedException) {
+						return false;
+					} catch (InvalidOperationException) {
+						return false;
+					}
 				}
 				return true;
 			}
@@ -272,7 +297,7 @@ namespace SweetEditor {
 
 	/// Completion popup controller: ListBox panel management + ICompletionItemRenderer-based custom rendering delegate.
 	/// </summary>
-	internal sealed class CompletionPopupController {
+	internal sealed class CompletionPopupController : IDisposable {
 
 		private sealed class CompletionPopupForm : Form {
 			private const int WS_EX_NOACTIVATE = 0x08000000;
@@ -313,6 +338,7 @@ namespace SweetEditor {
 		private float cachedCursorX;
 		private float cachedCursorY;
 		private float cachedCursorHeight;
+		private bool disposed;
 
 		public CompletionPopupController(Control anchorControl, EditorTheme theme) {
 			this.anchorControl = anchorControl;
@@ -578,6 +604,20 @@ namespace SweetEditor {
 				Dismiss();
 				OnConfirmed?.Invoke(item);
 			}
+		}
+
+		public void Dispose() {
+			if (disposed) return;
+			disposed = true;
+			OnConfirmed = null;
+			customRenderer = null;
+			items.Clear();
+			if (popupForm != null) {
+				popupForm.Hide();
+				popupForm.Dispose();
+				popupForm = null;
+			}
+			listBox = null;
 		}
 	}
 

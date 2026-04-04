@@ -22,6 +22,7 @@ import com.qiplat.sweeteditor.core.visual.EditorRenderModel;
 import com.qiplat.sweeteditor.core.visual.LayoutMetrics;
 import com.qiplat.sweeteditor.core.snippet.LinkedEditingModel;
 import com.qiplat.sweeteditor.core.visual.ScrollMetrics;
+import com.qiplat.sweeteditor.core.foundation.TextChange;
 import com.qiplat.sweeteditor.core.foundation.TextPosition;
 import com.qiplat.sweeteditor.core.foundation.TextRange;
 import com.qiplat.sweeteditor.core.adornment.PhantomText;
@@ -1535,25 +1536,6 @@ public class EditorCore {
     }
 
     // ==================== Inner Classes/Enums ====================
-
-    /** Single text change (exact change info at one edit location, contains only range + newText). */
-    public static class TextChange {
-        @NonNull
-        public final TextRange range;
-        @NonNull
-        public final String newText;
-
-        public TextChange(@NonNull TextRange range, @NonNull String newText) {
-            this.range = range;
-            this.newText = newText;
-        }
-
-        @NonNull
-        @Override
-        public String toString() {
-            return "TextChange{range=" + range + ", newText=" + newText + '}';
-        }
-    }
 
     public static class TextEditResult {
         public final boolean changed;

@@ -23,6 +23,7 @@ import com.qiplat.sweeteditor.core.adornment.SpanLayer;
 import com.qiplat.sweeteditor.core.adornment.StyleSpan;
 import com.qiplat.sweeteditor.core.EditorCore;
 import com.qiplat.sweeteditor.core.adornment.PhantomText;
+import com.qiplat.sweeteditor.core.foundation.TextChange;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -52,7 +53,7 @@ public final class DecorationProviderManager {
         }
     };
 
-    private final List<EditorCore.TextChange> pendingTextChanges = new ArrayList<>();
+    private final List<TextChange> pendingTextChanges = new ArrayList<>();
     private volatile boolean applyScheduled;
     private volatile int generation;
     private volatile int lastVisibleStartLine;
@@ -89,7 +90,7 @@ public final class DecorationProviderManager {
         scheduleRefresh(0, null);
     }
 
-    public void onTextChanged(@NonNull List<EditorCore.TextChange> changes) {
+    public void onTextChanged(@NonNull List<TextChange> changes) {
         scheduleRefresh(50, changes);
     }
 
@@ -97,7 +98,7 @@ public final class DecorationProviderManager {
         scheduleScrollRefresh();
     }
 
-    private void scheduleRefresh(long delayMs, @Nullable List<EditorCore.TextChange> changes) {
+    private void scheduleRefresh(long delayMs, @Nullable List<TextChange> changes) {
         if (changes != null) {
             pendingTextChanges.addAll(changes);
         }
@@ -128,7 +129,7 @@ public final class DecorationProviderManager {
         lastVisibleStartLine = visible[0];
         lastVisibleEndLine = visible[1];
         int total = editor.getTotalLineCount();
-        List<EditorCore.TextChange> changes = new ArrayList<>(pendingTextChanges);
+        List<TextChange> changes = new ArrayList<>(pendingTextChanges);
         pendingTextChanges.clear();
         int contextStart = visible[0];
         int contextEnd = visible[1];

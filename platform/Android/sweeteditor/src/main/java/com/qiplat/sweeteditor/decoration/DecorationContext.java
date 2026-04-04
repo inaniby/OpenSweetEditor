@@ -5,7 +5,7 @@ import androidx.annotation.Nullable;
 
 import com.qiplat.sweeteditor.EditorMetadata;
 import com.qiplat.sweeteditor.LanguageConfiguration;
-import com.qiplat.sweeteditor.core.EditorCore;
+import com.qiplat.sweeteditor.core.foundation.TextChange;
 
 import java.util.Collections;
 import java.util.List;
@@ -16,7 +16,7 @@ public final class DecorationContext {
     public final int totalLineCount;
     /** All text changes accumulated during this refresh cycle (immutable view), empty list indicates non-text-change trigger */
     @NonNull
-    public final List<EditorCore.TextChange> textChanges;
+    public final List<TextChange> textChanges;
     /** Current language configuration (from LanguageConfiguration) */
     @Nullable
     public final LanguageConfiguration languageConfiguration;
@@ -25,7 +25,7 @@ public final class DecorationContext {
     public final EditorMetadata editorMetadata;
 
     public DecorationContext(int visibleStartLine, int visibleEndLine, int totalLineCount,
-                             @NonNull List<EditorCore.TextChange> textChanges,
+                             @NonNull List<TextChange> textChanges,
                              @Nullable LanguageConfiguration languageConfiguration,
                              @Nullable EditorMetadata editorMetadata) {
         this.visibleStartLine = visibleStartLine;

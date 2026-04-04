@@ -54,6 +54,11 @@ namespace SweetEditor {
 		bool IsCancelled { get; }
 	}
 
+	/// <summary>
+	/// Decoration provider interface.
+	/// ProvideDecorations is invoked from the UI thread by the WinForms editor.
+	/// Providers may start background work, but results delivered through IDecorationReceiver may arrive from any thread and are marshaled back to the UI thread before being applied to the editor.
+	/// </summary>
 	public interface IDecorationProvider {
 		DecorationType Capabilities { get; }
 		void ProvideDecorations(DecorationContext context, IDecorationReceiver receiver);
@@ -121,7 +126,7 @@ namespace SweetEditor {
 		}
 	}
 
-	internal sealed class DecorationProviderManager {
+	internal sealed class DecorationProviderManager : IDisposable {
 		private readonly SweetEditorControl editor;
 		private readonly List<IDecorationProvider> providers = new();
 		private readonly Dictionary<IDecorationProvider, ProviderState> states = new();
@@ -136,6 +141,7 @@ namespace SweetEditor {
 		private bool scrollRefreshScheduled;
 		private bool pendingScrollRefresh;
 		private long lastScrollRefreshTickMs;
+		private bool disposed;
 
 		public DecorationProviderManager(SweetEditorControl editor) {
 			this.editor = editor;
@@ -261,9 +267,15 @@ namespace SweetEditor {
 		}
 
 		private void ScheduleApply() {
-			if (applyScheduled) return;
+			if (disposed || applyScheduled || editor.IsDisposed || !editor.IsHandleCreated) return;
 			applyScheduled = true;
-			editor.BeginInvoke(new Action(ApplyMerged));
+			try {
+				editor.BeginInvoke(new Action(ApplyMerged));
+			} catch (ObjectDisposedException) {
+				applyScheduled = false;
+			} catch (InvalidOperationException) {
+				applyScheduled = false;
+			}
 		}
 
 		private void ApplyMerged() {
@@ -520,6 +532,25 @@ namespace SweetEditor {
 			return Math.Max(0, (int)Math.Ceiling(viewportLineCount * multiplier));
 		}
 
+		public void Dispose() {
+			if (disposed) return;
+			disposed = true;
+			debounceTimer.Stop();
+			debounceTimer.Dispose();
+			scrollRefreshTimer.Stop();
+			scrollRefreshTimer.Dispose();
+			generation++;
+			foreach (var state in states.Values) {
+				state.ActiveReceiver?.Cancel();
+			}
+			providers.Clear();
+			states.Clear();
+			pendingTextChanges.Clear();
+			applyScheduled = false;
+			scrollRefreshScheduled = false;
+			pendingScrollRefresh = false;
+		}
+
 		private void ApplySpans(Dictionary<int, List<StyleSpan>> map, SpanLayer layer) {
 			foreach (var (line, spans) in map) {
 				editor.SetLineSpans(line, layer, spans);
@@ -649,10 +680,17 @@ namespace SweetEditor {
 			public bool Accept(DecorationResult result) {
 				if (cancelled || receiverGeneration != manager.generation) return false;
 				var snapshot = result.Clone();
-				manager.editor.BeginInvoke(new Action(() => {
-					if (cancelled || receiverGeneration != manager.generation) return;
-					manager.OnReceiverAccept(provider, receiverGeneration, snapshot);
-				}));
+				if (manager.editor.IsDisposed || !manager.editor.IsHandleCreated) return false;
+				try {
+					manager.editor.BeginInvoke(new Action(() => {
+						if (cancelled || receiverGeneration != manager.generation) return;
+						manager.OnReceiverAccept(provider, receiverGeneration, snapshot);
+					}));
+				} catch (ObjectDisposedException) {
+					return false;
+				} catch (InvalidOperationException) {
+					return false;
+				}
 				return true;
 			}
 

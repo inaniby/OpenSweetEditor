@@ -5,7 +5,7 @@ package com.qiplat.sweeteditor.event;
  * <p>
  * Used with {@link EditorEventBus}, subscribe by event type:
  * <pre>
- * editor.subscribe(TextChangedEvent.class, e -> Log.d(TAG, "action: " + e.action));
+ * editor.subscribe(TextChangedEvent.class, e -> Log.d(TAG, "changes: " + e.changes.size()));
  * editor.subscribe(CursorChangedEvent.class, e -> updateStatusBar(e.cursorPosition));
  * </pre>
  *

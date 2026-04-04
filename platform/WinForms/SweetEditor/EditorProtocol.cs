@@ -1170,5 +1170,47 @@ namespace SweetEditor {
 			}
 		}
 
+		internal static unsafe LayoutMetrics ParseLayoutMetrics(IntPtr payloadPtr, UIntPtr payloadSize) {
+			LayoutMetrics result = default;
+			int payloadLength = GetPayloadLength(payloadPtr, payloadSize);
+			if (payloadLength == 0) {
+				return result;
+			}
+			try {
+				ReadOnlySpan<byte> data = new(payloadPtr.ToPointer(), payloadLength);
+				int offset = 0;
+				if (!TryReadFloat(data, ref offset, out float fontHeight) ||
+					!TryReadFloat(data, ref offset, out float fontAscent) ||
+					!TryReadFloat(data, ref offset, out float lineSpacingAdd) ||
+					!TryReadFloat(data, ref offset, out float lineSpacingMult) ||
+					!TryReadFloat(data, ref offset, out float lineNumberMargin) ||
+					!TryReadFloat(data, ref offset, out float lineNumberWidth) ||
+					!TryReadInt32(data, ref offset, out int maxGutterIcons) ||
+					!TryReadFloat(data, ref offset, out float inlayHintPadding) ||
+					!TryReadFloat(data, ref offset, out float inlayHintMargin) ||
+					!TryReadInt32(data, ref offset, out int foldArrowModeValue) ||
+					!TryReadInt32(data, ref offset, out int hasFoldRegionsInt)) {
+					return result;
+				}
+
+				result.FontHeight = fontHeight;
+				result.FontAscent = fontAscent;
+				result.LineSpacingAdd = lineSpacingAdd;
+				result.LineSpacingMult = lineSpacingMult;
+				result.LineNumberMargin = lineNumberMargin;
+				result.LineNumberWidth = lineNumberWidth;
+				result.MaxGutterIcons = maxGutterIcons;
+				result.InlayHintPadding = inlayHintPadding;
+				result.InlayHintMargin = inlayHintMargin;
+				result.FoldArrowMode = Enum.IsDefined(typeof(FoldArrowMode), foldArrowModeValue)
+					? (FoldArrowMode)foldArrowModeValue
+					: FoldArrowMode.AUTO;
+				result.HasFoldRegions = hasFoldRegionsInt != 0;
+				return result;
+			} finally {
+				NativeMethods.FreeBinaryData(payloadPtr);
+			}
+		}
+
 	}
 }

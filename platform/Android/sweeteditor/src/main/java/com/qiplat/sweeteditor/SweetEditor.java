@@ -54,6 +54,7 @@ import com.qiplat.sweeteditor.core.adornment.TextStyle;
 import com.qiplat.sweeteditor.core.TextMeasurer;
 import com.qiplat.sweeteditor.core.foundation.ScrollBehavior;
 import com.qiplat.sweeteditor.core.adornment.SpanLayer;
+import com.qiplat.sweeteditor.core.foundation.TextChange;
 import com.qiplat.sweeteditor.core.foundation.TextPosition;
 import com.qiplat.sweeteditor.core.foundation.TextRange;
 import com.qiplat.sweeteditor.core.snippet.LinkedEditingModel;
@@ -1483,7 +1484,7 @@ public class SweetEditor extends View {
     /**
      * Subscribe to editor events of specified type (supports Lambda).
      * <pre>
-     * editor.subscribe(TextChangedEvent.class, e -> Log.d(TAG, e.action));
+     * editor.subscribe(TextChangedEvent.class, e -> Log.d(TAG, "changes=" + e.changes.size()));
      * editor.subscribe(CursorChangedEvent.class, e -> updateStatusBar(e.cursorPosition));
      * editor.subscribe(LongPressEvent.class, e -> showPopup(e.screenPoint));
      * </pre>
@@ -1548,9 +1549,7 @@ public class SweetEditor extends View {
 
     private void dispatchTextChanged(@NonNull TextChangeAction action, @NonNull EditorCore.TextEditResult editResult) {
         if (editResult.changed && !editResult.changes.isEmpty()) {
-            for (EditorCore.TextChange change : editResult.changes) {
-                mEventBus.publish(new TextChangedEvent(action, change.range, change.newText));
-            }
+            mEventBus.publish(new TextChangedEvent(action, editResult.changes));
             if (mDecorationProviderManager != null) {
                 mDecorationProviderManager.onTextChanged(editResult.changes);
             }
@@ -1561,9 +1560,9 @@ public class SweetEditor extends View {
             // Suppress completion trigger during linked editing to avoid conflict with Enter/Tab keys
             if (!mEditorCore.isInLinkedEditing()) {
                 // Completion trigger: based on first change (primary change)
-                EditorCore.TextChange primaryChange = editResult.changes.get(0);
-                if (mCompletionProviderManager != null && primaryChange.newText.length() == 1) {
-                    String ch = primaryChange.newText;
+                TextChange primaryChange = editResult.changes.get(0);
+                if (mCompletionProviderManager != null && primaryChange.text.length() == 1) {
+                    String ch = primaryChange.text;
                     if (mCompletionProviderManager.isTriggerCharacter(ch)) {
                         mCompletionProviderManager.triggerCompletion(
                                 CompletionContext.TriggerKind.CHARACTER, ch);
@@ -1718,14 +1717,10 @@ public class SweetEditor extends View {
                 mSelectionMenuController.onTextChanged();
             }
             if (result.editResult != null && result.editResult.changed && !result.editResult.changes.isEmpty()) {
-                for (EditorCore.TextChange change : result.editResult.changes) {
-                    mEventBus.publish(new TextChangedEvent(TextChangeAction.KEY, change.range, change.newText));
-                }
+                mEventBus.publish(new TextChangedEvent(TextChangeAction.KEY, result.editResult.changes));
                 if (mDecorationProviderManager != null) {
                     mDecorationProviderManager.onTextChanged(result.editResult.changes);
                 }
-            } else {
-                mEventBus.publish(new TextChangedEvent(TextChangeAction.KEY, null, null));
             }
         }
         if (result.cursorChanged) {
@@ -1774,7 +1769,7 @@ public class SweetEditor extends View {
                 NewLineAction action = mNewLineActionProviderManager.provideNewLineAction();
                 if (action != null) {
                     EditorCore.TextEditResult editResult = mEditorCore.insertText(action.text);
-                    dispatchTextChanged(TextChangeAction.KEY, editResult);
+        dispatchTextChanged(TextChangeAction.KEY, editResult);
                     resetCursorBlink();
                     flush();
                     logInputPerf(t0, "key-enter");

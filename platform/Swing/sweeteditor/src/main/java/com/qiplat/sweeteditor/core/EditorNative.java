@@ -255,7 +255,7 @@ public final class EditorNative {
     private static final MethodHandle CREATE_DOCUMENT_FROM_FILE = downcall("create_document_from_file",
             FunctionDescriptor.of(ValueLayout.JAVA_LONG, ValueLayout.ADDRESS));
 
-    private static final MethodHandle GET_DOCUMENT_LINE_TEXT = downcall("get_document_line_text",
+    private static final MethodHandle GET_DOCUMENT_LINE_TEXT = downcall("get_document_line_utf16",
             FunctionDescriptor.of(ValueLayout.ADDRESS, ValueLayout.JAVA_LONG, ValueLayout.JAVA_LONG));
 
     private static final MethodHandle GET_DOCUMENT_LINE_COUNT = downcall("get_document_line_count",

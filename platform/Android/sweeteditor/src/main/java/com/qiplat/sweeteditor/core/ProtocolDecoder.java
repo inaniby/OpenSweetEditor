@@ -23,6 +23,7 @@ import com.qiplat.sweeteditor.core.visual.SelectionRect;
 import com.qiplat.sweeteditor.core.visual.ScrollbarModel;
 import com.qiplat.sweeteditor.core.visual.ScrollbarRect;
 import com.qiplat.sweeteditor.core.visual.ScrollMetrics;
+import com.qiplat.sweeteditor.core.foundation.TextChange;
 import com.qiplat.sweeteditor.core.foundation.TextPosition;
 import com.qiplat.sweeteditor.core.foundation.TextRange;
 import com.qiplat.sweeteditor.core.visual.VisualLine;
@@ -49,13 +50,13 @@ final class ProtocolDecoder {
         boolean changed = data.getInt() != 0;
         if (!changed) return EditorCore.TextEditResult.EMPTY;
         int count = data.getInt();
-        java.util.List<EditorCore.TextChange> changes = new java.util.ArrayList<>(count);
+        java.util.List<TextChange> changes = new java.util.ArrayList<>(count);
         for (int i = 0; i < count; i++) {
             TextRange range = new TextRange(
                     new TextPosition(data.getInt(), data.getInt()),
                     new TextPosition(data.getInt(), data.getInt()));
             String newText = readBufferString(data);
-            changes.add(new EditorCore.TextChange(range, newText));
+            changes.add(new TextChange(range, newText));
         }
         return new EditorCore.TextEditResult(true, changes);
     }
@@ -71,13 +72,13 @@ final class ProtocolDecoder {
         EditorCore.TextEditResult editResult = EditorCore.TextEditResult.EMPTY;
         if (hasEdit) {
             int count = data.getInt();
-            java.util.List<EditorCore.TextChange> changes = new java.util.ArrayList<>(count);
+            java.util.List<TextChange> changes = new java.util.ArrayList<>(count);
             for (int i = 0; i < count; i++) {
                 TextRange range = new TextRange(
                         new TextPosition(data.getInt(), data.getInt()),
                         new TextPosition(data.getInt(), data.getInt()));
                 String newText = readBufferString(data);
-                changes.add(new EditorCore.TextChange(range, newText));
+                changes.add(new TextChange(range, newText));
             }
             editResult = new EditorCore.TextEditResult(true, changes);
         }

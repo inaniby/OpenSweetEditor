@@ -500,6 +500,10 @@ namespace SweetEditor {
 
 
 	[Designer("System.Windows.Forms.Design.ControlDesigner, System.Design")]
+	/// <summary>
+	/// WinForms editor control.
+	/// Public methods on this control are UI-thread-affine unless a method is explicitly documented otherwise.
+	/// </summary>
 	public class SweetEditorControl : Control {
 		#region Events
 		/// <summary>Text changed event.</summary>
@@ -572,6 +576,12 @@ namespace SweetEditor {
 		private EditorKeyMap keyMap = EditorKeyMap.DefaultKeyMap();
 		private int lastMeasureDpi;
 		private LanguageConfiguration? languageConfiguration;
+		private bool disposed;
+		private bool IsReleased => disposed || IsDisposed;
+
+		private static void LogIgnoredCall(string method, string reason) {
+			Debug.WriteLine($"[SweetEditor] Ignored {method}: {reason}.");
+		}
 		/// <summary>
 		/// Custom editor metadata attached by host code.
 		/// Cast to the concrete metadata subtype when reading it.
@@ -595,11 +605,16 @@ namespace SweetEditor {
 			InitializeComponent();
 		}
 
-		#region Public API - Construction/Initialization/Lifecycle
+		#region Public API
 
 		/// <summary>Loads a document into the editor.</summary>
 		/// <param name="document">Document instance to load.</param>
 		public void LoadDocument(Document document) {
+			if (IsReleased) return;
+			if (document == null) {
+				LogIgnoredCall(nameof(LoadDocument), "document is null");
+				return;
+			}
 			editorCore.LoadDocument(document);
 			decorationProviderManager?.OnDocumentLoaded();
 			DocumentLoaded?.Invoke(this, new DocumentLoadedEventArgs());
@@ -614,6 +629,11 @@ namespace SweetEditor {
 		/// Re-registers theme syntax styles to the C++ core.
 		/// </summary>
 		public void ApplyTheme(EditorTheme theme) {
+			if (IsReleased) return;
+			if (theme == null) {
+				LogIgnoredCall(nameof(ApplyTheme), "theme is null");
+				return;
+			}
 			currentTheme = theme;
 			renderer.ApplyTheme(theme);
 			this.BackColor = currentTheme.BackgroundColor;
@@ -630,12 +650,13 @@ namespace SweetEditor {
 
 		/// <summary>Enables or disables the performance overlay.</summary>
 		public void SetPerfOverlayEnabled(bool enabled) {
+			if (IsReleased) return;
 			renderer.SetPerfOverlayEnabled(enabled);
 			Invalidate();
 		}
 
 		/// <summary>Returns whether the performance overlay is enabled.</summary>
-		public bool IsPerfOverlayEnabled() => renderer.IsPerfOverlayEnabled;
+		public bool IsPerfOverlayEnabled() => !IsReleased && renderer.IsPerfOverlayEnabled;
 
 		/// <summary>Gets the centralized editor settings.</summary>
 		public EditorSettings Settings => settings;
@@ -645,25 +666,27 @@ namespace SweetEditor {
 
 		/// <summary>Replaces the current keymap and syncs bindings to the C++ core.</summary>
 		public void SetKeyMap(EditorKeyMap editorKeyMap) {
-			keyMap = editorKeyMap ?? throw new ArgumentNullException(nameof(editorKeyMap));
+			if (IsReleased) return;
+			if (editorKeyMap == null) {
+				LogIgnoredCall(nameof(SetKeyMap), "editorKeyMap is null");
+				return;
+			}
+			keyMap = editorKeyMap;
 			editorCore.SetKeyMap(keyMap);
 		}
 
 		/// <summary>Internal accessor for EditorCore, used by <see cref="EditorSettings"/>.</summary>
 		internal EditorCore EditorCoreInternal => editorCore;
 
-		#endregion
-
-		#region Public API - Viewport/Font/Appearance
-
 		// ==================== LanguageConfiguration API ====================
 
 		/// <summary>Sets language configuration.</summary>
 		public void SetLanguageConfiguration(LanguageConfiguration? config) {
+			if (IsReleased) return;
 			languageConfiguration = config;
 			if (config == null) return;
 
-			if (config.Brackets != null && config.Brackets.Count > 0) {
+			if (config.Brackets != null) {
 				int[] opens = new int[config.Brackets.Count];
 				int[] closes = new int[config.Brackets.Count];
 				for (int i = 0; i < config.Brackets.Count; i++) {
@@ -672,7 +695,7 @@ namespace SweetEditor {
 				}
 				editorCore.SetBracketPairs(opens, closes);
 			}
-			if (config.AutoClosingPairs != null && config.AutoClosingPairs.Count > 0) {
+			if (config.AutoClosingPairs != null) {
 				int[] acOpens = new int[config.AutoClosingPairs.Count];
 				int[] acCloses = new int[config.AutoClosingPairs.Count];
 				for (int i = 0; i < config.AutoClosingPairs.Count; i++) {
@@ -719,22 +742,21 @@ namespace SweetEditor {
 		/// <param name="column">Column index (0-based).</param>
 		/// <returns>Returns the cursor rectangle in control coordinates.</returns>
 		public CursorRect GetPositionRect(int line, int column) {
+			if (IsReleased) return default;
 			return editorCore.GetPositionRect(line, column);
 		}
 
 		/// <summary>Gets cursor rect.</summary>
 		/// <returns>Returns the cursor rectangle in control coordinates.</returns>
 		public CursorRect GetCursorRect() {
+			if (IsReleased) return default;
 			return editorCore.GetCursorRect();
 		}
-
-		#endregion
-
-		#region Public API - Text Editing
 
 		/// <summary>Inserts text.</summary>
 		/// <param name="text">Text content.</param>
 		public void InsertText(string text) {
+			if (IsReleased || text == null) return;
 			var result = editorCore.InsertText(text);
 			FireTextChanged(TextChangeAction.Insert, result);
 			Flush();
@@ -744,6 +766,7 @@ namespace SweetEditor {
 		/// <param name="range">Target text range.</param>
 		/// <param name="newText">Replacement text.</param>
 		public void ReplaceText(TextRange range, string newText) {
+			if (IsReleased || newText == null) return;
 			var result = editorCore.ReplaceText(range, newText);
 			FireTextChanged(TextChangeAction.Insert, result);
 			Flush();
@@ -752,6 +775,7 @@ namespace SweetEditor {
 		/// <summary>Deletes text.</summary>
 		/// <param name="range">Target text range.</param>
 		public void DeleteText(TextRange range) {
+			if (IsReleased) return;
 			var result = editorCore.DeleteText(range);
 			FireTextChanged(TextChangeAction.Insert, result);
 			Flush();
@@ -759,6 +783,7 @@ namespace SweetEditor {
 
 		/// <summary>Copies selected text to the system clipboard.</summary>
 		public void CopyToClipboard() {
+			if (IsReleased) return;
 			string text = GetSelectedText();
 			if (string.IsNullOrEmpty(text)) return;
 			try {
@@ -770,6 +795,7 @@ namespace SweetEditor {
 
 		/// <summary>Pastes clipboard text at the caret position.</summary>
 		public void PasteFromClipboard() {
+			if (IsReleased) return;
 			if (editorCore.IsReadOnly()) return;
 			try {
 				if (Clipboard.ContainsText()) {
@@ -785,6 +811,7 @@ namespace SweetEditor {
 
 		/// <summary>Cuts selected text to the system clipboard.</summary>
 		public void CutToClipboard() {
+			if (IsReleased) return;
 			if (editorCore.IsReadOnly()) return;
 			var selection = GetSelection();
 			if (!selection.hasSelection) return;
@@ -794,7 +821,7 @@ namespace SweetEditor {
 
 		/// <summary>Gets selected text.</summary>
 		/// <returns>Returns the resulting string value.</returns>
-		public string GetSelectedText() => editorCore.GetSelectedText();
+		public string GetSelectedText() => IsReleased ? "" : editorCore.GetSelectedText();
 
 		/// <summary>Moves line up.</summary>
 		public void MoveLineUp() {
@@ -845,13 +872,10 @@ namespace SweetEditor {
 			Flush();
 		}
 
-		#endregion
-
-		#region Public API - Undo/Redo
-
 		/// <summary>Performs an undo operation.</summary>
 		/// <returns>Returns <c>true</c> when the operation succeeds.</returns>
 		public bool Undo() {
+			if (IsReleased) return false;
 			var result = editorCore.Undo();
 			if (result != null) { FireTextChanged(TextChangeAction.Undo, result); Flush(); return true; }
 			return false;
@@ -860,6 +884,7 @@ namespace SweetEditor {
 		/// <summary>Performs a redo operation.</summary>
 		/// <returns>Returns <c>true</c> when the operation succeeds.</returns>
 		public bool Redo() {
+			if (IsReleased) return false;
 			var result = editorCore.Redo();
 			if (result != null) { FireTextChanged(TextChangeAction.Redo, result); Flush(); return true; }
 			return false;
@@ -869,10 +894,6 @@ namespace SweetEditor {
 		public bool CanUndo() => editorCore.CanUndo();
 		/// <summary>Returns whether redo.</summary>
 		public bool CanRedo() => editorCore.CanRedo();
-
-		#endregion
-
-		#region Public API - Caret/Selection Management
 
 		/// <summary>Gets cursor position.</summary>
 		public TextPosition GetCursorPosition() => editorCore.GetCursorPosition();
@@ -917,10 +938,6 @@ namespace SweetEditor {
 			Flush();
 		}
 
-		#endregion
-
-		#region Public API - Scrolling/Navigation
-
 		/// <summary>Goto position.</summary>
 		/// <param name="line">Line index (0-based).</param>
 		/// <param name="column">Column index (0-based).</param>
@@ -946,10 +963,6 @@ namespace SweetEditor {
 		/// <summary>Gets scroll metrics.</summary>
 		public ScrollMetrics GetScrollMetrics() => editorCore.GetScrollMetrics();
 
-		#endregion
-
-		#region Public API - Style Registration + Highlight Spans
-
 		/// <summary>Register style.</summary>
 		/// <param name="styleId">Style identifier.</param>
 		/// <param name="color">Color value (ARGB).</param>
@@ -958,10 +971,18 @@ namespace SweetEditor {
 		public void registerTextStyle(uint styleId, int color, int backgroundColor, int fontStyle) =>
 			editorCore.registerTextStyle(styleId, color, backgroundColor, fontStyle);
 
+		/// <summary>Registers a text style.</summary>
+		public void RegisterTextStyle(uint styleId, int color, int backgroundColor, int fontStyle) =>
+			registerTextStyle(styleId, color, backgroundColor, fontStyle);
+
 		/// <summary>Register multiple styles in one batch call.</summary>
 		/// <param name="stylesById">Style definitions keyed by style identifier.</param>
 		public void registerBatchTextStyles(IReadOnlyDictionary<uint, TextStyle> stylesById) =>
 			editorCore.registerBatchTextStyles(stylesById);
+
+		/// <summary>Registers multiple text styles in one batch call.</summary>
+		public void RegisterBatchTextStyles(IReadOnlyDictionary<uint, TextStyle> stylesById) =>
+			registerBatchTextStyles(stylesById);
 
 		/// <summary>Register style.</summary>
 		/// <param name="styleId">Style identifier.</param>
@@ -969,6 +990,10 @@ namespace SweetEditor {
 		/// <param name="fontStyle">Font style flags.</param>
 		public void registerTextStyle(uint styleId, int color, int fontStyle) =>
 			editorCore.registerTextStyle(styleId, color, fontStyle);
+
+		/// <summary>Registers a text style.</summary>
+		public void RegisterTextStyle(uint styleId, int color, int fontStyle) =>
+			registerTextStyle(styleId, color, fontStyle);
 
 		/// <summary>Sets line spans.</summary>
 		public void SetLineSpans(int line, SpanLayer layer, IList<StyleSpan> spans) {
@@ -984,10 +1009,6 @@ namespace SweetEditor {
 		public void SetBatchLineSpans(SpanLayer layer, Dictionary<int, IList<StyleSpan>> spansByLine) {
 			editorCore.SetBatchLineSpans((int)layer, spansByLine);
 		}
-
-		#endregion
-
-		#region Public API 閳?InlayHint / PhantomText
 
 		/// <summary>Sets line inlay hints.</summary>
 		public void SetLineInlayHints(int line, IList<InlayHint> hints) {
@@ -1008,10 +1029,6 @@ namespace SweetEditor {
 		public void SetBatchLinePhantomTexts(Dictionary<int, IList<PhantomText>> phantomsByLine) {
 			editorCore.SetBatchLinePhantomTexts(phantomsByLine);
 		}
-
-		#endregion
-
-		#region Public API - Gutter Icons
 
 		/// <summary>Sets editor icon provider.</summary>
 		public void SetEditorIconProvider(EditorIconProvider? provider) {
@@ -1060,10 +1077,6 @@ namespace SweetEditor {
 
 		public int GetTotalLineCount() => editorCore.GetDocument()?.GetLineCount() ?? -1;
 
-		#endregion
-
-		#region Public API - Diagnostic Decorations
-
 		/// <summary>Sets line diagnostics.</summary>
 		public void SetLineDiagnostics(int line, IList<Diagnostic> items) {
 			editorCore.SetLineDiagnostics(line, items);
@@ -1078,10 +1091,6 @@ namespace SweetEditor {
 		public void ClearDiagnostics() {
 			editorCore.ClearDiagnostics();
 		}
-
-		#endregion
-
-		#region Public API - Guide Structure Lines
 
 		/// <summary>Sets indent guides.</summary>
 		public void SetIndentGuides(IList<IndentGuide> guides) {
@@ -1106,10 +1115,6 @@ namespace SweetEditor {
 		/// <summary>Clears guides.</summary>
 		public void ClearGuides() { editorCore.ClearGuides(); }
 
-		#endregion
-
-		#region Public API - Code Folding
-
 		/// <summary>Sets fold regions.</summary>
 		public void SetFoldRegions(IList<FoldRegion> regions) {
 			editorCore.SetFoldRegions(regions);
@@ -1123,6 +1128,9 @@ namespace SweetEditor {
 			if (result) Flush();
 			return result;
 		}
+
+		/// <summary>Toggles fold state at the specified line.</summary>
+		public bool ToggleFoldAt(int line) => ToggleFold(line);
 
 		/// <summary>Fold at.</summary>
 		/// <param name="line">Line index (0-based).</param>
@@ -1149,10 +1157,6 @@ namespace SweetEditor {
 		/// <summary>Returns whether line visible.</summary>
 		public bool IsLineVisible(int line) => editorCore.IsLineVisible(line);
 
-		#endregion
-
-		#region Public API - Clear Operations
-
 		/// <summary>Clears highlights.</summary>
 		public void ClearHighlights() { editorCore.ClearHighlights(); }
 		/// <summary>Clears highlights.</summary>
@@ -1168,10 +1172,6 @@ namespace SweetEditor {
 		}
 		/// <summary>Clears matched brackets.</summary>
 		public void ClearMatchedBrackets() { editorCore.ClearMatchedBrackets(); Flush(); }
-
-		#endregion
-
-		#region Public API - Linked Editing
 
 		/// <summary>Inserts snippet.</summary>
 		public TextEditResult InsertSnippet(string snippetTemplate) {
@@ -1581,7 +1581,7 @@ namespace SweetEditor {
 			return mods;
 		}
 
-		#region Event Dispatching
+		#region Input Handling And Event Dispatch
 
 		/// <summary>Fire gesture events.</summary>
 		private void FireGestureEvents(GestureResult result, System.Drawing.PointF screenPoint) {
@@ -1723,6 +1723,7 @@ namespace SweetEditor {
 
 		/// <summary>Fire key event changes.</summary>
 		private void FireKeyEventChanges(KeyEventResult result, TextChangeAction action) {
+			if (IsReleased) return;
 			if (result.ContentChanged) {
 				if (result.EditResult?.Changes != null && result.EditResult.Changes.Count > 0) {
 					foreach (var change in result.EditResult.Changes) {
@@ -1744,6 +1745,7 @@ namespace SweetEditor {
 
 		/// <summary>Fire text changed.</summary>
 		private void FireTextChanged(TextChangeAction action, TextEditResult? editResult = null) {
+			if (IsReleased) return;
 			if (editResult?.Changes != null && editResult.Changes.Count > 0) {
 				foreach (var change in editResult.Changes) {
 					TextChanged?.Invoke(this, new TextChangedEventArgs(action, change.Range, change.NewText));
@@ -1757,7 +1759,7 @@ namespace SweetEditor {
 
 		#endregion
 
-		#region Private Helpers/Internal Implementation
+		#region Rendering, Lifecycle And Helpers
 
 		/// <summary>
 		/// Flush all pending changes (decoration / layout / scroll / selection) and trigger a redraw.
@@ -1768,12 +1770,13 @@ namespace SweetEditor {
 		/// </para>
 		/// </summary>
 		public void Flush() {
+			if (IsReleased) return;
 			renderModelDirty = true;
 			Invalidate();
 		}
 
 		private void EnsureRenderModelUpToDate() {
-			if (!renderModelDirty || IsDesignMode() || !IsHandleCreated || editorCore == null) {
+			if (IsReleased || !renderModelDirty || IsDesignMode() || !IsHandleCreated || editorCore == null) {
 				return;
 			}
 
@@ -1806,6 +1809,7 @@ namespace SweetEditor {
 		}
 
 		private void UpdateCompletionPopupCursorAnchor() {
+			if (IsReleased) return;
 			if (completionPopupController == null || renderModel == null) return;
 			EditorRenderModel model = (EditorRenderModel)renderModel;
 			completionPopupController.UpdateCursorPosition(
@@ -1837,6 +1841,7 @@ namespace SweetEditor {
 		internal void SyncPlatformScaleInternal(float scale) => SyncPlatformScale(scale);
 
 		private void SyncPlatformScale(float scale) {
+			if (IsReleased) return;
 			renderer.SyncPlatformScale(scale);
 			Font = renderer.RegularFont;
 			if (editorCore != null) {
@@ -1867,8 +1872,42 @@ namespace SweetEditor {
 			return false;
 		}
 
+		private void ClearEventSubscriptions() {
+			TextChanged = null;
+			CursorChanged = null;
+			SelectionChanged = null;
+			ScrollChanged = null;
+			ScaleChanged = null;
+			DocumentLoaded = null;
+			LongPress = null;
+			DoubleTap = null;
+			ContextMenu = null;
+			InlayHintClick = null;
+			GutterIconClick = null;
+			FoldToggle = null;
+		}
+
 		protected override void Dispose(bool disposing) {
+			if (disposed) {
+				base.Dispose(disposing);
+				return;
+			}
+			disposed = true;
 			if (disposing) {
+				animationActive = false;
+				animationTimer?.Stop();
+				animationTimer?.Dispose();
+				animationTimer = null;
+				ClearEventSubscriptions();
+				completionProviderManager?.Dispose();
+				completionProviderManager = null;
+				decorationProviderManager?.Dispose();
+				decorationProviderManager = null;
+				newLineActionProviderManager?.Dispose();
+				newLineActionProviderManager = null;
+				completionPopupController?.Dispose();
+				completionPopupController = null;
+				editorCore?.Dispose();
 				renderer?.Dispose();
 			}
 			base.Dispose(disposing);

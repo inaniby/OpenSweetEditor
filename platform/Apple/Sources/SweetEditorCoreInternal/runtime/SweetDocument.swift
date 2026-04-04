@@ -27,7 +27,7 @@ class SweetDocument {
     /// - Returns: Line text, or an empty string when the handle is invalid.
     func getLineText(_ line: Int) -> String {
         guard handle != 0 else { return "" }
-        guard let u16Ptr = get_document_line_text(handle, line) else { return "" }
+        guard let u16Ptr = get_document_line_utf16(handle, line) else { return "" }
         let text = stringFromU16Ptr(u16Ptr)
         free_u16_string(Int(bitPattern: u16Ptr))
         return text

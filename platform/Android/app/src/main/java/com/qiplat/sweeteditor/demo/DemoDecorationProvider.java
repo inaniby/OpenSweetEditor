@@ -8,16 +8,14 @@ import androidx.annotation.NonNull;
 import com.qiplat.sweeteditor.EditorTheme;
 import com.qiplat.sweeteditor.SweetEditor;
 import com.qiplat.sweeteditor.core.Document;
-import com.qiplat.sweeteditor.core.EditorCore;
-import com.qiplat.sweeteditor.core.adornment.Diagnostic;
 import com.qiplat.sweeteditor.core.adornment.Diagnostic;
 import com.qiplat.sweeteditor.core.adornment.FoldRegion;
 import com.qiplat.sweeteditor.core.adornment.GutterIcon;
 import com.qiplat.sweeteditor.core.adornment.IndentGuide;
 import com.qiplat.sweeteditor.core.adornment.InlayHint;
-
 import com.qiplat.sweeteditor.core.adornment.SeparatorGuide;
 import com.qiplat.sweeteditor.core.adornment.StyleSpan;
+import com.qiplat.sweeteditor.core.foundation.TextChange;
 import com.qiplat.sweeteditor.core.foundation.TextPosition;
 import com.qiplat.sweeteditor.core.foundation.TextRange;
 import com.qiplat.sweeteditor.decoration.DecorationContext;
@@ -150,10 +148,10 @@ public class DemoDecorationProvider implements DecorationProvider {
             cacheHighlight = documentAnalyzer.analyze();
             analyzedFileName = currentFileName;
         } else if (!context.textChanges.isEmpty()) {
-            for (EditorCore.TextChange change : context.textChanges) {
+            for (TextChange change : context.textChanges) {
                 cacheHighlight = documentAnalyzer.analyzeIncremental(
                         convertAsSLTextRange(change.range),
-                        change.newText
+                        change.text
                 );
             }
         }

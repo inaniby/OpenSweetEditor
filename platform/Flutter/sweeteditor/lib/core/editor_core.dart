@@ -1265,14 +1265,14 @@ class Document {
   /// Get document text as UTF8 string.
   String get text {
     _ensureOpen();
-    final ptr = bindings.get_document_text(_handle);
+    final ptr = bindings.get_document_utf8(_handle);
     return _readNativeUtf8(ptr);
   }
 
   /// Get a single line's text (0-indexed).
   String getLineText(int line) {
     _ensureOpen();
-    final ptr = bindings.get_document_line_text(_handle, line);
+    final ptr = bindings.get_document_line_utf16(_handle, line);
     return _readNativeUtf16(ptr);
   }
 

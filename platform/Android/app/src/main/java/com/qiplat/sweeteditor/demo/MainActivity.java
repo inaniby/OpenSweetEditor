@@ -232,14 +232,18 @@ public class MainActivity extends AppCompatActivity {
 
     private void subscribeEditorEvents() {
         mEditor.subscribe(TextChangedEvent.class, e -> {
-            String rangeStr = e.changeRange != null
-                    ? e.changeRange.start.line + ":" + e.changeRange.start.column
-                    + "-" + e.changeRange.end.line + ":" + e.changeRange.end.column
-                    : "null";
-            String textPreview = e.text != null
-                    ? (e.text.length() > 50 ? e.text.substring(0, 50) + "..." : e.text).replace("\n", "\\n")
-                    : "null";
-            Log.d("SweetEditor", "[TextChanged] action=" + e.action.name() + " range=" + rangeStr + " text=" + textPreview);
+            int count = e.changes.size();
+            String summary = "empty";
+            if (count > 0) {
+                TextChange first = e.changes.get(0);
+                String rangeStr = first.range.start.line + ":" + first.range.start.column
+                        + "-" + first.range.end.line + ":" + first.range.end.column;
+                String textPreview = first.text.length() > 50
+                        ? first.text.substring(0, 50) + "..."
+                        : first.text;
+                summary = "range=" + rangeStr + " text=" + textPreview.replace("\n", "\\n");
+            }
+            Log.d("SweetEditor", "[TextChanged] changes=" + count + " " + summary);
         });
         mEditor.subscribe(InlayHintClickEvent.class, e -> {
             if (e.type == InlayType.COLOR) {
