@@ -1168,15 +1168,15 @@ Minor visual differences are acceptable:
 
 ## 14. Threading and Concurrency Model (MUST)
 
-State-mutating editor operations and host-visible callbacks are UI-thread-affine by default. Platforms MAY expose additional thread-safe query surfaces, but MUST choose a concrete threading model and document it explicitly.
+State-mutating editor operations and host-visible callbacks are UI-thread-affine by default. Platforms MAY expose additional thread-safe query surfaces, but MUST choose a concrete threading model; platforms SHOULD explain that model through code comments, type annotations, or a README.
 
 | Rule | Constraint | Description |
 |---|---|---|
 | State-mutating API thread | **MUST** | Public methods that mutate editor state or trigger visible UI updates MUST be called on the UI thread unless the platform explicitly documents an equivalent serialized threading model |
-| API thread contract documentation | **MUST** | Platform documentation MUST explicitly identify which public APIs are UI-thread-only and which pure query / snapshot APIs, if any, are safe to call from background threads |
+| API thread contract documentation | **SHOULD** | Platforms SHOULD use code comments, type annotations, or a README to identify which public APIs are UI-thread-only and which pure query / snapshot APIs, if any, are safe to call from background threads |
 | Pure query API thread | **SHOULD** | Pure query / snapshot APIs SHOULD either remain UI-thread-only or be explicitly documented as background-safe; platforms MAY allow background reads only when implemented safely |
 | Event callback thread | **MUST** | All event callbacks / delegate invocations / stream emissions that are visible to host code MUST execute on the UI thread |
-| Provider call thread | **MUST** | Platforms MUST choose a stable invocation model for `provideDecorations()` and `provideCompletions()` (UI thread, worker thread, or another documented serialized executor) and MUST document that model for host code |
+| Provider call thread | **MUST** | Platforms MUST choose a stable invocation model for `provideDecorations()` and `provideCompletions()` (UI thread, worker thread, or another serialized executor); platforms SHOULD explain that model to host code through code comments, type annotations, or a README |
 | Provider async callback thread | **MUST** | Provider result delivery may happen from any thread, but the Manager MUST switch back to the UI thread when applying results to Core or mutating host-visible editor state |
 | `buildRenderModel()` | **MUST** | `buildRenderModel()` MUST observe a stable editor snapshot. Platforms MAY require UI-thread calls or provide a stronger thread-safe snapshot contract, but the returned `EditorRenderModel` SHOULD be treated as immutable and MAY be safely read on the render thread |
 | `NewLineActionProvider` | **MUST** | `provideNewLineAction()` MUST complete synchronously on the input path so Enter handling does not depend on a later async callback |
