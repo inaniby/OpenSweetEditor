@@ -424,6 +424,34 @@ namespace NS_SWEETEDITOR {
     m_fling_->stop();
   }
 
+  void EditorInteraction::resetForDocumentLoad() {
+    m_scrollbar_last_interaction_ms_ = 0;
+    m_scrollbar_cycle_start_ms_ = 0;
+    m_dragging_scrollbar_ = ScrollbarDragTarget::NONE;
+    m_scrollbar_drag_start_point_ = {};
+    m_scrollbar_drag_start_scroll_x_ = 0;
+    m_scrollbar_drag_start_scroll_y_ = 0;
+    m_scrollbar_drag_travel_x_ = 0;
+    m_scrollbar_drag_travel_y_ = 0;
+    m_scrollbar_drag_max_scroll_x_ = 0;
+    m_scrollbar_drag_max_scroll_y_ = 0;
+
+    m_pending_scale_anchor_ = {};
+    m_scale_gesture_active_ = false;
+
+    m_dragging_handle_ = HandleDragTarget::NONE;
+    m_cached_start_handle_pos_ = {};
+    m_cached_end_handle_pos_ = {};
+    m_cached_handle_height_ = 0;
+    m_cached_handles_valid_ = false;
+
+    m_edge_scroll_ = {};
+
+    m_fling_->stop();
+    m_fling_->resetSamples();
+    m_gesture_handler_->resetState();
+  }
+
   void EditorInteraction::markScrollbarInteraction() {
     const int64_t now_ms = monotonicNowMs();
     const int64_t hide_window_ms =

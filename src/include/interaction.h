@@ -43,6 +43,7 @@ namespace NS_SWEETEDITOR {
     GestureResult tickFling();
     GestureResult tickAnimations();
     void stopFling();
+    void resetForDocumentLoad();
 
     void markScrollbarInteraction();
     void computeScrollbarModels(ScrollbarModel& vertical, ScrollbarModel& horizontal) const;
