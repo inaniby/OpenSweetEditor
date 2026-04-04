@@ -54,7 +54,7 @@ class DecorationResult {
   Map<int, List<core.StyleSpan>>? syntaxSpans;
   Map<int, List<core.StyleSpan>>? semanticSpans;
   Map<int, List<core.InlayHint>>? inlayHints;
-  Map<int, List<core.DiagnosticItem>>? diagnostics;
+  Map<int, List<core.Diagnostic>>? diagnostics;
   List<core.IndentGuide>? indentGuides;
   List<core.BracketGuide>? bracketGuides;
   List<core.FlowGuide>? flowGuides;
@@ -141,7 +141,7 @@ class DecorationResultBuilder {
   }
 
   DecorationResultBuilder diagnostics(
-    Map<int, List<core.DiagnosticItem>>? value,
+    Map<int, List<core.Diagnostic>>? value,
     ApplyMode mode,
   ) {
     _result.diagnostics = value;

@@ -72,8 +72,7 @@ enum GuideType {
 enum GuideStyle {
   solid(0),
   dashed(1),
-  dotted(2),
-  double_(3);
+  double_(2);
 
   const GuideStyle(this.value);
   final int value;
@@ -82,6 +81,37 @@ enum GuideStyle {
     (e) => e.value == value,
     orElse: () => solid,
   );
+}
+
+/// Layout metrics snapshot produced by the core.
+class LayoutMetrics {
+  const LayoutMetrics({
+    this.fontHeight = 0,
+    this.fontAscent = 0,
+    this.lineSpacingAdd = 0,
+    this.lineSpacingMult = 1,
+    this.lineNumberMargin = 0,
+    this.lineNumberWidth = 0,
+    this.maxGutterIcons = 0,
+    this.inlayHintPadding = 0,
+    this.inlayHintMargin = 0,
+    this.foldArrowMode = FoldArrowMode.always,
+    this.hasFoldRegions = false,
+  });
+
+  static const LayoutMetrics empty = LayoutMetrics();
+
+  final double fontHeight;
+  final double fontAscent;
+  final double lineSpacingAdd;
+  final double lineSpacingMult;
+  final double lineNumberMargin;
+  final double lineNumberWidth;
+  final int maxGutterIcons;
+  final double inlayHintPadding;
+  final double inlayHintMargin;
+  final FoldArrowMode foldArrowMode;
+  final bool hasFoldRegions;
 }
 
 /// A single visual run (text segment or decoration) within a visual line.

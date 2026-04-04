@@ -305,7 +305,7 @@ class ProtocolEncoder {
     return data.buffer.asUint8List();
   }
 
-  static Uint8List packLineDiagnostics(int line, List<DiagnosticItem> items) {
+  static Uint8List packLineDiagnostics(int line, List<Diagnostic> items) {
     final data = ByteData(8 + items.length * 16);
     var offset = 0;
     data.setInt32(offset, line, Endian.little);
@@ -326,7 +326,7 @@ class ProtocolEncoder {
   }
 
   static Uint8List packBatchLineDiagnostics(
-    Map<int, List<DiagnosticItem>> diagsByLine,
+    Map<int, List<Diagnostic>> diagsByLine,
   ) {
     var totalDiags = 0;
     diagsByLine.forEach((_, items) => totalDiags += items.length);
@@ -441,7 +441,7 @@ class ProtocolEncoder {
     for (final g in guides) {
       data.setInt32(offset, g.line, Endian.little);
       offset += 4;
-      data.setInt32(offset, g.style, Endian.little);
+      data.setInt32(offset, g.style.value, Endian.little);
       offset += 4;
       data.setInt32(offset, g.count, Endian.little);
       offset += 4;
@@ -533,8 +533,8 @@ class ProtocolDecoder {
     final changes = <TextChange>[];
     for (var i = 0; i < count; i++) {
       final range = TextRange(r.readTextPosition(), r.readTextPosition());
-      final newText = r.readUtf8String();
-      changes.add(TextChange(range, newText));
+      final text = r.readUtf8String();
+      changes.add(TextChange(range, text));
     }
     return TextEditResult(changed: true, changes: changes);
   }
@@ -646,6 +646,30 @@ class ProtocolDecoder {
       textAreaWidth: r.readFloat32(),
       canScrollX: r.readInt32() != 0,
       canScrollY: r.readInt32() != 0,
+    );
+  }
+
+  static LayoutMetrics decodeLayoutMetrics(
+    ffi.Pointer<ffi.Uint8> ptr,
+    int size,
+  ) {
+    if (ptr == ffi.nullptr || size < 44) return LayoutMetrics.empty;
+    final r = _BinaryReader(ptr, size);
+    return LayoutMetrics(
+      fontHeight: r.readFloat32(),
+      fontAscent: r.readFloat32(),
+      lineSpacingAdd: r.readFloat32(),
+      lineSpacingMult: r.readFloat32(),
+      lineNumberMargin: r.readFloat32(),
+      lineNumberWidth: r.readFloat32(),
+      maxGutterIcons: r.readInt32(),
+      inlayHintPadding: r.readFloat32(),
+      inlayHintMargin: r.readFloat32(),
+      foldArrowMode: FoldArrowMode.values.firstWhere(
+        (mode) => mode.value == r.readInt32(),
+        orElse: () => FoldArrowMode.always,
+      ),
+      hasFoldRegions: r.readInt32() != 0,
     );
   }
 

@@ -421,17 +421,14 @@ class EditorCanvasPainter extends ChangeNotifier implements CustomPainter {
             paint,
           );
         }
-      } else if (seg.style == core.GuideStyle.dashed ||
-          seg.style == core.GuideStyle.dotted) {
-        final dashLen = seg.style == core.GuideStyle.dashed ? 4.0 : 2.0;
-        final gapLen = seg.style == core.GuideStyle.dashed ? 3.0 : 2.0;
+      } else if (seg.style == core.GuideStyle.dashed) {
         _drawDashedLine(
           canvas,
           Offset(startX, startY),
           Offset(endX, endY),
           paint,
-          dashLen,
-          gapLen,
+          4.0,
+          3.0,
         );
       } else {
         if (seg.arrowEnd) {

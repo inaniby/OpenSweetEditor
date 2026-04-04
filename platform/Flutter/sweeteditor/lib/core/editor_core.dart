@@ -131,10 +131,10 @@ enum KeyCode {
 
 /// A single text change from an edit operation.
 class TextChange {
-  const TextChange(this.range, this.newText);
+  const TextChange(this.range, this.text);
 
   final TextRange range;
-  final String newText;
+  final String text;
 }
 
 /// Result of a text edit operation.
@@ -355,7 +355,7 @@ class EditorCore {
 
   int get handle => _handle;
 
-  void setDocument(Document document) {
+  void loadDocument(Document document) {
     _ensureOpen();
     document._ensureOpen();
     bindings.set_editor_document(_handle, document._handle);
@@ -518,11 +518,38 @@ class EditorCore {
     });
   }
 
+  LayoutMetrics getLayoutMetrics() {
+    _ensureOpen();
+    return _callAndParse(
+      LayoutMetrics.empty,
+      (outSize) => bindings.get_layout_metrics(_handle, outSize),
+      ProtocolDecoder.decodeLayoutMetrics,
+    );
+  }
+
   GestureResult handleGestureEvent(GestureEvent event) {
+    return handleGestureEventEx(
+      type: event.type,
+      points: event.points,
+      modifiers: event.modifiers,
+      wheelDeltaX: event.wheelDeltaX,
+      wheelDeltaY: event.wheelDeltaY,
+      directScale: event.directScale,
+    );
+  }
+
+  GestureResult handleGestureEventEx({
+    required int type,
+    required List<PointF> points,
+    int modifiers = 0,
+    double wheelDeltaX = 0,
+    double wheelDeltaY = 0,
+    double directScale = 0,
+  }) {
     _ensureOpen();
     return using((arena) {
       final flatPoints = <double>[];
-      for (final p in event.points) {
+      for (final p in points) {
         flatPoints.add(p.x);
         flatPoints.add(p.y);
       }
@@ -535,13 +562,13 @@ class EditorCore {
       final outSize = arena.allocate<ffi.Size>(ffi.sizeOf<ffi.Size>());
       final ptr = bindings.handle_editor_gesture_event_ex(
         _handle,
-        event.type,
-        event.points.length,
+        type,
+        points.length,
         pointsPtr,
-        event.modifiers,
-        event.wheelDeltaX,
-        event.wheelDeltaY,
-        event.directScale,
+        modifiers,
+        wheelDeltaX,
+        wheelDeltaY,
+        directScale,
         outSize,
       );
       if (ptr == ffi.nullptr) return GestureResult.empty;
@@ -941,7 +968,11 @@ class EditorCore {
     );
   }
 
-  void setLineSpans(Uint8List data) {
+  void setLineSpans(int line, SpanLayer layer, List<StyleSpan> spans) {
+    setLineSpansRaw(ProtocolEncoder.packLineSpans(line, layer.value, spans));
+  }
+
+  void setLineSpansRaw(Uint8List data) {
     _ensureOpen();
     _callWithBinaryData(
       data,
@@ -949,7 +980,16 @@ class EditorCore {
     );
   }
 
-  void setBatchLineSpans(Uint8List data) {
+  void setBatchLineSpans(
+    SpanLayer layer,
+    Map<int, List<StyleSpan>> spansByLine,
+  ) {
+    setBatchLineSpansRaw(
+      ProtocolEncoder.packBatchLineSpans(layer.value, spansByLine),
+    );
+  }
+
+  void setBatchLineSpansRaw(Uint8List data) {
     _ensureOpen();
     _callWithBinaryData(
       data,
@@ -957,7 +997,11 @@ class EditorCore {
     );
   }
 
-  void setLineInlayHints(Uint8List data) {
+  void setLineInlayHints(int line, List<InlayHint> hints) {
+    setLineInlayHintsRaw(ProtocolEncoder.packLineInlayHints(line, hints));
+  }
+
+  void setLineInlayHintsRaw(Uint8List data) {
     _ensureOpen();
     _callWithBinaryData(
       data,
@@ -965,7 +1009,13 @@ class EditorCore {
     );
   }
 
-  void setBatchLineInlayHints(Uint8List data) {
+  void setBatchLineInlayHints(Map<int, List<InlayHint>> hintsByLine) {
+    setBatchLineInlayHintsRaw(
+      ProtocolEncoder.packBatchLineInlayHints(hintsByLine),
+    );
+  }
+
+  void setBatchLineInlayHintsRaw(Uint8List data) {
     _ensureOpen();
     _callWithBinaryData(
       data,
@@ -974,7 +1024,11 @@ class EditorCore {
     );
   }
 
-  void setLinePhantomTexts(Uint8List data) {
+  void setLinePhantomTexts(int line, List<PhantomText> phantoms) {
+    setLinePhantomTextsRaw(ProtocolEncoder.packLinePhantomTexts(line, phantoms));
+  }
+
+  void setLinePhantomTextsRaw(Uint8List data) {
     _ensureOpen();
     _callWithBinaryData(
       data,
@@ -982,7 +1036,13 @@ class EditorCore {
     );
   }
 
-  void setBatchLinePhantomTexts(Uint8List data) {
+  void setBatchLinePhantomTexts(Map<int, List<PhantomText>> phantomsByLine) {
+    setBatchLinePhantomTextsRaw(
+      ProtocolEncoder.packBatchLinePhantomTexts(phantomsByLine),
+    );
+  }
+
+  void setBatchLinePhantomTextsRaw(Uint8List data) {
     _ensureOpen();
     _callWithBinaryData(
       data,
@@ -991,7 +1051,11 @@ class EditorCore {
     );
   }
 
-  void setLineGutterIcons(Uint8List data) {
+  void setLineGutterIcons(int line, List<GutterIcon> icons) {
+    setLineGutterIconsRaw(ProtocolEncoder.packLineGutterIcons(line, icons));
+  }
+
+  void setLineGutterIconsRaw(Uint8List data) {
     _ensureOpen();
     _callWithBinaryData(
       data,
@@ -999,7 +1063,13 @@ class EditorCore {
     );
   }
 
-  void setBatchLineGutterIcons(Uint8List data) {
+  void setBatchLineGutterIcons(Map<int, List<GutterIcon>> iconsByLine) {
+    setBatchLineGutterIconsRaw(
+      ProtocolEncoder.packBatchLineGutterIcons(iconsByLine),
+    );
+  }
+
+  void setBatchLineGutterIconsRaw(Uint8List data) {
     _ensureOpen();
     _callWithBinaryData(
       data,
@@ -1008,7 +1078,11 @@ class EditorCore {
     );
   }
 
-  void setLineDiagnostics(Uint8List data) {
+  void setLineDiagnostics(int line, List<Diagnostic> items) {
+    setLineDiagnosticsRaw(ProtocolEncoder.packLineDiagnostics(line, items));
+  }
+
+  void setLineDiagnosticsRaw(Uint8List data) {
     _ensureOpen();
     _callWithBinaryData(
       data,
@@ -1016,7 +1090,13 @@ class EditorCore {
     );
   }
 
-  void setBatchLineDiagnostics(Uint8List data) {
+  void setBatchLineDiagnostics(Map<int, List<Diagnostic>> itemsByLine) {
+    setBatchLineDiagnosticsRaw(
+      ProtocolEncoder.packBatchLineDiagnostics(itemsByLine),
+    );
+  }
+
+  void setBatchLineDiagnosticsRaw(Uint8List data) {
     _ensureOpen();
     _callWithBinaryData(
       data,
@@ -1025,7 +1105,11 @@ class EditorCore {
     );
   }
 
-  void setIndentGuides(Uint8List data) {
+  void setIndentGuides(List<IndentGuide> guides) {
+    setIndentGuidesRaw(ProtocolEncoder.packIndentGuides(guides));
+  }
+
+  void setIndentGuidesRaw(Uint8List data) {
     _ensureOpen();
     _callWithBinaryData(
       data,
@@ -1033,7 +1117,11 @@ class EditorCore {
     );
   }
 
-  void setBracketGuides(Uint8List data) {
+  void setBracketGuides(List<BracketGuide> guides) {
+    setBracketGuidesRaw(ProtocolEncoder.packBracketGuides(guides));
+  }
+
+  void setBracketGuidesRaw(Uint8List data) {
     _ensureOpen();
     _callWithBinaryData(
       data,
@@ -1041,7 +1129,11 @@ class EditorCore {
     );
   }
 
-  void setFlowGuides(Uint8List data) {
+  void setFlowGuides(List<FlowGuide> guides) {
+    setFlowGuidesRaw(ProtocolEncoder.packFlowGuides(guides));
+  }
+
+  void setFlowGuidesRaw(Uint8List data) {
     _ensureOpen();
     _callWithBinaryData(
       data,
@@ -1049,7 +1141,11 @@ class EditorCore {
     );
   }
 
-  void setSeparatorGuides(Uint8List data) {
+  void setSeparatorGuides(List<SeparatorGuide> guides) {
+    setSeparatorGuidesRaw(ProtocolEncoder.packSeparatorGuides(guides));
+  }
+
+  void setSeparatorGuidesRaw(Uint8List data) {
     _ensureOpen();
     _callWithBinaryData(
       data,
@@ -1062,7 +1158,11 @@ class EditorCore {
     bindings.editor_set_max_gutter_icons(_handle, count);
   }
 
-  void registerBatchTextStyles(Uint8List data) {
+  void registerBatchTextStyles(Map<int, TextStyle> stylesById) {
+    registerBatchTextStylesRaw(ProtocolEncoder.packBatchTextStyles(stylesById));
+  }
+
+  void registerBatchTextStylesRaw(Uint8List data) {
     _ensureOpen();
     _callWithBinaryData(
       data,
@@ -1076,14 +1176,13 @@ class EditorCore {
     bindings.editor_clear_line_spans(_handle, line, layer.value);
   }
 
-  void clearHighlightsLayer(SpanLayer layer) {
+  void clearHighlights([SpanLayer? layer]) {
     _ensureOpen();
-    bindings.editor_clear_highlights_layer(_handle, layer.value);
-  }
-
-  void clearHighlights() {
-    _ensureOpen();
-    bindings.editor_clear_highlights(_handle);
+    if (layer == null) {
+      bindings.editor_clear_highlights(_handle);
+    } else {
+      bindings.editor_clear_highlights_layer(_handle, layer.value);
+    }
   }
 
   void clearInlayHints() {
@@ -1150,7 +1249,11 @@ class EditorCore {
     });
   }
 
-  void setFoldRegions(Uint8List data) {
+  void setFoldRegions(List<FoldRegion> regions) {
+    setFoldRegionsRaw(ProtocolEncoder.packFoldRegions(regions));
+  }
+
+  void setFoldRegionsRaw(Uint8List data) {
     _ensureOpen();
     _callWithBinaryData(
       data,
@@ -1158,7 +1261,7 @@ class EditorCore {
     );
   }
 
-  bool toggleFold(int line) {
+  bool toggleFoldAt(int line) {
     _ensureOpen();
     return bindings.editor_toggle_fold(_handle, line) != 0;
   }

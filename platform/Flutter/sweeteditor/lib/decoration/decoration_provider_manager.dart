@@ -180,7 +180,7 @@ class DecorationProviderManager {
     final syntaxSpans = <int, List<core.StyleSpan>>{};
     final semanticSpans = <int, List<core.StyleSpan>>{};
     final inlayHints = <int, List<core.InlayHint>>{};
-    final diagnostics = <int, List<core.DiagnosticItem>>{};
+    final diagnostics = <int, List<core.Diagnostic>>{};
     List<core.IndentGuide>? indentGuides;
     List<core.BracketGuide>? bracketGuides;
     List<core.FlowGuide>? flowGuides;
@@ -365,7 +365,7 @@ class DecorationProviderManager {
   }
 
   void _clearDiagnosticRange(int startLine, int endLine) {
-    final empty = _buildEmptyMapRange<core.DiagnosticItem>(startLine, endLine);
+      final empty = _buildEmptyMapRange<core.Diagnostic>(startLine, endLine);
     if (empty.isEmpty) return;
     _setBatchLineDiagnostics(empty);
   }
@@ -497,14 +497,13 @@ class DecorationProviderManager {
   }
 
   void _clearHighlights(int layer) {
-    session.editorCore?.clearHighlightsLayer(core.SpanLayer.values[layer]);
+    session.editorCore?.clearHighlights(core.SpanLayer.values[layer]);
   }
 
   void _setBatchLineSpans(int layer, Map<int, List<core.StyleSpan>> spans) {
     final ec = session.editorCore;
     if (ec == null) return;
-    final data = core.ProtocolEncoder.packBatchLineSpans(layer, spans);
-    ec.setBatchLineSpans(data);
+    ec.setBatchLineSpans(core.SpanLayer.values[layer], spans);
   }
 
   void _clearInlayHints() {
@@ -514,19 +513,17 @@ class DecorationProviderManager {
   void _setBatchLineInlayHints(Map<int, List<core.InlayHint>> hints) {
     final ec = session.editorCore;
     if (ec == null) return;
-    final data = core.ProtocolEncoder.packBatchLineInlayHints(hints);
-    ec.setBatchLineInlayHints(data);
+    ec.setBatchLineInlayHints(hints);
   }
 
   void _clearDiagnostics() {
     session.editorCore?.clearDiagnostics();
   }
 
-  void _setBatchLineDiagnostics(Map<int, List<core.DiagnosticItem>> items) {
+  void _setBatchLineDiagnostics(Map<int, List<core.Diagnostic>> items) {
     final ec = session.editorCore;
     if (ec == null) return;
-    final data = core.ProtocolEncoder.packBatchLineDiagnostics(items);
-    ec.setBatchLineDiagnostics(data);
+    ec.setBatchLineDiagnostics(items);
   }
 
   void _clearGutterIcons() {
@@ -536,8 +533,7 @@ class DecorationProviderManager {
   void _setBatchLineGutterIcons(Map<int, List<core.GutterIcon>> icons) {
     final ec = session.editorCore;
     if (ec == null) return;
-    final data = core.ProtocolEncoder.packBatchLineGutterIcons(icons);
-    ec.setBatchLineGutterIcons(data);
+    ec.setBatchLineGutterIcons(icons);
   }
 
   void _clearPhantomTexts() {
@@ -547,43 +543,37 @@ class DecorationProviderManager {
   void _setBatchLinePhantomTexts(Map<int, List<core.PhantomText>> texts) {
     final ec = session.editorCore;
     if (ec == null) return;
-    final data = core.ProtocolEncoder.packBatchLinePhantomTexts(texts);
-    ec.setBatchLinePhantomTexts(data);
+    ec.setBatchLinePhantomTexts(texts);
   }
 
   void _setIndentGuides(List<core.IndentGuide> guides) {
     final ec = session.editorCore;
     if (ec == null) return;
-    final data = core.ProtocolEncoder.packIndentGuides(guides);
-    ec.setIndentGuides(data);
+    ec.setIndentGuides(guides);
   }
 
   void _setBracketGuides(List<core.BracketGuide> guides) {
     final ec = session.editorCore;
     if (ec == null) return;
-    final data = core.ProtocolEncoder.packBracketGuides(guides);
-    ec.setBracketGuides(data);
+    ec.setBracketGuides(guides);
   }
 
   void _setFlowGuides(List<core.FlowGuide> guides) {
     final ec = session.editorCore;
     if (ec == null) return;
-    final data = core.ProtocolEncoder.packFlowGuides(guides);
-    ec.setFlowGuides(data);
+    ec.setFlowGuides(guides);
   }
 
   void _setSeparatorGuides(List<core.SeparatorGuide> guides) {
     final ec = session.editorCore;
     if (ec == null) return;
-    final data = core.ProtocolEncoder.packSeparatorGuides(guides);
-    ec.setSeparatorGuides(data);
+    ec.setSeparatorGuides(guides);
   }
 
   void _setFoldRegions(List<core.FoldRegion> regions) {
     final ec = session.editorCore;
     if (ec == null) return;
-    final data = core.ProtocolEncoder.packFoldRegions(regions);
-    ec.setFoldRegions(data);
+    ec.setFoldRegions(regions);
   }
 
   static Map<int, List<T>> _buildEmptyMapRange<T>(int startLine, int endLine) {

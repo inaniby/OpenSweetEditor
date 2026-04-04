@@ -95,7 +95,7 @@ class DemoDecorationProvider implements DecorationProvider {
 
     final syntaxSpans = <int, List<core.StyleSpan>>{};
     final inlayHints = <int, List<core.InlayHint>>{};
-    final diagnostics = <int, List<core.DiagnosticItem>>{};
+    final diagnostics = <int, List<core.Diagnostic>>{};
     final gutterIcons = <int, List<core.GutterIcon>>{};
     final indentGuides = <core.IndentGuide>[];
     final foldRegions = <core.FoldRegion>[];
@@ -134,7 +134,7 @@ class DemoDecorationProvider implements DecorationProvider {
       for (final change in context.textChanges) {
         _cacheHighlight = _documentAnalyzer?.analyzeIncremental(
           _convertRange(change.range),
-          change.newText,
+          change.text,
         );
       }
     }
@@ -228,7 +228,7 @@ class DemoDecorationProvider implements DecorationProvider {
   }
 
   _TokenRangeInfo? _appendDynamicDemoDecorations(
-    Map<int, List<core.DiagnosticItem>> diagnostics,
+    Map<int, List<core.Diagnostic>> diagnostics,
     Set<String> seenDiagnostics,
     List<int> diagnosticCount,
     _TokenRangeInfo? firstKeywordRange,
@@ -299,7 +299,7 @@ class DemoDecorationProvider implements DecorationProvider {
   }
 
   void _appendDiagnostic(
-    Map<int, List<core.DiagnosticItem>> diagnostics,
+    Map<int, List<core.Diagnostic>> diagnostics,
     Set<String> seenDiagnostics,
     List<int> diagnosticCount, {
     required int line,
@@ -321,7 +321,7 @@ class DemoDecorationProvider implements DecorationProvider {
     diagnostics
         .putIfAbsent(line, () => [])
         .add(
-          core.DiagnosticItem(
+          core.Diagnostic(
             column: column,
             length: length,
             severity: severity,
@@ -332,7 +332,7 @@ class DemoDecorationProvider implements DecorationProvider {
   }
 
   void _appendDiagnosticFallbackIfNeeded(
-    Map<int, List<core.DiagnosticItem>> diagnostics,
+    Map<int, List<core.Diagnostic>> diagnostics,
     Set<String> seenDiagnostics,
     List<int> diagnosticCount,
     _TokenRangeInfo? firstKeywordRange,
@@ -497,7 +497,9 @@ class DemoDecorationProvider implements DecorationProvider {
       separatorGuides.add(
         core.SeparatorGuide(
           line: range.line,
-          style: isDouble ? 1 : 0,
+          style: isDouble
+              ? core.SeparatorStyle.double_
+              : core.SeparatorStyle.single,
           count: count,
           textEndColumn: lineText.length,
         ),

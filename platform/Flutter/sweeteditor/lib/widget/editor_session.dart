@@ -169,7 +169,7 @@ class EditorSession implements EditorSettingsHost {
     }
     _document = document;
     _ownsDocument = takeOwnership;
-    _editorCore?.setDocument(document);
+    _editorCore?.loadDocument(document);
   }
 
   String getContent() => _document?.text ?? '';

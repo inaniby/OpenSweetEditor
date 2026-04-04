@@ -100,11 +100,15 @@ class _EditorDemoPageState extends State<EditorDemoPage> {
   }
 
   void _onTextChanged(TextChangedEvent e) {
-    final rangeStr = e.changeRange != null
-        ? '${e.changeRange!.start.line}:${e.changeRange!.start.column}'
-              '-${e.changeRange!.end.line}:${e.changeRange!.end.column}'
-        : 'null';
-    _updateStatus('${e.action.name} $rangeStr');
+    final changeSummary = e.changes
+        .map(
+          (change) =>
+              '${change.range.start.line}:${change.range.start.column}'
+              '-${change.range.end.line}:${change.range.end.column}'
+              ' ${change.text}',
+        )
+        .join(', ');
+    _updateStatus('${e.action?.name ?? 'unknown'} [$changeSummary]');
   }
 
   void _onCursorChanged(CursorChangedEvent e) {

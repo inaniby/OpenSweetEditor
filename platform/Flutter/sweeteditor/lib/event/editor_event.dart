@@ -10,11 +10,10 @@ typedef EditorEventListener<T extends EditorEvent> = void Function(T event);
 enum TextChangeAction { insert, delete_, key, composition, undo, redo }
 
 class TextChangedEvent implements EditorEvent {
-  final TextChangeAction action;
-  final core.TextRange? changeRange;
-  final String? text;
+  final List<core.TextChange> changes;
+  final TextChangeAction? action;
 
-  const TextChangedEvent({required this.action, this.changeRange, this.text});
+  const TextChangedEvent({required this.changes, this.action});
 }
 
 class CursorChangedEvent implements EditorEvent {
@@ -97,52 +96,17 @@ class GutterIconClickEvent implements EditorEvent {
 class InlayHintClickEvent implements EditorEvent {
   final int line;
   final int column;
-  final int iconId;
-  final bool isIcon;
-  final bool isColor;
-  final int colorValue;
+  final core.InlayType type;
+  final int intValue;
   final core.PointF screenPoint;
 
   const InlayHintClickEvent({
     required this.line,
     required this.column,
-    this.iconId = 0,
-    this.isIcon = false,
-    this.isColor = false,
-    this.colorValue = 0,
+    required this.type,
+    this.intValue = 0,
     required this.screenPoint,
   });
-
-  factory InlayHintClickEvent.icon({
-    required int line,
-    required int column,
-    required int iconId,
-    required bool isIcon,
-    required core.PointF screenPoint,
-  }) {
-    return InlayHintClickEvent(
-      line: line,
-      column: column,
-      iconId: iconId,
-      isIcon: isIcon,
-      screenPoint: screenPoint,
-    );
-  }
-
-  factory InlayHintClickEvent.color({
-    required int line,
-    required int column,
-    required int colorValue,
-    required core.PointF screenPoint,
-  }) {
-    return InlayHintClickEvent(
-      line: line,
-      column: column,
-      isColor: true,
-      colorValue: colorValue,
-      screenPoint: screenPoint,
-    );
-  }
 }
 
 class FoldToggleEvent implements EditorEvent {

@@ -317,25 +317,27 @@ class EditorInteractionController {
           InlayHintClickEvent(
             line: hitTarget.line,
             column: hitTarget.column,
+            type: core.InlayType.text,
             screenPoint: screenPoint,
           ),
         );
       case core.HitTargetType.inlayHintIcon:
         _session.eventBus.publish(
-          InlayHintClickEvent.icon(
+          InlayHintClickEvent(
             line: hitTarget.line,
             column: hitTarget.column,
-            iconId: hitTarget.iconId,
-            isIcon: true,
+            type: core.InlayType.icon,
+            intValue: hitTarget.iconId,
             screenPoint: screenPoint,
           ),
         );
       case core.HitTargetType.inlayHintColor:
         _session.eventBus.publish(
-          InlayHintClickEvent.color(
+          InlayHintClickEvent(
             line: hitTarget.line,
             column: hitTarget.column,
-            colorValue: hitTarget.colorValue,
+            type: core.InlayType.color,
+            intValue: hitTarget.colorValue,
             screenPoint: screenPoint,
           ),
         );
@@ -524,15 +526,9 @@ class EditorInteractionController {
     core.TextEditResult result,
   ) {
     if (!result.changed || result.changes.isEmpty) return;
-    for (final change in result.changes) {
-      _session.eventBus.publish(
-        TextChangedEvent(
-          action: action,
-          changeRange: change.range,
-          text: change.newText,
-        ),
-      );
-    }
+    _session.eventBus.publish(
+      TextChangedEvent(changes: result.changes, action: action),
+    );
     _session.decorationProviderManager.onTextChanged(result.changes);
     _session.selectionMenuController.onTextChanged();
 
@@ -542,8 +538,8 @@ class EditorInteractionController {
     }
 
     final primaryChange = result.changes.first;
-    if (primaryChange.newText.length == 1) {
-      final ch = primaryChange.newText;
+    if (primaryChange.text.length == 1) {
+      final ch = primaryChange.text;
       if (_session.completionProviderManager.isTriggerCharacter(ch)) {
         _session.completionProviderManager.triggerCompletion(
           CompletionTriggerKind.character,

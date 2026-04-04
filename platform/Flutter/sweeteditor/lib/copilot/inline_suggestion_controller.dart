@@ -175,12 +175,11 @@ class InlineSuggestionController implements InlineSuggestionActionCallback {
 
   void _injectPhantomText(InlineSuggestion suggestion) {
     _session.editorCore?.clearPhantomTexts();
-    final data = core.ProtocolEncoder.packBatchLinePhantomTexts({
+    _session.editorCore?.setBatchLinePhantomTexts({
       suggestion.line: [
         core.PhantomText(column: suggestion.column, text: suggestion.text),
       ],
     });
-    _session.editorCore?.setBatchLinePhantomTexts(data);
   }
 
   InlineSuggestionOverlayState _buildOverlayState() {

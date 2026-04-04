@@ -75,9 +75,18 @@ class GutterIcon {
   final int iconId;
 }
 
-/// Diagnostic item for a line.
-class DiagnosticItem {
-  const DiagnosticItem({
+/// Separator line style.
+enum SeparatorStyle {
+  single(0),
+  double_(1);
+
+  const SeparatorStyle(this.value);
+  final int value;
+}
+
+/// Minimal diagnostic decoration model for a line.
+class Diagnostic {
+  const Diagnostic({
     required this.column,
     required this.length,
     required this.severity,
@@ -137,7 +146,7 @@ class SeparatorGuide {
   });
 
   final int line;
-  final int style;
+  final SeparatorStyle style;
   final int count;
   final int textEndColumn;
 }

@@ -279,11 +279,9 @@ class SweetEditorController {
       _eventBus.on<SelectionMenuItemClickEvent>();
 
   void toggleFoldAt(int line) {
-    _state?._editorCore?.toggleFold(line);
+    _state?._editorCore?.toggleFoldAt(line);
     _state?._flush();
   }
-
-  void toggleFold(int line) => toggleFoldAt(line);
 
   void foldAt(int line) {
     _state?._editorCore?.foldAt(line);
@@ -392,9 +390,7 @@ class SweetEditorController {
 
   void registerBatchTextStyles(Map<int, core.TextStyle> stylesById) {
     _withEditorCore((editorCore) {
-      editorCore.registerBatchTextStyles(
-        core.ProtocolEncoder.packBatchTextStyles(stylesById),
-      );
+      editorCore.registerBatchTextStyles(stylesById);
     });
   }
 
@@ -404,9 +400,7 @@ class SweetEditorController {
     List<core.StyleSpan> spans,
   ) {
     _withEditorCore((editorCore) {
-      editorCore.setLineSpans(
-        core.ProtocolEncoder.packLineSpans(line, layer.value, spans),
-      );
+      editorCore.setLineSpans(line, layer, spans);
     });
   }
 
@@ -415,33 +409,25 @@ class SweetEditorController {
     Map<int, List<core.StyleSpan>> spansByLine,
   ) {
     _withEditorCore((editorCore) {
-      editorCore.setBatchLineSpans(
-        core.ProtocolEncoder.packBatchLineSpans(layer.value, spansByLine),
-      );
+      editorCore.setBatchLineSpans(layer, spansByLine);
     });
   }
 
   void setLineInlayHints(int line, List<core.InlayHint> hints) {
     _withEditorCore((editorCore) {
-      editorCore.setLineInlayHints(
-        core.ProtocolEncoder.packLineInlayHints(line, hints),
-      );
+      editorCore.setLineInlayHints(line, hints);
     });
   }
 
   void setBatchLineInlayHints(Map<int, List<core.InlayHint>> hintsByLine) {
     _withEditorCore((editorCore) {
-      editorCore.setBatchLineInlayHints(
-        core.ProtocolEncoder.packBatchLineInlayHints(hintsByLine),
-      );
+      editorCore.setBatchLineInlayHints(hintsByLine);
     });
   }
 
   void setLinePhantomTexts(int line, List<core.PhantomText> phantoms) {
     _withEditorCore((editorCore) {
-      editorCore.setLinePhantomTexts(
-        core.ProtocolEncoder.packLinePhantomTexts(line, phantoms),
-      );
+      editorCore.setLinePhantomTexts(line, phantoms);
     });
   }
 
@@ -449,87 +435,69 @@ class SweetEditorController {
     Map<int, List<core.PhantomText>> phantomsByLine,
   ) {
     _withEditorCore((editorCore) {
-      editorCore.setBatchLinePhantomTexts(
-        core.ProtocolEncoder.packBatchLinePhantomTexts(phantomsByLine),
-      );
+      editorCore.setBatchLinePhantomTexts(phantomsByLine);
     });
   }
 
   void setLineGutterIcons(int line, List<core.GutterIcon> icons) {
     _withEditorCore((editorCore) {
-      editorCore.setLineGutterIcons(
-        core.ProtocolEncoder.packLineGutterIcons(line, icons),
-      );
+      editorCore.setLineGutterIcons(line, icons);
     });
   }
 
   void setBatchLineGutterIcons(Map<int, List<core.GutterIcon>> iconsByLine) {
     _withEditorCore((editorCore) {
-      editorCore.setBatchLineGutterIcons(
-        core.ProtocolEncoder.packBatchLineGutterIcons(iconsByLine),
-      );
+      editorCore.setBatchLineGutterIcons(iconsByLine);
     });
   }
 
-  void setLineDiagnostics(int line, List<core.DiagnosticItem> items) {
+  void setLineDiagnostics(int line, List<core.Diagnostic> items) {
     _withEditorCore((editorCore) {
-      editorCore.setLineDiagnostics(
-        core.ProtocolEncoder.packLineDiagnostics(line, items),
-      );
+      editorCore.setLineDiagnostics(line, items);
     });
   }
 
   void setBatchLineDiagnostics(
-    Map<int, List<core.DiagnosticItem>> itemsByLine,
+    Map<int, List<core.Diagnostic>> itemsByLine,
   ) {
     _withEditorCore((editorCore) {
-      editorCore.setBatchLineDiagnostics(
-        core.ProtocolEncoder.packBatchLineDiagnostics(itemsByLine),
-      );
+      editorCore.setBatchLineDiagnostics(itemsByLine);
     });
   }
 
   void setIndentGuides(List<core.IndentGuide> guides) {
     _withEditorCore((editorCore) {
-      editorCore.setIndentGuides(core.ProtocolEncoder.packIndentGuides(guides));
+      editorCore.setIndentGuides(guides);
     });
   }
 
   void setBracketGuides(List<core.BracketGuide> guides) {
     _withEditorCore((editorCore) {
-      editorCore.setBracketGuides(
-        core.ProtocolEncoder.packBracketGuides(guides),
-      );
+      editorCore.setBracketGuides(guides);
     });
   }
 
   void setFlowGuides(List<core.FlowGuide> guides) {
     _withEditorCore((editorCore) {
-      editorCore.setFlowGuides(core.ProtocolEncoder.packFlowGuides(guides));
+      editorCore.setFlowGuides(guides);
     });
   }
 
   void setSeparatorGuides(List<core.SeparatorGuide> guides) {
     _withEditorCore((editorCore) {
-      editorCore.setSeparatorGuides(
-        core.ProtocolEncoder.packSeparatorGuides(guides),
-      );
+      editorCore.setSeparatorGuides(guides);
     });
   }
 
   void setFoldRegions(List<core.FoldRegion> regions) {
     _withEditorCore((editorCore) {
-      editorCore.setFoldRegions(core.ProtocolEncoder.packFoldRegions(regions));
+      editorCore.setFoldRegions(regions);
     });
   }
 
   void clearHighlights([core.SpanLayer? layer]) {
     _withEditorCore((editorCore) {
-      if (layer == null) {
-        editorCore.clearHighlights();
-      } else {
-        editorCore.clearHighlightsLayer(layer);
-      }
+      editorCore.clearHighlights(layer);
     });
   }
 
