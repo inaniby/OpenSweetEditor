@@ -6,9 +6,9 @@ using namespace NS_SWEETEDITOR;
 
 TEST_CASE("EditorCore normalizes selection before insert replacement") {
   EditorOptions options;
-  EditorCore editor(makePtr<FixedWidthTextMeasurer>(), options);
+  EditorCore editor(makeShared<FixedWidthTextMeasurer>(), options);
 
-  Ptr<Document> document = makePtr<LineArrayDocument>("hello world");
+  SharedPtr<Document> document = makeShared<LineArrayDocument>("hello world");
   editor.loadDocument(document);
   editor.setViewport({800, 600});
 
@@ -26,9 +26,9 @@ TEST_CASE("EditorCore normalizes selection before insert replacement") {
 
 TEST_CASE("EditorCore Enter keeps current line indent by default") {
   EditorOptions options;
-  EditorCore editor(makePtr<FixedWidthTextMeasurer>(), options);
+  EditorCore editor(makeShared<FixedWidthTextMeasurer>(), options);
 
-  Ptr<Document> document = makePtr<LineArrayDocument>("  foo");
+  SharedPtr<Document> document = makeShared<LineArrayDocument>("  foo");
   editor.loadDocument(document);
   editor.setViewport({800, 600});
   editor.setCursorPosition({0, 5});
@@ -45,9 +45,9 @@ TEST_CASE("EditorCore Enter keeps current line indent by default") {
 
 TEST_CASE("EditorCore Tab inserts spaces to the next tab stop when insertSpaces is enabled") {
   EditorOptions options;
-  EditorCore editor(makePtr<FixedWidthTextMeasurer>(), options);
+  EditorCore editor(makeShared<FixedWidthTextMeasurer>(), options);
 
-  Ptr<Document> document = makePtr<LineArrayDocument>("  foo");
+  SharedPtr<Document> document = makeShared<LineArrayDocument>("  foo");
   editor.loadDocument(document);
   editor.setViewport({800, 600});
   editor.setTabSize(4);
@@ -66,9 +66,9 @@ TEST_CASE("EditorCore Tab inserts spaces to the next tab stop when insertSpaces 
 
 TEST_CASE("EditorCore backspace removes one surrogate pair as a single glyph") {
   EditorOptions options;
-  EditorCore editor(makePtr<FixedWidthTextMeasurer>(), options);
+  EditorCore editor(makeShared<FixedWidthTextMeasurer>(), options);
 
-  Ptr<Document> document = makePtr<LineArrayDocument>("A\xF0\x9F\x98\x80" "B");
+  SharedPtr<Document> document = makeShared<LineArrayDocument>("A\xF0\x9F\x98\x80" "B");
   editor.loadDocument(document);
   editor.setViewport({800, 600});
   editor.setCursorPosition({0, 3}); // after 'A' (1) and emoji (2)
@@ -82,9 +82,9 @@ TEST_CASE("EditorCore backspace removes one surrogate pair as a single glyph") {
 
 TEST_CASE("EditorCore clamps cursor positions away from surrogate middles") {
   EditorOptions options;
-  EditorCore editor(makePtr<FixedWidthTextMeasurer>(), options);
+  EditorCore editor(makeShared<FixedWidthTextMeasurer>(), options);
 
-  Ptr<Document> document = makePtr<LineArrayDocument>("A\xF0\x9F\x98\x80" "B");
+  SharedPtr<Document> document = makeShared<LineArrayDocument>("A\xF0\x9F\x98\x80" "B");
   editor.loadDocument(document);
   editor.setViewport({800, 600});
 
@@ -100,9 +100,9 @@ TEST_CASE("EditorCore clamps cursor positions away from surrogate middles") {
 
 TEST_CASE("EditorCore keeps zero-length selection collapsed when clamped around a surrogate pair") {
   EditorOptions options;
-  EditorCore editor(makePtr<FixedWidthTextMeasurer>(), options);
+  EditorCore editor(makeShared<FixedWidthTextMeasurer>(), options);
 
-  Ptr<Document> document = makePtr<LineArrayDocument>("A\xF0\x9F\x98\x80" "B");
+  SharedPtr<Document> document = makeShared<LineArrayDocument>("A\xF0\x9F\x98\x80" "B");
   editor.loadDocument(document);
   editor.setViewport({800, 600});
 
@@ -114,9 +114,9 @@ TEST_CASE("EditorCore keeps zero-length selection collapsed when clamped around 
 
 TEST_CASE("EditorCore deleteForward removes one surrogate pair as a single glyph") {
   EditorOptions options;
-  EditorCore editor(makePtr<FixedWidthTextMeasurer>(), options);
+  EditorCore editor(makeShared<FixedWidthTextMeasurer>(), options);
 
-  Ptr<Document> document = makePtr<LineArrayDocument>("A\xF0\x9F\x98\x80" "B");
+  SharedPtr<Document> document = makeShared<LineArrayDocument>("A\xF0\x9F\x98\x80" "B");
   editor.loadDocument(document);
   editor.setViewport({800, 600});
   editor.setCursorPosition({0, 1});
@@ -130,9 +130,9 @@ TEST_CASE("EditorCore deleteForward removes one surrogate pair as a single glyph
 
 TEST_CASE("EditorCore treats emoji modifier grapheme clusters as one editing unit") {
   EditorOptions options;
-  EditorCore editor(makePtr<FixedWidthTextMeasurer>(), options);
+  EditorCore editor(makeShared<FixedWidthTextMeasurer>(), options);
 
-  Ptr<Document> document = makePtr<LineArrayDocument>("\xF0\x9F\x91\x8D\xF0\x9F\x8F\xBB");
+  SharedPtr<Document> document = makeShared<LineArrayDocument>("\xF0\x9F\x91\x8D\xF0\x9F\x8F\xBB");
   editor.loadDocument(document);
   editor.setViewport({800, 600});
 
@@ -150,7 +150,7 @@ TEST_CASE("EditorCore treats emoji modifier grapheme clusters as one editing uni
   CHECK(document->getU8Text() == "");
   CHECK(editor.getCursorPosition() == (TextPosition{0, 0}));
 
-  document = makePtr<LineArrayDocument>("\xF0\x9F\x91\x8D\xF0\x9F\x8F\xBB");
+  document = makeShared<LineArrayDocument>("\xF0\x9F\x91\x8D\xF0\x9F\x8F\xBB");
   editor.loadDocument(document);
   editor.setViewport({800, 600});
   editor.setCursorPosition({0, 0});
@@ -162,9 +162,9 @@ TEST_CASE("EditorCore treats emoji modifier grapheme clusters as one editing uni
 
 TEST_CASE("EditorCore clamps direct cursor and range APIs to grapheme boundaries") {
   EditorOptions options;
-  EditorCore editor(makePtr<FixedWidthTextMeasurer>(), options);
+  EditorCore editor(makeShared<FixedWidthTextMeasurer>(), options);
 
-  Ptr<Document> document = makePtr<LineArrayDocument>("\xF0\x9F\x91\x8D\xF0\x9F\x8F\xBB");
+  SharedPtr<Document> document = makeShared<LineArrayDocument>("\xF0\x9F\x91\x8D\xF0\x9F\x8F\xBB");
   editor.loadDocument(document);
   editor.setViewport({800, 600});
 
@@ -180,7 +180,7 @@ TEST_CASE("EditorCore clamps direct cursor and range APIs to grapheme boundaries
   CHECK(document->getU8Text() == "X\xF0\x9F\x91\x8D\xF0\x9F\x8F\xBB");
   CHECK(editor.getCursorPosition() == (TextPosition{0, 1}));
 
-  document = makePtr<LineArrayDocument>("\xF0\x9F\x91\x8D\xF0\x9F\x8F\xBB");
+  document = makeShared<LineArrayDocument>("\xF0\x9F\x91\x8D\xF0\x9F\x8F\xBB");
   editor.loadDocument(document);
   editor.setViewport({800, 600});
   TextEditResult delete_result = editor.deleteText({{0, 2}, {0, 4}});
@@ -191,9 +191,9 @@ TEST_CASE("EditorCore clamps direct cursor and range APIs to grapheme boundaries
 
 TEST_CASE("EditorCore treats ZWJ emoji families as one editing unit") {
   EditorOptions options;
-  EditorCore editor(makePtr<FixedWidthTextMeasurer>(), options);
+  EditorCore editor(makeShared<FixedWidthTextMeasurer>(), options);
 
-  Ptr<Document> document = makePtr<LineArrayDocument>(
+  SharedPtr<Document> document = makeShared<LineArrayDocument>(
       "\xF0\x9F\x91\xA8\xE2\x80\x8D\xF0\x9F\x91\xA9\xE2\x80\x8D\xF0\x9F\x91\xA7\xE2\x80\x8D\xF0\x9F\x91\xA6");
   editor.loadDocument(document);
   editor.setViewport({800, 600});
@@ -210,9 +210,9 @@ TEST_CASE("EditorCore treats ZWJ emoji families as one editing unit") {
 
 TEST_CASE("EditorCore expands ZWJ family ranges to full grapheme boundaries") {
   EditorOptions options;
-  EditorCore editor(makePtr<FixedWidthTextMeasurer>(), options);
+  EditorCore editor(makeShared<FixedWidthTextMeasurer>(), options);
 
-  Ptr<Document> document = makePtr<LineArrayDocument>(
+  SharedPtr<Document> document = makeShared<LineArrayDocument>(
       "\xF0\x9F\x91\xA8\xE2\x80\x8D\xF0\x9F\x91\xA9\xE2\x80\x8D\xF0\x9F\x91\xA7\xE2\x80\x8D\xF0\x9F\x91\xA6");
   editor.loadDocument(document);
   editor.setViewport({800, 600});
@@ -229,9 +229,9 @@ TEST_CASE("EditorCore expands ZWJ family ranges to full grapheme boundaries") {
 
 TEST_CASE("EditorCore getWordRangeAtCursor keeps combining graphemes intact") {
   EditorOptions options;
-  EditorCore editor(makePtr<FixedWidthTextMeasurer>(), options);
+  EditorCore editor(makeShared<FixedWidthTextMeasurer>(), options);
 
-  Ptr<Document> document = makePtr<LineArrayDocument>("a\xCC\x81" "bc");
+  SharedPtr<Document> document = makeShared<LineArrayDocument>("a\xCC\x81" "bc");
   editor.loadDocument(document);
   editor.setViewport({800, 600});
 
@@ -243,9 +243,9 @@ TEST_CASE("EditorCore getWordRangeAtCursor keeps combining graphemes intact") {
 
 TEST_CASE("EditorCore replaceText normalizes insert positions away from surrogate middles") {
   EditorOptions options;
-  EditorCore editor(makePtr<FixedWidthTextMeasurer>(), options);
+  EditorCore editor(makeShared<FixedWidthTextMeasurer>(), options);
 
-  Ptr<Document> document = makePtr<LineArrayDocument>("A\xF0\x9F\x98\x80" "B");
+  SharedPtr<Document> document = makeShared<LineArrayDocument>("A\xF0\x9F\x98\x80" "B");
   editor.loadDocument(document);
   editor.setViewport({800, 600});
 
@@ -258,9 +258,9 @@ TEST_CASE("EditorCore replaceText normalizes insert positions away from surrogat
 
 TEST_CASE("EditorCore deleteText expands surrogate-spanning ranges to full code-point boundaries") {
   EditorOptions options;
-  EditorCore editor(makePtr<FixedWidthTextMeasurer>(), options);
+  EditorCore editor(makeShared<FixedWidthTextMeasurer>(), options);
 
-  Ptr<Document> document = makePtr<LineArrayDocument>("A\xF0\x9F\x98\x80" "B");
+  SharedPtr<Document> document = makeShared<LineArrayDocument>("A\xF0\x9F\x98\x80" "B");
   editor.loadDocument(document);
   editor.setViewport({800, 600});
 
@@ -273,9 +273,9 @@ TEST_CASE("EditorCore deleteText expands surrogate-spanning ranges to full code-
 
 TEST_CASE("EditorCore rebuilds text run styles after style re-registration") {
   EditorOptions options;
-  EditorCore editor(makePtr<FixedWidthTextMeasurer>(), options);
+  EditorCore editor(makeShared<FixedWidthTextMeasurer>(), options);
 
-  Ptr<Document> document = makePtr<LineArrayDocument>("hello");
+  SharedPtr<Document> document = makeShared<LineArrayDocument>("hello");
   editor.loadDocument(document);
   editor.setViewport({800, 600});
 
@@ -305,9 +305,9 @@ TEST_CASE("EditorCore rebuilds text run styles after style re-registration") {
 
 TEST_CASE("EditorCore rebuilds text run styles after batch style re-registration") {
   EditorOptions options;
-  EditorCore editor(makePtr<FixedWidthTextMeasurer>(), options);
+  EditorCore editor(makeShared<FixedWidthTextMeasurer>(), options);
 
-  Ptr<Document> document = makePtr<LineArrayDocument>("hello");
+  SharedPtr<Document> document = makeShared<LineArrayDocument>("hello");
   editor.loadDocument(document);
   editor.setViewport({800, 600});
 

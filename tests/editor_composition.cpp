@@ -6,9 +6,9 @@ using namespace NS_SWEETEDITOR;
 
 TEST_CASE("EditorCore composition update is transient and cancel restores original text") {
   EditorOptions options;
-  EditorCore editor(makePtr<FixedWidthTextMeasurer>(), options);
+  EditorCore editor(makeShared<FixedWidthTextMeasurer>(), options);
 
-  Ptr<Document> document = makePtr<LineArrayDocument>("ab");
+  SharedPtr<Document> document = makeShared<LineArrayDocument>("ab");
   editor.loadDocument(document);
   editor.setViewport({800, 600});
   editor.setCompositionEnabled(true);
@@ -32,9 +32,9 @@ TEST_CASE("EditorCore composition update is transient and cancel restores origin
 
 TEST_CASE("EditorCore composition end commits final text once and supports undo") {
   EditorOptions options;
-  EditorCore editor(makePtr<FixedWidthTextMeasurer>(), options);
+  EditorCore editor(makeShared<FixedWidthTextMeasurer>(), options);
 
-  Ptr<Document> document = makePtr<LineArrayDocument>("ab");
+  SharedPtr<Document> document = makeShared<LineArrayDocument>("ab");
   editor.loadDocument(document);
   editor.setViewport({800, 600});
   editor.setCompositionEnabled(true);
@@ -60,9 +60,9 @@ TEST_CASE("EditorCore composition end commits final text once and supports undo"
 
 TEST_CASE("EditorCore composition disabled mode commits only on compositionEnd") {
   EditorOptions options;
-  EditorCore editor(makePtr<FixedWidthTextMeasurer>(), options);
+  EditorCore editor(makeShared<FixedWidthTextMeasurer>(), options);
 
-  Ptr<Document> document = makePtr<LineArrayDocument>("ab");
+  SharedPtr<Document> document = makeShared<LineArrayDocument>("ab");
   editor.loadDocument(document);
   editor.setViewport({800, 600});
   editor.setCompositionEnabled(false);

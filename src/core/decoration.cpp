@@ -30,10 +30,10 @@ namespace NS_SWEETEDITOR {
 
 #pragma region [Class: DecorationManager]
   DecorationManager::DecorationManager() {
-    m_text_style_reg_ = makePtr<TextStyleRegistry>();
+    m_text_style_reg_ = makeShared<TextStyleRegistry>();
   }
 
-  Ptr<TextStyleRegistry> DecorationManager::getTextStyleRegistry() {
+  SharedPtr<TextStyleRegistry> DecorationManager::getTextStyleRegistry() {
     return m_text_style_reg_;
   }
 

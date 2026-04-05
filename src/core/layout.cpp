@@ -11,12 +11,12 @@
 
 namespace NS_SWEETEDITOR {
 #pragma region [Class: TextLayout]
-  TextLayout::TextLayout(const Ptr<TextMeasurer>& measurer, const Ptr<DecorationManager>& decoration_manager)
+  TextLayout::TextLayout(const SharedPtr<TextMeasurer>& measurer, const SharedPtr<DecorationManager>& decoration_manager)
     : m_measurer_(measurer), m_decoration_manager_(decoration_manager) {
     resetMeasurer();
   }
 
-  void TextLayout::loadDocument(const Ptr<Document>& document) {
+  void TextLayout::loadDocument(const SharedPtr<Document>& document) {
     m_document_ = document;
     m_content_metrics_dirty_ = true;
     m_prefix_dirty_from_ = 0;
@@ -630,7 +630,7 @@ namespace NS_SWEETEDITOR {
     const float scroll_offset = (m_wrap_mode_ == WrapMode::NONE) ? scroll_x : 0.0f;
 
     for (const VisualLine& vl : ll.visual_lines) {
-      // 计算该视觉行中 TEXT runs 覆盖的逻辑列范围
+      // Compute the logical column range covered by TEXT/TAB runs in this visual line.
       size_t vl_col_min = SIZE_MAX;
       size_t vl_col_max = 0;
       for (const VisualRun& run : vl.runs) {
@@ -641,12 +641,12 @@ namespace NS_SWEETEDITOR {
       }
       if (vl_col_min == SIZE_MAX) continue;
 
-      // 与选区列范围取交集
+      // 涓庨€夊尯鍒楄寖鍥村彇浜ら泦
       size_t intersect_start = std::max(safe_start, vl_col_min);
       size_t intersect_end = std::min(safe_end, vl_col_max);
       if (intersect_start >= intersect_end) continue;
 
-      // 在该视觉行的 runs 中计算交集范围的 x 坐标
+      // 鍦ㄨ瑙嗚琛岀殑 runs 涓绠椾氦闆嗚寖鍥寸殑 x 鍧愭爣
       float x_start = 0, x_end = 0;
       bool found_start = false, found_end = false;
       float vl_x = 0;
@@ -692,7 +692,7 @@ namespace NS_SWEETEDITOR {
         vl_x += run.width;
       }
 
-      // 未找到则使用视觉行末尾
+      // 鏈壘鍒板垯浣跨敤瑙嗚琛屾湯灏?
       if (!found_start || !found_end) {
         float last_x = 0;
         for (const VisualRun& run : vl.runs) {
@@ -917,7 +917,7 @@ namespace NS_SWEETEDITOR {
     // invalidatePrefixFrom marks following prefixes dirty.
     const float default_height = getLineHeight();
 
-    // ── Multiplication-based run tracking ──
+    // 鈹€鈹€ Multiplication-based run tracking 鈹€鈹€
     // When consecutive lines share the same height (typically default_height for
     // unlaid-out lines after markAllLinesDirty), we compute prefix_y as
     //   run_base_y + run_count * height
@@ -1595,7 +1595,7 @@ namespace NS_SWEETEDITOR {
       fold_x += run.width;
     }
 
-    // Append fold placeholder " … "
+    // Append fold placeholder " 鈥?"
     VisualRun fold_run;
     fold_run.type = VisualRunType::FOLD_PLACEHOLDER;
     fold_run.column = line_text.length();
@@ -1610,7 +1610,7 @@ namespace NS_SWEETEDITOR {
     fold_run.width += fold_run.padding * 2 + fold_run.margin * 2;
     last_vl.runs.push_back(std::move(fold_run));
 
-    // Append tail-line VisualRuns (JetBrains style: first line + … + tail content, preserving highlights)
+    // Append tail-line VisualRuns (JetBrains style: first line + 鈥?+ tail content, preserving highlights)
     const FoldRegion* fold_region = m_decoration_manager_->getFoldRegionForLine(index);
     if (!fold_region || fold_region->end_line <= fold_region->start_line) return;
 

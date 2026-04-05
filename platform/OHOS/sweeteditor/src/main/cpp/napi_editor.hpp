@@ -135,7 +135,7 @@ public:
     napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
 
     std::string text = napi_get_utf8_string(env, args[0]);
-    Ptr<Document> document = makePtr<LineArrayDocument>(text.c_str());
+    SharedPtr<Document> document = makeShared<LineArrayDocument>(text.c_str());
     return napi_create_int64_value(env, toIntPtr(document));
   }
 
@@ -145,8 +145,8 @@ public:
     napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
 
     std::string path = napi_get_utf8_string(env, args[0]);
-    UPtr<Buffer> buffer = makeUPtr<MappedFileBuffer>(path.c_str());
-    Ptr<Document> document = makePtr<LineArrayDocument>(std::move(buffer));
+    UniquePtr<Buffer> buffer = makeUnique<MappedFileBuffer>(path.c_str());
+    SharedPtr<Document> document = makeShared<LineArrayDocument>(std::move(buffer));
     return napi_create_int64_value(env, toIntPtr(document));
   }
 
@@ -165,7 +165,7 @@ public:
     napi_value args[1];
     napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
 
-    Ptr<Document> doc = getCPtrHolderValue<Document>(napi_get_handle(env, args[0]));
+    SharedPtr<Document> doc = getCPtrHolderValue<Document>(napi_get_handle(env, args[0]));
     if (doc == nullptr) return napi_create_string_value(env, "");
     return napi_create_string_value(env, doc->getU8Text().c_str());
   }
@@ -175,7 +175,7 @@ public:
     napi_value args[1];
     napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
 
-    Ptr<Document> doc = getCPtrHolderValue<Document>(napi_get_handle(env, args[0]));
+    SharedPtr<Document> doc = getCPtrHolderValue<Document>(napi_get_handle(env, args[0]));
     if (doc == nullptr) return napi_create_int32_value(env, 0);
     return napi_create_int32_value(env, static_cast<int32_t>(doc->getLineCount()));
   }
@@ -185,7 +185,7 @@ public:
     napi_value args[2];
     napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
 
-    Ptr<Document> doc = getCPtrHolderValue<Document>(napi_get_handle(env, args[0]));
+    SharedPtr<Document> doc = getCPtrHolderValue<Document>(napi_get_handle(env, args[0]));
     if (doc == nullptr) return napi_create_string_value(env, "");
 
     int32_t line = napi_get_int32(env, args[1]);
@@ -203,7 +203,7 @@ public:
     napi_value args[2];
     napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
 
-    Ptr<TextMeasurer> measurer = makePtr<OhosTextMeasurer>(env, args[0]);
+    SharedPtr<TextMeasurer> measurer = makeShared<OhosTextMeasurer>(env, args[0]);
     EditorOptions options;
 
     if (argc > 1 && !napi_is_null_or_undefined(env, args[1])) {
@@ -575,7 +575,7 @@ public:
     napi_value args[1];
     napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
     int64_t handle = napi_get_handle(env, args[0]);
-    Ptr<EditorCore> editor = getCPtrHolderValue<EditorCore>(handle);
+    SharedPtr<EditorCore> editor = getCPtrHolderValue<EditorCore>(handle);
     if (editor == nullptr) return napi_create_string_value(env, "");
     U8String selected = editor->getSelectedText();
     return napi_create_string_value(env, selected.c_str());
@@ -1371,7 +1371,7 @@ public:
     napi_value args[1];
     napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
     int64_t handle = napi_get_handle(env, args[0]);
-    Ptr<EditorCore> editor = getCPtrHolderValue<EditorCore>(handle);
+    SharedPtr<EditorCore> editor = getCPtrHolderValue<EditorCore>(handle);
     if (editor == nullptr) return napi_create_string_value(env, "");
     U8String word = editor->getWordAtCursor();
     return napi_create_string_value(env, word.c_str());

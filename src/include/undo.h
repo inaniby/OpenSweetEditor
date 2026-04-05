@@ -4,7 +4,7 @@
 #ifndef SWEETEDITOR_UNDO_MANAGER_H
 #define SWEETEDITOR_UNDO_MANAGER_H
 
-#include <foundation.h>
+#include "foundation.h"
 #include <chrono>
 
 namespace NS_SWEETEDITOR {

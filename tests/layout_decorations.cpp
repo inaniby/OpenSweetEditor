@@ -7,11 +7,11 @@
 using namespace NS_SWEETEDITOR;
 
 TEST_CASE("TextLayout hitTest/getPositionScreenCoord stay consistent with inlay and phantom runs") {
-  Ptr<TextMeasurer> measurer = makePtr<FixedWidthTextMeasurer>(10.0f);
-  Ptr<DecorationManager> decorations = makePtr<DecorationManager>();
+  SharedPtr<TextMeasurer> measurer = makeShared<FixedWidthTextMeasurer>(10.0f);
+  SharedPtr<DecorationManager> decorations = makeShared<DecorationManager>();
   TextLayout layout(measurer, decorations);
 
-  Ptr<Document> document = makePtr<LineArrayDocument>("abcd");
+  SharedPtr<Document> document = makeShared<LineArrayDocument>("abcd");
   layout.loadDocument(document);
   layout.setViewport({400, 200});
   layout.setViewState({1.0f, 0.0f, 0.0f});

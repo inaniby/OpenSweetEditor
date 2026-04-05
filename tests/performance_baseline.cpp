@@ -22,8 +22,8 @@ namespace {
                         const Viewport& viewport,
                         WrapMode wrap_mode = WrapMode::NONE) {
     EditorOptions options;
-    EditorCore editor(makePtr<FixedWidthTextMeasurer>(10.0f), options);
-    editor.loadDocument(makePtr<LineArrayDocument>(text));
+    EditorCore editor(makeShared<FixedWidthTextMeasurer>(10.0f), options);
+    editor.loadDocument(makeShared<LineArrayDocument>(text));
     editor.setViewport(viewport);
     editor.setWrapMode(wrap_mode);
     return editor;
@@ -32,10 +32,10 @@ namespace {
   TextLayout makeLayout(const U8String& text,
                         const Viewport& viewport,
                         WrapMode wrap_mode = WrapMode::NONE) {
-    Ptr<TextMeasurer> measurer = makePtr<FixedWidthTextMeasurer>(10.0f);
-    Ptr<DecorationManager> decorations = makePtr<DecorationManager>();
+    SharedPtr<TextMeasurer> measurer = makeShared<FixedWidthTextMeasurer>(10.0f);
+    SharedPtr<DecorationManager> decorations = makeShared<DecorationManager>();
     TextLayout layout(measurer, decorations);
-    layout.loadDocument(makePtr<LineArrayDocument>(text));
+    layout.loadDocument(makeShared<LineArrayDocument>(text));
     layout.setViewport(viewport);
     layout.setViewState({1.0f, 0.0f, 0.0f});
     layout.setWrapMode(wrap_mode);
@@ -88,8 +88,8 @@ TEST_CASE("Performance baseline: hitTest mapping on large wrapped layout") {
 
 TEST_CASE("Performance baseline: render model with guide and diagnostic decorations") {
   EditorOptions options;
-  EditorCore editor(makePtr<FixedWidthTextMeasurer>(10.0f), options);
-  editor.loadDocument(makePtr<LineArrayDocument>(makeRepeatedLines(800, "    if (value > 0) return value;")));
+  EditorCore editor(makeShared<FixedWidthTextMeasurer>(10.0f), options);
+  editor.loadDocument(makeShared<LineArrayDocument>(makeRepeatedLines(800, "    if (value > 0) return value;")));
   editor.setViewport({240, 220});
 
   editor.setIndentGuides({IndentGuide{{0, 4}, {799, 4}}});

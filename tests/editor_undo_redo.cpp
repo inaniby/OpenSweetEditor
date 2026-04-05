@@ -6,9 +6,9 @@ using namespace NS_SWEETEDITOR;
 
 TEST_CASE("Sequential single-char insertions are merged into one undo step") {
   EditorOptions options;
-  EditorCore editor(makePtr<FixedWidthTextMeasurer>(), options);
+  EditorCore editor(makeShared<FixedWidthTextMeasurer>(), options);
 
-  Ptr<Document> document = makePtr<LineArrayDocument>("");
+  SharedPtr<Document> document = makeShared<LineArrayDocument>("");
   editor.loadDocument(document);
   editor.setViewport({800, 600});
 
@@ -32,9 +32,9 @@ TEST_CASE("Sequential single-char insertions are merged into one undo step") {
 
 TEST_CASE("Move line down is undoable as one grouped operation") {
   EditorOptions options;
-  EditorCore editor(makePtr<FixedWidthTextMeasurer>(), options);
+  EditorCore editor(makeShared<FixedWidthTextMeasurer>(), options);
 
-  Ptr<Document> document = makePtr<LineArrayDocument>("a\nb\nc");
+  SharedPtr<Document> document = makeShared<LineArrayDocument>("a\nb\nc");
   editor.loadDocument(document);
   editor.setViewport({800, 600});
   editor.setCursorPosition({0, 0});
@@ -57,9 +57,9 @@ TEST_CASE("Move line down is undoable as one grouped operation") {
 
 TEST_CASE("New edit clears redo stack after undo") {
   EditorOptions options;
-  EditorCore editor(makePtr<FixedWidthTextMeasurer>(), options);
+  EditorCore editor(makeShared<FixedWidthTextMeasurer>(), options);
 
-  Ptr<Document> document = makePtr<LineArrayDocument>("abc");
+  SharedPtr<Document> document = makeShared<LineArrayDocument>("abc");
   editor.loadDocument(document);
   editor.setViewport({800, 600});
   editor.setCursorPosition({0, 3});

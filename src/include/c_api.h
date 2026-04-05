@@ -20,13 +20,17 @@
     #define EDITOR_API __declspec(dllimport)
   #endif
   #define EDITOR_CALL __stdcall
-  #ifndef __cplusplus
+  #ifdef __cplusplus
+    using U16Char = wchar_t;
+  #else
     typedef uint16_t U16Char;
   #endif
 #else
   #define EDITOR_API __attribute__((visibility("default")))
   #define EDITOR_CALL
-  #ifndef __cplusplus
+  #ifdef __cplusplus
+    using U16Char = char16_t;
+  #else
     typedef uint16_t U16Char;
   #endif
 #endif

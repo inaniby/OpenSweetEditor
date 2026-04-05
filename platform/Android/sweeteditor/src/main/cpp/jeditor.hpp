@@ -15,16 +15,16 @@ class DocumentJni {
 public:
   static jlong makeStringDocument(JNIEnv* env, jclass clazz, jstring text) {
     const char* content_str = env->GetStringUTFChars(text, nullptr);
-    Ptr<Document> document = makePtr<LineArrayDocument>(content_str);
+    SharedPtr<Document> document = makeShared<LineArrayDocument>(content_str);
     env->ReleaseStringUTFChars(text, content_str);
     return toIntPtr(document);
   }
 
   static jlong makeFileDocument(JNIEnv* env, jclass clazz, jstring path) {
     const char* path_str = env->GetStringUTFChars(path, nullptr);
-    UPtr<Buffer> buffer = makeUPtr<MappedFileBuffer>(path_str);
+    UniquePtr<Buffer> buffer = makeUnique<MappedFileBuffer>(path_str);
     env->ReleaseStringUTFChars(path, path_str);
-    Ptr<Document> document = makePtr<LineArrayDocument>(std::move(buffer));
+    SharedPtr<Document> document = makeShared<LineArrayDocument>(std::move(buffer));
     return toIntPtr(document);
   }
 
@@ -33,7 +33,7 @@ public:
   }
 
   static jstring getText(JNIEnv* env, jclass clazz, jlong handle) {
-    Ptr<Document> document = getCPtrHolderValue<Document>(handle);
+    SharedPtr<Document> document = getCPtrHolderValue<Document>(handle);
     if (document == nullptr) {
       return env->NewStringUTF("");
     }
@@ -41,7 +41,7 @@ public:
   }
 
   static jint getLineCount(jlong handle) {
-    Ptr<Document> document = getCPtrHolderValue<Document>(handle);
+    SharedPtr<Document> document = getCPtrHolderValue<Document>(handle);
     if (document == nullptr) {
       return 0;
     }
@@ -49,7 +49,7 @@ public:
   }
 
   static jstring getLineText(JNIEnv* env, jclass clazz, jlong handle, jint line) {
-    Ptr<Document> document = getCPtrHolderValue<Document>(handle);
+    SharedPtr<Document> document = getCPtrHolderValue<Document>(handle);
     if (document == nullptr) {
       return env->NewStringUTF("");
     }
@@ -60,7 +60,7 @@ public:
   }
 
   static jlong getPositionFromCharIndex(jlong handle, jint index) {
-    Ptr<Document> document = getCPtrHolderValue<Document>(handle);
+    SharedPtr<Document> document = getCPtrHolderValue<Document>(handle);
     if (document == nullptr) {
       return 0;
     }
@@ -71,7 +71,7 @@ public:
   }
 
   static jint getCharIndexFromPosition(jlong handle, jlong position) {
-    Ptr<Document> document = getCPtrHolderValue<Document>(handle);
+    SharedPtr<Document> document = getCPtrHolderValue<Document>(handle);
     if (document == nullptr) {
       return 0;
     }
@@ -200,7 +200,7 @@ public:
         }
       }
     }
-    Ptr<TextMeasurer> native_measurer = makePtr<AndroidTextMeasurer>(env, measurer);
+    SharedPtr<TextMeasurer> native_measurer = makeShared<AndroidTextMeasurer>(env, measurer);
     auto handle = makeCPtrHolderToIntPtr<EditorCore>(native_measurer, editor_options);
     return handle;
   }
@@ -400,7 +400,7 @@ public:
   }
 
   static jstring getSelectedText(JNIEnv* env, jclass clazz, jlong handle) {
-    Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(handle);
+    SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(handle);
     if (editor_core == nullptr) {
       return env->NewStringUTF("");
     }
@@ -746,7 +746,7 @@ public:
   }
 
   static void setScale(jlong handle, jfloat scale) {
-    Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(handle);
+    SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(handle);
     if (editor_core == nullptr) return;
     editor_core->setScale(scale);
   }
@@ -841,7 +841,7 @@ public:
   }
 
   static jstring getWordAtCursor(JNIEnv* env, jclass clazz, jlong handle) {
-    Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(handle);
+    SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(handle);
     if (editor_core == nullptr) return env->NewStringUTF("");
     U8String word = editor_core->getWordAtCursor();
     return env->NewStringUTF(word.c_str());

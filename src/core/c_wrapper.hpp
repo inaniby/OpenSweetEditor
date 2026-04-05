@@ -2,22 +2,24 @@
 #include <c_api.h>
 #include <macro.h>
 
+using NS_SWEETEDITOR::SharedPtr;
+
 template<typename T>
 class CPtrHolder {
 public:
-  explicit CPtrHolder(const Ptr<T>& ptr): m_ptr_(ptr) {
+  explicit CPtrHolder(const SharedPtr<T>& ptr): m_ptr_(ptr) {
   }
 
-  Ptr<T>& get() {
+  SharedPtr<T>& get() {
     return m_ptr_;
   }
 private:
-  Ptr<T> m_ptr_;
+  SharedPtr<T> m_ptr_;
 };
 
 template<typename T, typename... Args>
 intptr_t makeCPtrHolderToIntPtr(Args&&... args) {
-  Ptr<T> ptr = std::make_shared<T>(std::forward<Args>(args)...);
+  SharedPtr<T> ptr = std::make_shared<T>(std::forward<Args>(args)...);
   CPtrHolder<T>* holder = new CPtrHolder<T>(ptr);
   return reinterpret_cast<intptr_t>(holder);
 }
@@ -28,7 +30,7 @@ intptr_t toIntPtr(CPtrHolder<T>* holder) {
 }
 
 template<typename T>
-intptr_t toIntPtr(const Ptr<T>& ptr) {
+intptr_t toIntPtr(const SharedPtr<T>& ptr) {
   if (ptr == nullptr) {
     return 0;
   }
@@ -45,7 +47,7 @@ CPtrHolder<T>* toCPtrHolder(intptr_t handle) {
 }
 
 template<typename T>
-Ptr<T> getCPtrHolderValue(intptr_t handle) {
+SharedPtr<T> getCPtrHolderValue(intptr_t handle) {
   if (handle == 0) {
     return nullptr;
   }

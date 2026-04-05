@@ -1,4 +1,4 @@
-﻿//
+//
 // Created by Scave on 2025/12/2.
 //
 #include <stdexcept>
@@ -10,22 +10,22 @@
 
 namespace NS_SWEETEDITOR {
 #pragma region [Class: PieceTableDocument]
-  PieceTableDocument::PieceTableDocument(U8String&& original_string): m_original_buffer_(makeUPtr<U8StringBuffer>(std::move(original_string))) {
+  PieceTableDocument::PieceTableDocument(U8String&& original_string): m_original_buffer_(makeUnique<U8StringBuffer>(std::move(original_string))) {
     rebuildBufferSegments();
   }
 
-  PieceTableDocument::PieceTableDocument(const U8String& original_string): m_original_buffer_(makeUPtr<U8StringBuffer>(original_string)) {
+  PieceTableDocument::PieceTableDocument(const U8String& original_string): m_original_buffer_(makeUnique<U8StringBuffer>(original_string)) {
     rebuildBufferSegments();
   }
 
   PieceTableDocument::PieceTableDocument(const U16String& original_string) {
     U8String utf8_text;
     StrUtil::convertUTF16ToUTF8(original_string, utf8_text);
-    m_original_buffer_ = makeUPtr<U8StringBuffer>(std::move(utf8_text));
+    m_original_buffer_ = makeUnique<U8StringBuffer>(std::move(utf8_text));
     rebuildBufferSegments();
   }
 
-  PieceTableDocument::PieceTableDocument(UPtr<Buffer>&& original_buffer): m_original_buffer_(std::move(original_buffer)) {
+  PieceTableDocument::PieceTableDocument(UniquePtr<Buffer>&& original_buffer): m_original_buffer_(std::move(original_buffer)) {
     rebuildBufferSegments();
   }
 
@@ -363,7 +363,7 @@ namespace NS_SWEETEDITOR {
   }
 
   void PieceTableDocument::rebuildBufferSegments() {
-    m_edit_buffer_ = makeUPtr<U8StringBuffer>();
+    m_edit_buffer_ = makeUnique<U8StringBuffer>();
     m_buffer_segments_.clear();
     m_buffer_segments_.push_back({SegmentType::ORIGINAL, 0, m_original_buffer_->size()});
     m_total_bytes_ = m_original_buffer_->size();
@@ -759,7 +759,7 @@ namespace NS_SWEETEDITOR {
     buildFromU8String(utf8_text);
   }
 
-  LineArrayDocument::LineArrayDocument(UPtr<Buffer>&& original_buffer) {
+  LineArrayDocument::LineArrayDocument(UniquePtr<Buffer>&& original_buffer) {
     U8String text(original_buffer->data(), original_buffer->size());
     buildFromU8String(text);
   }

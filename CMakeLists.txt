@@ -232,6 +232,6 @@ if (INSTALL_TARGETS)
 endif ()
 # install headers
 install(DIRECTORY ${SRC_DIR}/include/
-        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/sweeteditor
         FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp"
 )

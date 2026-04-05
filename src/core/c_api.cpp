@@ -461,12 +461,12 @@ extern "C" {
 #pragma region [Core Lifecycle, View & Events]
 
 intptr_t create_document_from_utf8(const char* text) {
-  Ptr<Document> document = makePtr<LineArrayDocument>(text);
+  SharedPtr<Document> document = makeShared<LineArrayDocument>(text);
   return toIntPtr(document);
 }
 
 intptr_t create_document_from_utf16(const U16Char* text) {
-  Ptr<Document> document = makePtr<LineArrayDocument>(text);
+  SharedPtr<Document> document = makeShared<LineArrayDocument>(text);
   return toIntPtr(document);
 }
 
@@ -474,8 +474,8 @@ intptr_t create_document_from_file(const char* path) {
   if (path == nullptr) {
     return 0;
   }
-  UPtr<Buffer> buffer = makeUPtr<MappedFileBuffer>(path);
-  Ptr<Document> document = makePtr<LineArrayDocument>(std::move(buffer));
+  UniquePtr<Buffer> buffer = makeUnique<MappedFileBuffer>(path);
+  SharedPtr<Document> document = makeShared<LineArrayDocument>(std::move(buffer));
   return toIntPtr(document);
 }
 
@@ -490,7 +490,7 @@ static char* allocU8Chars(const U8String& text) {
 }
 
 char* get_document_utf8(intptr_t document_handle) {
-  Ptr<Document> document = getCPtrHolderValue<Document>(document_handle);
+  SharedPtr<Document> document = getCPtrHolderValue<Document>(document_handle);
   if (document == nullptr) {
     return nullptr;
   }
@@ -498,7 +498,7 @@ char* get_document_utf8(intptr_t document_handle) {
 }
 
 U16Char* get_document_utf16(intptr_t document_handle) {
-  Ptr<Document> document = getCPtrHolderValue<Document>(document_handle);
+  SharedPtr<Document> document = getCPtrHolderValue<Document>(document_handle);
   if (document == nullptr) {
     return nullptr;
   }
@@ -507,7 +507,7 @@ U16Char* get_document_utf16(intptr_t document_handle) {
 }
 
 size_t get_document_line_count(intptr_t document_handle) {
-  Ptr<Document> document = getCPtrHolderValue<Document>(document_handle);
+  SharedPtr<Document> document = getCPtrHolderValue<Document>(document_handle);
   if (document == nullptr) {
     return 0;
   }
@@ -515,7 +515,7 @@ size_t get_document_line_count(intptr_t document_handle) {
 }
 
 char* get_document_line_utf8(intptr_t document_handle, size_t line) {
-  Ptr<Document> document = getCPtrHolderValue<Document>(document_handle);
+  SharedPtr<Document> document = getCPtrHolderValue<Document>(document_handle);
   if (document == nullptr) {
     return nullptr;
   }
@@ -528,7 +528,7 @@ char* get_document_line_utf8(intptr_t document_handle, size_t line) {
 }
 
 U16Char* get_document_line_utf16(intptr_t document_handle, size_t line) {
-  Ptr<Document> document = getCPtrHolderValue<Document>(document_handle);
+  SharedPtr<Document> document = getCPtrHolderValue<Document>(document_handle);
   if (document == nullptr) {
     return nullptr;
   }
@@ -537,7 +537,7 @@ U16Char* get_document_line_utf16(intptr_t document_handle, size_t line) {
 }
 
 intptr_t create_editor(text_measurer_t measurer, const uint8_t* options_data, size_t options_size) {
-  Ptr<CTextMeasurer> c_measurer = makePtr<CTextMeasurer>(measurer);
+  SharedPtr<CTextMeasurer> c_measurer = makeShared<CTextMeasurer>(measurer);
   EditorOptions options;
   // Decode binary payload (LE): f32 touch_slop, i64 double_tap_timeout, i64 long_press_ms, f32 fling_friction, f32 fling_min_velocity, f32 fling_max_velocity, u64 max_undo_stack_size
   if (options_data != nullptr) {
@@ -560,7 +560,7 @@ intptr_t create_editor(text_measurer_t measurer, const uint8_t* options_data, si
     readU64(options.max_undo_stack_size);
     readI64(options.key_chord_timeout_ms);
   }
-  Ptr<EditorCore> editor_core = makePtr<EditorCore>(c_measurer, options);
+  SharedPtr<EditorCore> editor_core = makeShared<EditorCore>(c_measurer, options);
   return toIntPtr(editor_core);
 }
 
@@ -569,11 +569,11 @@ void free_editor(intptr_t editor_handle) {
 }
 
 void set_editor_document(intptr_t editor_handle, intptr_t document_handle) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr) {
     return;
   }
-  Ptr<Document> document = getCPtrHolderValue<Document>(document_handle);
+  SharedPtr<Document> document = getCPtrHolderValue<Document>(document_handle);
   if (document == nullptr) {
     return;
   }
@@ -581,7 +581,7 @@ void set_editor_document(intptr_t editor_handle, intptr_t document_handle) {
 }
 
 void set_editor_viewport(intptr_t editor_handle, int16_t width, int16_t height) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr) {
     return;
   }
@@ -589,7 +589,7 @@ void set_editor_viewport(intptr_t editor_handle, int16_t width, int16_t height) 
 }
 
 void editor_on_font_metrics_changed(intptr_t editor_handle) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr) {
     return;
   }
@@ -597,7 +597,7 @@ void editor_on_font_metrics_changed(intptr_t editor_handle) {
 }
 
 void editor_set_fold_arrow_mode(intptr_t editor_handle, int mode) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr) {
     return;
   }
@@ -605,7 +605,7 @@ void editor_set_fold_arrow_mode(intptr_t editor_handle, int mode) {
 }
 
 void editor_set_wrap_mode(intptr_t editor_handle, int mode) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr) {
     return;
   }
@@ -613,7 +613,7 @@ void editor_set_wrap_mode(intptr_t editor_handle, int mode) {
 }
 
 void editor_set_tab_size(intptr_t editor_handle, int tab_size) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr) {
     return;
   }
@@ -621,7 +621,7 @@ void editor_set_tab_size(intptr_t editor_handle, int tab_size) {
 }
 
 void editor_set_scale(intptr_t editor_handle, float scale) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr) {
     return;
   }
@@ -629,7 +629,7 @@ void editor_set_scale(intptr_t editor_handle, float scale) {
 }
 
 void editor_set_line_spacing(intptr_t editor_handle, float add, float mult) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr) {
     return;
   }
@@ -637,7 +637,7 @@ void editor_set_line_spacing(intptr_t editor_handle, float add, float mult) {
 }
 
 void editor_set_content_start_padding(intptr_t editor_handle, float padding) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr) {
     return;
   }
@@ -645,7 +645,7 @@ void editor_set_content_start_padding(intptr_t editor_handle, float padding) {
 }
 
 void editor_set_show_split_line(intptr_t editor_handle, int show) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr) {
     return;
   }
@@ -653,7 +653,7 @@ void editor_set_show_split_line(intptr_t editor_handle, int show) {
 }
 
 void editor_set_current_line_render_mode(intptr_t editor_handle, int mode) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr) {
     return;
   }
@@ -661,7 +661,7 @@ void editor_set_current_line_render_mode(intptr_t editor_handle, int mode) {
 }
 
 void editor_set_gutter_sticky(intptr_t editor_handle, int sticky) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr) {
     return;
   }
@@ -669,7 +669,7 @@ void editor_set_gutter_sticky(intptr_t editor_handle, int sticky) {
 }
 
 void editor_set_gutter_visible(intptr_t editor_handle, int visible) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr) {
     return;
   }
@@ -679,7 +679,7 @@ void editor_set_gutter_visible(intptr_t editor_handle, int visible) {
 void editor_set_handle_config(intptr_t editor_handle,
     float start_left, float start_top, float start_right, float start_bottom,
     float end_left, float end_top, float end_right, float end_bottom) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr) {
     return;
   }
@@ -693,7 +693,7 @@ void editor_set_scrollbar_config(intptr_t editor_handle,
     float thickness, float min_thumb, float thumb_hit_padding,
     int mode, int thumb_draggable, int track_tap_mode,
     int fade_delay_ms, int fade_duration_ms) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr) {
     return;
   }
@@ -721,7 +721,7 @@ void editor_set_scrollbar_config(intptr_t editor_handle,
 
 const uint8_t* build_editor_render_model(intptr_t editor_handle, size_t* out_size) {
   PERF_TIMER("c_api::build_editor_render_model");
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr) {
     if (out_size != nullptr) {
       *out_size = 0;
@@ -737,7 +737,7 @@ const uint8_t* build_editor_render_model(intptr_t editor_handle, size_t* out_siz
 }
 
 const uint8_t* get_layout_metrics(intptr_t editor_handle, size_t* out_size) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr) {
     if (out_size != nullptr) {
       *out_size = 0;
@@ -754,7 +754,7 @@ const uint8_t* handle_editor_gesture_event(intptr_t editor_handle, uint8_t type,
 
 const uint8_t* handle_editor_gesture_event_ex(intptr_t editor_handle, uint8_t type, uint8_t pointer_count,
     float* points, uint8_t modifiers, float wheel_delta_x, float wheel_delta_y, float direct_scale, size_t* out_size) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr || (pointer_count > 0 && points == nullptr)) {
     if (out_size != nullptr) {
       *out_size = 0;
@@ -775,7 +775,7 @@ const uint8_t* handle_editor_gesture_event_ex(intptr_t editor_handle, uint8_t ty
 }
 
 const uint8_t* editor_tick_edge_scroll(intptr_t editor_handle, size_t* out_size) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr) {
     if (out_size != nullptr) {
       *out_size = 0;
@@ -787,7 +787,7 @@ const uint8_t* editor_tick_edge_scroll(intptr_t editor_handle, size_t* out_size)
 }
 
 const uint8_t* editor_tick_fling(intptr_t editor_handle, size_t* out_size) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr) {
     if (out_size != nullptr) {
       *out_size = 0;
@@ -799,7 +799,7 @@ const uint8_t* editor_tick_fling(intptr_t editor_handle, size_t* out_size) {
 }
 
 const uint8_t* editor_tick_animations(intptr_t editor_handle, size_t* out_size) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr) {
     if (out_size != nullptr) {
       *out_size = 0;
@@ -811,7 +811,7 @@ const uint8_t* editor_tick_animations(intptr_t editor_handle, size_t* out_size) 
 }
 
 const uint8_t* handle_editor_key_event(intptr_t editor_handle, uint16_t key_code, const char* text, uint8_t modifiers, size_t* out_size) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr) {
     if (out_size != nullptr) {
       *out_size = 0;
@@ -829,7 +829,7 @@ const uint8_t* handle_editor_key_event(intptr_t editor_handle, uint16_t key_code
 }
 
 void editor_set_keymap(intptr_t editor_handle, const uint8_t* data, size_t size) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr || data == nullptr || size < 4) return;
 
   size_t offset = 0;
@@ -884,7 +884,7 @@ void editor_set_keymap(intptr_t editor_handle, const uint8_t* data, size_t size)
 #pragma region [Editing, Cursor/IME & Interaction]
 
 const uint8_t* editor_insert_text(intptr_t editor_handle, const char* text, size_t* out_size) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr || text == nullptr) {
     if (out_size != nullptr) {
       *out_size = 0;
@@ -899,7 +899,7 @@ const uint8_t* editor_replace_text(intptr_t editor_handle,
     size_t start_line, size_t start_column,
     size_t end_line, size_t end_column,
     const char* text, size_t* out_size) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr || text == nullptr) {
     if (out_size != nullptr) {
       *out_size = 0;
@@ -914,7 +914,7 @@ const uint8_t* editor_replace_text(intptr_t editor_handle,
 const uint8_t* editor_delete_text(intptr_t editor_handle,
     size_t start_line, size_t start_column,
     size_t end_line, size_t end_column, size_t* out_size) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr) {
     if (out_size != nullptr) {
       *out_size = 0;
@@ -927,7 +927,7 @@ const uint8_t* editor_delete_text(intptr_t editor_handle,
 }
 
 const uint8_t* editor_backspace(intptr_t editor_handle, size_t* out_size) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr) {
     if (out_size != nullptr) {
       *out_size = 0;
@@ -939,7 +939,7 @@ const uint8_t* editor_backspace(intptr_t editor_handle, size_t* out_size) {
 }
 
 const uint8_t* editor_delete_forward(intptr_t editor_handle, size_t* out_size) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr) {
     if (out_size != nullptr) {
       *out_size = 0;
@@ -951,7 +951,7 @@ const uint8_t* editor_delete_forward(intptr_t editor_handle, size_t* out_size) {
 }
 
 const uint8_t* editor_move_line_up(intptr_t editor_handle, size_t* out_size) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr) {
     if (out_size != nullptr) {
       *out_size = 0;
@@ -963,7 +963,7 @@ const uint8_t* editor_move_line_up(intptr_t editor_handle, size_t* out_size) {
 }
 
 const uint8_t* editor_move_line_down(intptr_t editor_handle, size_t* out_size) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr) {
     if (out_size != nullptr) {
       *out_size = 0;
@@ -975,7 +975,7 @@ const uint8_t* editor_move_line_down(intptr_t editor_handle, size_t* out_size) {
 }
 
 const uint8_t* editor_copy_line_up(intptr_t editor_handle, size_t* out_size) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr) {
     if (out_size != nullptr) {
       *out_size = 0;
@@ -987,7 +987,7 @@ const uint8_t* editor_copy_line_up(intptr_t editor_handle, size_t* out_size) {
 }
 
 const uint8_t* editor_copy_line_down(intptr_t editor_handle, size_t* out_size) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr) {
     if (out_size != nullptr) {
       *out_size = 0;
@@ -999,7 +999,7 @@ const uint8_t* editor_copy_line_down(intptr_t editor_handle, size_t* out_size) {
 }
 
 const uint8_t* editor_delete_line(intptr_t editor_handle, size_t* out_size) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr) {
     if (out_size != nullptr) {
       *out_size = 0;
@@ -1011,7 +1011,7 @@ const uint8_t* editor_delete_line(intptr_t editor_handle, size_t* out_size) {
 }
 
 const uint8_t* editor_insert_line_above(intptr_t editor_handle, size_t* out_size) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr) {
     if (out_size != nullptr) {
       *out_size = 0;
@@ -1023,7 +1023,7 @@ const uint8_t* editor_insert_line_above(intptr_t editor_handle, size_t* out_size
 }
 
 const uint8_t* editor_insert_line_below(intptr_t editor_handle, size_t* out_size) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr) {
     if (out_size != nullptr) {
       *out_size = 0;
@@ -1035,7 +1035,7 @@ const uint8_t* editor_insert_line_below(intptr_t editor_handle, size_t* out_size
 }
 
 const uint8_t* editor_undo(intptr_t editor_handle, size_t* out_size) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr) {
     if (out_size != nullptr) {
       *out_size = 0;
@@ -1047,7 +1047,7 @@ const uint8_t* editor_undo(intptr_t editor_handle, size_t* out_size) {
 }
 
 const uint8_t* editor_redo(intptr_t editor_handle, size_t* out_size) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr) {
     if (out_size != nullptr) {
       *out_size = 0;
@@ -1059,25 +1059,25 @@ const uint8_t* editor_redo(intptr_t editor_handle, size_t* out_size) {
 }
 
 int editor_can_undo(intptr_t editor_handle) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr) return 0;
   return editor_core->canUndo() ? 1 : 0;
 }
 
 int editor_can_redo(intptr_t editor_handle) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr) return 0;
   return editor_core->canRedo() ? 1 : 0;
 }
 
 void editor_set_cursor_position(intptr_t editor_handle, size_t line, size_t column) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr) return;
   editor_core->setCursorPosition({line, column});
 }
 
 void editor_get_cursor_position(intptr_t editor_handle, size_t* out_line, size_t* out_column) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr) return;
   TextPosition pos = editor_core->getCursorPosition();
   if (out_line) *out_line = pos.line;
@@ -1085,7 +1085,7 @@ void editor_get_cursor_position(intptr_t editor_handle, size_t* out_line, size_t
 }
 
 void editor_select_all(intptr_t editor_handle) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr) {
     return;
   }
@@ -1093,7 +1093,7 @@ void editor_select_all(intptr_t editor_handle) {
 }
 
 void editor_set_selection(intptr_t editor_handle, size_t start_line, size_t start_column, size_t end_line, size_t end_column) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr) {
     return;
   }
@@ -1101,7 +1101,7 @@ void editor_set_selection(intptr_t editor_handle, size_t start_line, size_t star
 }
 
 int editor_get_selection(intptr_t editor_handle, size_t* out_start_line, size_t* out_start_column, size_t* out_end_line, size_t* out_end_column) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr || !editor_core->hasSelection()) {
     return 0;
   }
@@ -1114,7 +1114,7 @@ int editor_get_selection(intptr_t editor_handle, size_t* out_start_line, size_t*
 }
 
 const char* editor_get_selected_text(intptr_t editor_handle) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr) {
     return "";
   }
@@ -1125,7 +1125,7 @@ const char* editor_get_selected_text(intptr_t editor_handle) {
 }
 
 void editor_get_word_range_at_cursor(intptr_t editor_handle, size_t* out_start_line, size_t* out_start_column, size_t* out_end_line, size_t* out_end_column) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr) return;
   TextRange range = editor_core->getWordRangeAtCursor();
   if (out_start_line) *out_start_line = range.start.line;
@@ -1135,7 +1135,7 @@ void editor_get_word_range_at_cursor(intptr_t editor_handle, size_t* out_start_l
 }
 
 const char* editor_get_word_at_cursor(intptr_t editor_handle) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr) return "";
   U8String word = editor_core->getWordAtCursor();
   char* result = new char[word.size() + 1];
@@ -1144,43 +1144,43 @@ const char* editor_get_word_at_cursor(intptr_t editor_handle) {
 }
 
 void editor_move_cursor_left(intptr_t editor_handle, int extend_selection) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr) return;
   editor_core->moveCursorLeft(extend_selection != 0);
 }
 
 void editor_move_cursor_right(intptr_t editor_handle, int extend_selection) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr) return;
   editor_core->moveCursorRight(extend_selection != 0);
 }
 
 void editor_move_cursor_up(intptr_t editor_handle, int extend_selection) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr) return;
   editor_core->moveCursorUp(extend_selection != 0);
 }
 
 void editor_move_cursor_down(intptr_t editor_handle, int extend_selection) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr) return;
   editor_core->moveCursorDown(extend_selection != 0);
 }
 
 void editor_move_cursor_to_line_start(intptr_t editor_handle, int extend_selection) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr) return;
   editor_core->moveCursorToLineStart(extend_selection != 0);
 }
 
 void editor_move_cursor_to_line_end(intptr_t editor_handle, int extend_selection) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr) return;
   editor_core->moveCursorToLineEnd(extend_selection != 0);
 }
 
 void editor_composition_start(intptr_t editor_handle) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr) {
     return;
   }
@@ -1188,7 +1188,7 @@ void editor_composition_start(intptr_t editor_handle) {
 }
 
 void editor_composition_update(intptr_t editor_handle, const char* text) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr) {
     return;
   }
@@ -1196,7 +1196,7 @@ void editor_composition_update(intptr_t editor_handle, const char* text) {
 }
 
 const uint8_t* editor_composition_end(intptr_t editor_handle, const char* committed_text, size_t* out_size) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr) {
     if (out_size != nullptr) {
       *out_size = 0;
@@ -1208,7 +1208,7 @@ const uint8_t* editor_composition_end(intptr_t editor_handle, const char* commit
 }
 
 void editor_composition_cancel(intptr_t editor_handle) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr) {
     return;
   }
@@ -1216,7 +1216,7 @@ void editor_composition_cancel(intptr_t editor_handle) {
 }
 
 int editor_is_composing(intptr_t editor_handle) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr) {
     return 0;
   }
@@ -1224,7 +1224,7 @@ int editor_is_composing(intptr_t editor_handle) {
 }
 
 void editor_set_composition_enabled(intptr_t editor_handle, int enabled) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr) {
     return;
   }
@@ -1232,7 +1232,7 @@ void editor_set_composition_enabled(intptr_t editor_handle, int enabled) {
 }
 
 int editor_is_composition_enabled(intptr_t editor_handle) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr) {
     return 0;
   }
@@ -1240,7 +1240,7 @@ int editor_is_composition_enabled(intptr_t editor_handle) {
 }
 
 void editor_set_read_only(intptr_t editor_handle, int read_only) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr) {
     return;
   }
@@ -1248,7 +1248,7 @@ void editor_set_read_only(intptr_t editor_handle, int read_only) {
 }
 
 int editor_is_read_only(intptr_t editor_handle) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr) {
     return 0;
   }
@@ -1256,7 +1256,7 @@ int editor_is_read_only(intptr_t editor_handle) {
 }
 
 void editor_set_auto_indent_mode(intptr_t editor_handle, int mode) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr) {
     return;
   }
@@ -1264,7 +1264,7 @@ void editor_set_auto_indent_mode(intptr_t editor_handle, int mode) {
 }
 
 int editor_get_auto_indent_mode(intptr_t editor_handle) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr) {
     return 0;
   }
@@ -1272,7 +1272,7 @@ int editor_get_auto_indent_mode(intptr_t editor_handle) {
 }
 
 void editor_set_backspace_unindent(intptr_t editor_handle, int enabled) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr) {
     return;
   }
@@ -1280,7 +1280,7 @@ void editor_set_backspace_unindent(intptr_t editor_handle, int enabled) {
 }
 
 void editor_set_insert_spaces(intptr_t editor_handle, int enabled) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr) {
     return;
   }
@@ -1292,7 +1292,7 @@ void editor_set_insert_spaces(intptr_t editor_handle, int enabled) {
 #pragma region [Navigation, Styles & Decorations]
 
 void editor_scroll_to_line(intptr_t editor_handle, size_t line, uint8_t behavior) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr) {
     return;
   }
@@ -1300,7 +1300,7 @@ void editor_scroll_to_line(intptr_t editor_handle, size_t line, uint8_t behavior
 }
 
 void editor_goto_position(intptr_t editor_handle, size_t line, size_t column) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr) {
     return;
   }
@@ -1308,7 +1308,7 @@ void editor_goto_position(intptr_t editor_handle, size_t line, size_t column) {
 }
 
 void editor_ensure_cursor_visible(intptr_t editor_handle) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr) {
     return;
   }
@@ -1316,7 +1316,7 @@ void editor_ensure_cursor_visible(intptr_t editor_handle) {
 }
 
 void editor_set_scroll(intptr_t editor_handle, float scroll_x, float scroll_y) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr) {
     return;
   }
@@ -1326,7 +1326,7 @@ void editor_set_scroll(intptr_t editor_handle, float scroll_x, float scroll_y) {
 const uint8_t* editor_get_scroll_metrics(intptr_t editor_handle, size_t* out_size) {
   ScrollMetrics metrics {};
   metrics.scale = 1.0f;
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core != nullptr) {
     metrics = editor_core->getScrollMetrics();
   }
@@ -1336,7 +1336,7 @@ const uint8_t* editor_get_scroll_metrics(intptr_t editor_handle, size_t* out_siz
 void editor_get_position_rect(intptr_t editor_handle,
     size_t line, size_t column,
     float* out_x, float* out_y, float* out_height) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr) return;
   CursorRect rect = editor_core->getPositionScreenRect({line, column});
   if (out_x) *out_x = rect.x;
@@ -1346,7 +1346,7 @@ void editor_get_position_rect(intptr_t editor_handle,
 
 void editor_get_cursor_rect(intptr_t editor_handle,
     float* out_x, float* out_y, float* out_height) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr) return;
   CursorRect rect = editor_core->getCursorScreenRect();
   if (out_x) *out_x = rect.x;
@@ -1355,7 +1355,7 @@ void editor_get_cursor_rect(intptr_t editor_handle,
 }
 
 void editor_register_text_style(intptr_t editor_handle, uint32_t style_id, int32_t color, int32_t background_color, int32_t font_style) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr) {
     return;
   }
@@ -1363,7 +1363,7 @@ void editor_register_text_style(intptr_t editor_handle, uint32_t style_id, int32
 }
 
 void editor_set_line_spans(intptr_t editor_handle, const uint8_t* data, size_t size) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr || data == nullptr) {
     return;
   }
@@ -1396,7 +1396,7 @@ void editor_set_line_spans(intptr_t editor_handle, const uint8_t* data, size_t s
 }
 
 void editor_set_batch_line_spans(intptr_t editor_handle, const uint8_t* data, size_t size) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr || data == nullptr) return;
 
   ByteCursor cursor(data, size);
@@ -1426,7 +1426,7 @@ void editor_set_batch_line_spans(intptr_t editor_handle, const uint8_t* data, si
 }
 
 void editor_register_batch_text_styles(intptr_t editor_handle, const uint8_t* data, size_t size) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr || data == nullptr) return;
 
   ByteCursor cursor(data, size);
@@ -1450,7 +1450,7 @@ void editor_register_batch_text_styles(intptr_t editor_handle, const uint8_t* da
 }
 
 void editor_clear_line_spans(intptr_t editor_handle, size_t line, uint8_t layer) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr) {
     return;
   }
@@ -1458,13 +1458,13 @@ void editor_clear_line_spans(intptr_t editor_handle, size_t line, uint8_t layer)
 }
 
 void editor_clear_highlights_layer(intptr_t editor_handle, uint8_t layer) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr) return;
   editor_core->clearHighlights(static_cast<SpanLayer>(layer));
 }
 
 void editor_set_line_inlay_hints(intptr_t editor_handle, const uint8_t* data, size_t size) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr || data == nullptr) {
     return;
   }
@@ -1508,7 +1508,7 @@ void editor_set_line_inlay_hints(intptr_t editor_handle, const uint8_t* data, si
 }
 
 void editor_set_batch_line_inlay_hints(intptr_t editor_handle, const uint8_t* data, size_t size) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr || data == nullptr) return;
 
   ByteCursor cursor(data, size);
@@ -1551,7 +1551,7 @@ void editor_set_batch_line_inlay_hints(intptr_t editor_handle, const uint8_t* da
 }
 
 void editor_set_line_phantom_texts(intptr_t editor_handle, const uint8_t* data, size_t size) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr || data == nullptr) return;
 
   ByteCursor cursor(data, size);
@@ -1584,7 +1584,7 @@ void editor_set_line_phantom_texts(intptr_t editor_handle, const uint8_t* data, 
 }
 
 void editor_set_batch_line_phantom_texts(intptr_t editor_handle, const uint8_t* data, size_t size) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr || data == nullptr) return;
 
   ByteCursor cursor(data, size);
@@ -1618,7 +1618,7 @@ void editor_set_batch_line_phantom_texts(intptr_t editor_handle, const uint8_t* 
 }
 
 void editor_set_line_gutter_icons(intptr_t editor_handle, const uint8_t* data, size_t size) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr || data == nullptr) return;
 
   ByteCursor cursor(data, size);
@@ -1647,7 +1647,7 @@ void editor_set_line_gutter_icons(intptr_t editor_handle, const uint8_t* data, s
 }
 
 void editor_set_batch_line_gutter_icons(intptr_t editor_handle, const uint8_t* data, size_t size) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr || data == nullptr) return;
 
   ByteCursor cursor(data, size);
@@ -1674,7 +1674,7 @@ void editor_set_batch_line_gutter_icons(intptr_t editor_handle, const uint8_t* d
 }
 
 void editor_set_max_gutter_icons(intptr_t editor_handle, uint32_t count) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr) {
     return;
   }
@@ -1682,7 +1682,7 @@ void editor_set_max_gutter_icons(intptr_t editor_handle, uint32_t count) {
 }
 
 void editor_set_line_diagnostics(intptr_t editor_handle, const uint8_t* data, size_t size) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr || data == nullptr) return;
 
   ByteCursor cursor(data, size);
@@ -1719,7 +1719,7 @@ void editor_set_line_diagnostics(intptr_t editor_handle, const uint8_t* data, si
 }
 
 void editor_set_batch_line_diagnostics(intptr_t editor_handle, const uint8_t* data, size_t size) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr || data == nullptr) return;
 
   ByteCursor cursor(data, size);
@@ -1755,13 +1755,13 @@ void editor_set_batch_line_diagnostics(intptr_t editor_handle, const uint8_t* da
 }
 
 void editor_clear_diagnostics(intptr_t editor_handle) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr) return;
   editor_core->clearDiagnostics();
 }
 
 void editor_set_indent_guides(intptr_t editor_handle, const uint8_t* data, size_t size) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr || data == nullptr) return;
 
   ByteCursor cursor(data, size);
@@ -1788,7 +1788,7 @@ void editor_set_indent_guides(intptr_t editor_handle, const uint8_t* data, size_
 }
 
 void editor_set_bracket_guides(intptr_t editor_handle, const uint8_t* data, size_t size) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr || data == nullptr) return;
 
   ByteCursor cursor(data, size);
@@ -1821,7 +1821,7 @@ void editor_set_bracket_guides(intptr_t editor_handle, const uint8_t* data, size
 }
 
 void editor_set_flow_guides(intptr_t editor_handle, const uint8_t* data, size_t size) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr || data == nullptr) return;
 
   ByteCursor cursor(data, size);
@@ -1848,7 +1848,7 @@ void editor_set_flow_guides(intptr_t editor_handle, const uint8_t* data, size_t 
 }
 
 void editor_set_separator_guides(intptr_t editor_handle, const uint8_t* data, size_t size) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr || data == nullptr) return;
 
   ByteCursor cursor(data, size);
@@ -1876,7 +1876,7 @@ void editor_set_separator_guides(intptr_t editor_handle, const uint8_t* data, si
 }
 
 void editor_set_bracket_pairs(intptr_t editor_handle, const uint32_t* open_chars, const uint32_t* close_chars, size_t count) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr || open_chars == nullptr || close_chars == nullptr) return;
   Vector<BracketPair> pairs;
   pairs.reserve(count);
@@ -1887,7 +1887,7 @@ void editor_set_bracket_pairs(intptr_t editor_handle, const uint32_t* open_chars
 }
 
 void editor_set_auto_closing_pairs(intptr_t editor_handle, const uint32_t* open_chars, const uint32_t* close_chars, size_t count) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr) return;
   Vector<BracketPair> pairs;
   if (open_chars != nullptr && close_chars != nullptr) {
@@ -1900,19 +1900,19 @@ void editor_set_auto_closing_pairs(intptr_t editor_handle, const uint32_t* open_
 }
 
 void editor_set_matched_brackets(intptr_t editor_handle, size_t open_line, size_t open_col, size_t close_line, size_t close_col) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr) return;
   editor_core->setMatchedBrackets({open_line, open_col}, {close_line, close_col});
 }
 
 void editor_clear_matched_brackets(intptr_t editor_handle) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr) return;
   editor_core->clearMatchedBrackets();
 }
 
 void editor_set_fold_regions(intptr_t editor_handle, const uint8_t* data, size_t size) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr || data == nullptr) return;
 
   ByteCursor cursor(data, size);
@@ -1940,73 +1940,73 @@ void editor_set_fold_regions(intptr_t editor_handle, const uint8_t* data, size_t
 }
 
 int editor_toggle_fold(intptr_t editor_handle, size_t line) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr) return 0;
   return editor_core->toggleFoldAt(line) ? 1 : 0;
 }
 
 int editor_fold_at(intptr_t editor_handle, size_t line) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr) return 0;
   return editor_core->foldAt(line) ? 1 : 0;
 }
 
 int editor_unfold_at(intptr_t editor_handle, size_t line) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr) return 0;
   return editor_core->unfoldAt(line) ? 1 : 0;
 }
 
 void editor_fold_all(intptr_t editor_handle) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr) return;
   editor_core->foldAll();
 }
 
 void editor_unfold_all(intptr_t editor_handle) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr) return;
   editor_core->unfoldAll();
 }
 
 int editor_is_line_visible(intptr_t editor_handle, size_t line) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr) return 1;
   return editor_core->isLineVisible(line) ? 1 : 0;
 }
 
 void editor_clear_highlights(intptr_t editor_handle) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr) return;
   editor_core->clearHighlights();
 }
 
 void editor_clear_inlay_hints(intptr_t editor_handle) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr) return;
   editor_core->clearInlayHints();
 }
 
 void editor_clear_phantom_texts(intptr_t editor_handle) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr) return;
   editor_core->clearPhantomTexts();
 }
 
 void editor_clear_gutter_icons(intptr_t editor_handle) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr) return;
   editor_core->clearGutterIcons();
 }
 
 void editor_clear_guides(intptr_t editor_handle) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr) return;
   editor_core->clearGuides();
 }
 
 void editor_clear_all_decorations(intptr_t editor_handle) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr) return;
   editor_core->clearAllDecorations();
 }
@@ -2016,7 +2016,7 @@ void editor_clear_all_decorations(intptr_t editor_handle) {
 #pragma region [Linked Editing & Utilities]
 
 const uint8_t* editor_insert_snippet(intptr_t editor_handle, const char* snippet_template, size_t* out_size) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr || snippet_template == nullptr) {
     if (out_size != nullptr) {
       *out_size = 0;
@@ -2028,7 +2028,7 @@ const uint8_t* editor_insert_snippet(intptr_t editor_handle, const char* snippet
 }
 
 void editor_start_linked_editing(intptr_t editor_handle, const uint8_t* data, size_t size) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr || data == nullptr) return;
 
   ByteCursor cursor(data, size);
@@ -2126,25 +2126,25 @@ void editor_start_linked_editing(intptr_t editor_handle, const uint8_t* data, si
 }
 
 int editor_is_in_linked_editing(intptr_t editor_handle) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr) return 0;
   return editor_core->isInLinkedEditing() ? 1 : 0;
 }
 
 int editor_linked_editing_next(intptr_t editor_handle) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr) return 0;
   return editor_core->linkedEditingNextTabStop() ? 1 : 0;
 }
 
 int editor_linked_editing_prev(intptr_t editor_handle) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr) return 0;
   return editor_core->linkedEditingPrevTabStop() ? 1 : 0;
 }
 
 void editor_cancel_linked_editing(intptr_t editor_handle) {
-  Ptr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
+  SharedPtr<EditorCore> editor_core = getCPtrHolderValue<EditorCore>(editor_handle);
   if (editor_core == nullptr) return;
   editor_core->cancelLinkedEditing();
 }

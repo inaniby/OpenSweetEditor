@@ -7,8 +7,8 @@
 
 #include <cstdint>
 #include <array>
-#include <macro.h>
-#include <foundation.h>
+#include "macro.h"
+#include "foundation.h"
 
 namespace NS_SWEETEDITOR {
   /// Highlight layer enum (priority from low to high, higher layers cover lower layers)
@@ -191,7 +191,7 @@ namespace NS_SWEETEDITOR {
   public:
     DecorationManager();
 
-    Ptr<TextStyleRegistry> getTextStyleRegistry();
+    SharedPtr<TextStyleRegistry> getTextStyleRegistry();
 
     /// Set highlight spans for a given line and layer (externally provided, sorted by column ascending)
     void setLineSpans(size_t line, SpanLayer layer, Vector<StyleSpan>&& spans);
@@ -317,7 +317,7 @@ namespace NS_SWEETEDITOR {
     void adjustForEdit(const TextRange& old_range, const TextPosition& new_end);
   private:
     void ensureLineCapacity_(size_t line_count);
-    Ptr<TextStyleRegistry> m_text_style_reg_;
+    SharedPtr<TextStyleRegistry> m_text_style_reg_;
     std::array<Vector<Vector<StyleSpan>>, kSpanLayerCount> m_layer_spans_;
     Vector<Vector<InlayHint>> m_inlay_hints_;
     Vector<Vector<PhantomText>> m_phantom_texts_;

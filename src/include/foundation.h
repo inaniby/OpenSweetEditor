@@ -5,8 +5,8 @@
 #define SWEETEDITOR_FOUNDATION_H
 
 #include <cstdint>
-#include <macro.h>
-#include <keymap.h>
+#include "macro.h"
+#include "keymap.h"
 
 namespace NS_SWEETEDITOR {
   /// Text position

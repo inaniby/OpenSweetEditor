@@ -7,8 +7,7 @@
 
 #include <cstdint>
 #include <limits>
-#include <nlohmann/json.hpp>
-#include <foundation.h>
+#include "foundation.h"
 
 namespace NS_SWEETEDITOR {
 
@@ -250,44 +249,6 @@ namespace NS_SWEETEDITOR {
     KeyModifier m_active_modifiers_ {KeyModifier::NONE};
   };
 
-  NLOHMANN_JSON_SERIALIZE_ENUM(EventType, {
-    {EventType::UNDEFINED, "UNDEFINED"},
-    {EventType::TOUCH_DOWN, "TOUCH_DOWN"},
-    {EventType::TOUCH_POINTER_DOWN, "TOUCH_POINTER_DOWN"},
-    {EventType::TOUCH_MOVE, "TOUCH_MOVE"},
-    {EventType::TOUCH_POINTER_UP, "TOUCH_POINTER_UP"},
-    {EventType::TOUCH_UP, "TOUCH_UP"},
-    {EventType::TOUCH_CANCEL, "TOUCH_CANCEL"},
-    {EventType::MOUSE_DOWN, "MOUSE_DOWN"},
-    {EventType::MOUSE_MOVE, "MOUSE_MOVE"},
-    {EventType::MOUSE_UP, "MOUSE_UP"},
-    {EventType::MOUSE_WHEEL, "MOUSE_WHEEL"},
-    {EventType::MOUSE_RIGHT_DOWN, "MOUSE_RIGHT_DOWN"},
-    {EventType::DIRECT_SCALE, "DIRECT_SCALE"},
-    {EventType::DIRECT_SCROLL, "DIRECT_SCROLL"},
-  })
-  NLOHMANN_JSON_SERIALIZE_ENUM(GestureType, {
-    {GestureType::UNDEFINED, "UNDEFINED"},
-    {GestureType::TAP, "TAP"},
-    {GestureType::DOUBLE_TAP, "DOUBLE_TAP"},
-    {GestureType::LONG_PRESS, "LONG_PRESS"},
-    {GestureType::SCALE, "SCALE"},
-    {GestureType::SCROLL, "SCROLL"},
-    {GestureType::FAST_SCROLL, "FAST_SCROLL"},
-    {GestureType::DRAG_SELECT, "DRAG_SELECT"},
-    {GestureType::CONTEXT_MENU, "CONTEXT_MENU"},
-  })
-  NLOHMANN_JSON_SERIALIZE_ENUM(HitTargetType, {
-    {HitTargetType::NONE, "NONE"},
-    {HitTargetType::INLAY_HINT_TEXT, "INLAY_HINT_TEXT"},
-    {HitTargetType::INLAY_HINT_ICON, "INLAY_HINT_ICON"},
-    {HitTargetType::GUTTER_ICON, "GUTTER_ICON"},
-    {HitTargetType::FOLD_PLACEHOLDER, "FOLD_PLACEHOLDER"},
-    {HitTargetType::FOLD_GUTTER, "FOLD_GUTTER"},
-    {HitTargetType::INLAY_HINT_COLOR, "INLAY_HINT_COLOR"},
-  })
-  NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(HitTarget, type, line, column, icon_id, color_value)
-  NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(GestureResult, type, tap_point, modifiers, scale, scroll_x, scroll_y, cursor_position, has_selection, selection, view_scroll_x, view_scroll_y, view_scale, hit_target, needs_edge_scroll, needs_fling, needs_animation, is_handle_drag)
 }
 
 #endif //SWEETEDITOR_GESTURE_H

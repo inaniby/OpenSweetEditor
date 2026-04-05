@@ -75,9 +75,9 @@ namespace NS_SWEETEDITOR {
   }
 
 #pragma region [Setup & View State]
-  EditorCore::EditorCore(const Ptr<TextMeasurer>& measurer, const EditorOptions& options): m_measurer_(measurer), m_options_(options), m_key_resolver_(options.key_chord_timeout_ms) {
-    m_decorations_ = makePtr<DecorationManager>();
-    m_text_layout_ = makeUPtr<TextLayout>(measurer, m_decorations_);
+  EditorCore::EditorCore(const SharedPtr<TextMeasurer>& measurer, const EditorOptions& options): m_measurer_(measurer), m_options_(options), m_key_resolver_(options.key_chord_timeout_ms) {
+    m_decorations_ = makeShared<DecorationManager>();
+    m_text_layout_ = makeUnique<TextLayout>(measurer, m_decorations_);
     InteractionContext interaction_context;
     interaction_context.touch_config = options.simpleAsTouchConfig();
     interaction_context.settings = &m_settings_;
@@ -85,11 +85,11 @@ namespace NS_SWEETEDITOR {
     interaction_context.viewport = &m_viewport_;
     interaction_context.text_layout = m_text_layout_.get();
     interaction_context.caret = &m_caret_;
-    m_interaction_ = makeUPtr<EditorInteraction>(interaction_context);
-    m_render_composer_ = makeUPtr<RenderComposer>(m_text_layout_.get(), m_decorations_.get(), &m_settings_);
-    m_undo_manager_ = makeUPtr<UndoManager>(options.max_undo_stack_size);
+    m_interaction_ = makeUnique<EditorInteraction>(interaction_context);
+    m_render_composer_ = makeUnique<RenderComposer>(m_text_layout_.get(), m_decorations_.get(), &m_settings_);
+    m_undo_manager_ = makeUnique<UndoManager>(options.max_undo_stack_size);
     m_key_resolver_.setKeyMap(KeyMap::createDefault());
-    loadDocument(makePtr<LineArrayDocument>(""));
+    loadDocument(makeShared<LineArrayDocument>(""));
     LOGD("EditorCore::EditorCore(), options = %s", options.dump().c_str());
   }
 
@@ -123,7 +123,7 @@ namespace NS_SWEETEDITOR {
          m_settings_.scrollbar.fade_duration_ms);
   }
 
-  void EditorCore::loadDocument(const Ptr<Document>& document) {
+  void EditorCore::loadDocument(const SharedPtr<Document>& document) {
     cancelLinkedEditing();
     removeComposingText();
     resetCompositionState();
@@ -360,7 +360,7 @@ namespace NS_SWEETEDITOR {
 
 #pragma region [Rendering & Input]
 
-  Ptr<TextStyleRegistry> EditorCore::getTextStyleRegistry() const {
+  SharedPtr<TextStyleRegistry> EditorCore::getTextStyleRegistry() const {
     return m_decorations_->getTextStyleRegistry();
   }
 
@@ -1989,7 +1989,7 @@ namespace NS_SWEETEDITOR {
 
     // If tab stops exist, start linked editing
     if (!parse_result.model.groups.empty()) {
-      m_linked_editing_session_ = makeUPtr<LinkedEditingSession>(std::move(parse_result.model));
+      m_linked_editing_session_ = makeUnique<LinkedEditingSession>(std::move(parse_result.model));
       activateCurrentTabStop();
     }
 
@@ -2012,7 +2012,7 @@ namespace NS_SWEETEDITOR {
       m_linked_editing_session_.reset();
     }
 
-    m_linked_editing_session_ = makeUPtr<LinkedEditingSession>(std::move(model));
+    m_linked_editing_session_ = makeUnique<LinkedEditingSession>(std::move(model));
     activateCurrentTabStop();
 
     LOGD("EditorCore::startLinkedEditing, cursor = %s", m_caret_.cursor.dump().c_str());

@@ -6,9 +6,9 @@ using namespace NS_SWEETEDITOR;
 
 TEST_CASE("EditorCore snippet linked editing mirrors placeholders and exits at tail") {
   EditorOptions options;
-  EditorCore editor(makePtr<FixedWidthTextMeasurer>(), options);
+  EditorCore editor(makeShared<FixedWidthTextMeasurer>(), options);
 
-  Ptr<Document> document = makePtr<LineArrayDocument>("");
+  SharedPtr<Document> document = makeShared<LineArrayDocument>("");
   editor.loadDocument(document);
   editor.setViewport({800, 600});
 
@@ -36,9 +36,9 @@ TEST_CASE("EditorCore snippet linked editing mirrors placeholders and exits at t
 
 TEST_CASE("EditorCore linked editing supports prev navigation and explicit cancel") {
   EditorOptions options;
-  EditorCore editor(makePtr<FixedWidthTextMeasurer>(), options);
+  EditorCore editor(makeShared<FixedWidthTextMeasurer>(), options);
 
-  Ptr<Document> document = makePtr<LineArrayDocument>("");
+  SharedPtr<Document> document = makeShared<LineArrayDocument>("");
   editor.loadDocument(document);
   editor.setViewport({800, 600});
 

@@ -20,11 +20,11 @@ static U8String collectVisualLineText(const VisualLine& line) {
 }
 
 TEST_CASE("TextLayout hitTest matches getPositionScreenCoord in non-wrap mode") {
-  Ptr<TextMeasurer> measurer = makePtr<FixedWidthTextMeasurer>(10.0f);
-  Ptr<DecorationManager> decorations = makePtr<DecorationManager>();
+  SharedPtr<TextMeasurer> measurer = makeShared<FixedWidthTextMeasurer>(10.0f);
+  SharedPtr<DecorationManager> decorations = makeShared<DecorationManager>();
   TextLayout layout(measurer, decorations);
 
-  Ptr<Document> document = makePtr<LineArrayDocument>("abcdef");
+  SharedPtr<Document> document = makeShared<LineArrayDocument>("abcdef");
   layout.loadDocument(document);
   layout.setViewport({320, 200});
   layout.setViewState({1.0f, 0.0f, 0.0f});
@@ -46,11 +46,11 @@ TEST_CASE("TextLayout hitTest matches getPositionScreenCoord in non-wrap mode") 
 }
 
 TEST_CASE("TextLayout hitTest/getPositionScreenCoord stay consistent in wrap mode") {
-  Ptr<TextMeasurer> measurer = makePtr<FixedWidthTextMeasurer>(10.0f);
-  Ptr<DecorationManager> decorations = makePtr<DecorationManager>();
+  SharedPtr<TextMeasurer> measurer = makeShared<FixedWidthTextMeasurer>(10.0f);
+  SharedPtr<DecorationManager> decorations = makeShared<DecorationManager>();
   TextLayout layout(measurer, decorations);
 
-  Ptr<Document> document = makePtr<LineArrayDocument>("abcdefghij");
+  SharedPtr<Document> document = makeShared<LineArrayDocument>("abcdefghij");
   layout.loadDocument(document);
   layout.setViewport({90, 320}); // text area width ~= 60 => force wrap
   layout.setViewState({1.0f, 0.0f, 0.0f});
@@ -72,11 +72,11 @@ TEST_CASE("TextLayout hitTest/getPositionScreenCoord stay consistent in wrap mod
 }
 
 TEST_CASE("TextLayout hitTest snaps emoji modifier graphemes to left and right boundaries") {
-  Ptr<TextMeasurer> measurer = makePtr<FixedWidthTextMeasurer>(10.0f);
-  Ptr<DecorationManager> decorations = makePtr<DecorationManager>();
+  SharedPtr<TextMeasurer> measurer = makeShared<FixedWidthTextMeasurer>(10.0f);
+  SharedPtr<DecorationManager> decorations = makeShared<DecorationManager>();
   TextLayout layout(measurer, decorations);
 
-  Ptr<Document> document = makePtr<LineArrayDocument>("A\xF0\x9F\x91\x8D\xF0\x9F\x8F\xBB" "B");
+  SharedPtr<Document> document = makeShared<LineArrayDocument>("A\xF0\x9F\x91\x8D\xF0\x9F\x8F\xBB" "B");
   layout.loadDocument(document);
   layout.setViewport({320, 200});
   layout.setViewState({1.0f, 0.0f, 0.0f});
@@ -95,11 +95,11 @@ TEST_CASE("TextLayout hitTest snaps emoji modifier graphemes to left and right b
 }
 
 TEST_CASE("TextLayout horizontal cropping preserves grapheme hit testing") {
-  Ptr<TextMeasurer> measurer = makePtr<FixedWidthTextMeasurer>(10.0f);
-  Ptr<DecorationManager> decorations = makePtr<DecorationManager>();
+  SharedPtr<TextMeasurer> measurer = makeShared<FixedWidthTextMeasurer>(10.0f);
+  SharedPtr<DecorationManager> decorations = makeShared<DecorationManager>();
   TextLayout layout(measurer, decorations);
 
-  Ptr<Document> document = makePtr<LineArrayDocument>("A\xF0\x9F\x91\x8D\xF0\x9F\x8F\xBB" "B");
+  SharedPtr<Document> document = makeShared<LineArrayDocument>("A\xF0\x9F\x91\x8D\xF0\x9F\x8F\xBB" "B");
   layout.loadDocument(document);
   layout.setViewport({80, 200});
   layout.setWrapMode(WrapMode::NONE);
@@ -125,11 +125,11 @@ TEST_CASE("TextLayout horizontal cropping preserves grapheme hit testing") {
 }
 
 TEST_CASE("TextLayout wrap keeps emoji modifier grapheme on one visual line") {
-  Ptr<TextMeasurer> measurer = makePtr<FixedGraphemeWidthTextMeasurer>(10.0f);
-  Ptr<DecorationManager> decorations = makePtr<DecorationManager>();
+  SharedPtr<TextMeasurer> measurer = makeShared<FixedGraphemeWidthTextMeasurer>(10.0f);
+  SharedPtr<DecorationManager> decorations = makeShared<DecorationManager>();
   TextLayout layout(measurer, decorations);
 
-  Ptr<Document> document = makePtr<LineArrayDocument>("A\xF0\x9F\x91\x8D\xF0\x9F\x8F\xBB" "B");
+  SharedPtr<Document> document = makeShared<LineArrayDocument>("A\xF0\x9F\x91\x8D\xF0\x9F\x8F\xBB" "B");
   layout.loadDocument(document);
   layout.setViewport({120, 200});
   const float text_area_x = layout.getLayoutMetrics().textAreaX();
@@ -146,11 +146,11 @@ TEST_CASE("TextLayout wrap keeps emoji modifier grapheme on one visual line") {
 }
 
 TEST_CASE("TextLayout monospace left crop does not over-trim complex graphemes") {
-  Ptr<TextMeasurer> measurer = makePtr<FixedGraphemeWidthTextMeasurer>(10.0f);
-  Ptr<DecorationManager> decorations = makePtr<DecorationManager>();
+  SharedPtr<TextMeasurer> measurer = makeShared<FixedGraphemeWidthTextMeasurer>(10.0f);
+  SharedPtr<DecorationManager> decorations = makeShared<DecorationManager>();
   TextLayout layout(measurer, decorations);
 
-  Ptr<Document> document = makePtr<LineArrayDocument>(
+  SharedPtr<Document> document = makeShared<LineArrayDocument>(
       "\xF0\x9F\x92\x9D\xF0\x9F\x92\x97\xF0\x9F\x87\xA8\xF0\x9F\x87\xB3\xF0\x9F\x87\xB2\xF0\x9F\x87\xB4\xF0\x9F\x91\x8C\xF0\x9F\x8F\xBB");
   layout.loadDocument(document);
   layout.setViewport({160, 200});

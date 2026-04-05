@@ -28,8 +28,8 @@ namespace NS_SWEETEDITOR {
 
   EditorInteraction::EditorInteraction(const InteractionContext& context)
       : m_context_(context),
-        m_gesture_handler_(makeUPtr<GestureHandler>(context.touch_config)),
-        m_fling_(makeUPtr<FlingAnimator>(context.touch_config)) {
+        m_gesture_handler_(makeUnique<GestureHandler>(context.touch_config)),
+        m_fling_(makeUnique<FlingAnimator>(context.touch_config)) {
   }
 
   void EditorInteraction::fillGestureResult(GestureResult& result) const {

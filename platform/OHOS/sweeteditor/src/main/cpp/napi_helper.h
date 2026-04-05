@@ -13,30 +13,30 @@ using namespace NS_SWEETEDITOR;
 template<typename T>
 class CPtrHolder {
 public:
-  explicit CPtrHolder(const Ptr<T>& ptr): m_ptr_(ptr) {}
+  explicit CPtrHolder(const SharedPtr<T>& ptr): m_ptr_(ptr) {}
 
-  Ptr<T>& get() { return m_ptr_; }
+  SharedPtr<T>& get() { return m_ptr_; }
 
 private:
-  Ptr<T> m_ptr_;
+  SharedPtr<T> m_ptr_;
 };
 
 template<typename T, typename... Args>
 intptr_t makeCPtrHolderToIntPtr(Args&&... args) {
-  Ptr<T> ptr = makePtr<T>(std::forward<Args>(args)...);
+  SharedPtr<T> ptr = makeShared<T>(std::forward<Args>(args)...);
   auto* holder = new CPtrHolder<T>(ptr);
   return reinterpret_cast<intptr_t>(holder);
 }
 
 template<typename T>
-intptr_t toIntPtr(const Ptr<T>& ptr) {
+intptr_t toIntPtr(const SharedPtr<T>& ptr) {
   if (ptr == nullptr) return 0;
   auto* holder = new CPtrHolder<T>(ptr);
   return reinterpret_cast<intptr_t>(holder);
 }
 
 template<typename T>
-Ptr<T> getCPtrHolderValue(intptr_t handle) {
+SharedPtr<T> getCPtrHolderValue(intptr_t handle) {
   if (handle == 0) return nullptr;
   auto* holder = reinterpret_cast<CPtrHolder<T>*>(handle);
   return holder->get();

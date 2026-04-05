@@ -1,4 +1,4 @@
-﻿# Platform Implementation Standard
+# Platform Implementation Standard
 
 > This document defines the conventions and constraints that every SweetEditor platform implementation must follow.
 > The goal is to keep cross-platform behavior consistent while allowing platform-specific rendering and input handling.

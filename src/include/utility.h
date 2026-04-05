@@ -6,8 +6,8 @@
 #define SWEETEDITOR_UTILITY_H
 
 #include <cstdint>
-#include <foundation.h>
-#include <macro.h>
+#include "foundation.h"
+#include "macro.h"
 
 namespace NS_SWEETEDITOR {
   class TimeUtil {

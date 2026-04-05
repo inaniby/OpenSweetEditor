@@ -1,4 +1,4 @@
-﻿//
+//
 // Created by Scave on 2025/12/2.
 //
 
@@ -6,9 +6,9 @@
 #define SWEETEDITOR_DOCUMENT_H
 
 #include <cstdint>
-#include <foundation.h>
-#include <buffer.h>
-#include <visual.h>
+#include "foundation.h"
+#include "buffer.h"
+#include "visual.h"
 
 namespace NS_SWEETEDITOR {
   /// Line ending type
@@ -137,7 +137,7 @@ namespace NS_SWEETEDITOR {
     explicit LineArrayDocument(U8String&& original_string);
     explicit LineArrayDocument(const U8String& original_string);
     explicit LineArrayDocument(const U16String& original_string);
-    explicit LineArrayDocument(UPtr<Buffer>&& original_buffer);
+    explicit LineArrayDocument(UniquePtr<Buffer>&& original_buffer);
 
     ~LineArrayDocument() override;
 
@@ -175,7 +175,7 @@ namespace NS_SWEETEDITOR {
     explicit PieceTableDocument(U8String&& original_string);
     explicit PieceTableDocument(const U8String& original_string);
     explicit PieceTableDocument(const U16String& original_string);
-    explicit PieceTableDocument(UPtr<Buffer>&& original_buffer);
+    explicit PieceTableDocument(UniquePtr<Buffer>&& original_buffer);
 
     ~PieceTableDocument() override;
 
@@ -196,9 +196,9 @@ namespace NS_SWEETEDITOR {
   protected:
     void updateDirtyLine(size_t index, LogicalLine& logical_line) override;
     /// Buffer for original content (read-only)
-    UPtr<Buffer> m_original_buffer_;
+    UniquePtr<Buffer> m_original_buffer_;
     /// Buffer for user edits, append-only
-    UPtr<U8StringBuffer> m_edit_buffer_;
+    UniquePtr<U8StringBuffer> m_edit_buffer_;
     /// All text segments
     Vector<BufferSegment> m_buffer_segments_;
     /// Logical line data

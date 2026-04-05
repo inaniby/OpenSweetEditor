@@ -24,9 +24,9 @@ namespace {
 }
 
 TEST_CASE("EditorInteraction track tap jumps vertical scrollbar position") {
-  Ptr<TextMeasurer> measurer = makePtr<FixedWidthTextMeasurer>(10.0f);
-  Ptr<DecorationManager> decorations = makePtr<DecorationManager>();
-  Ptr<Document> document = makePtr<LineArrayDocument>(makeLines(80, "abcdefghij"));
+  SharedPtr<TextMeasurer> measurer = makeShared<FixedWidthTextMeasurer>(10.0f);
+  SharedPtr<DecorationManager> decorations = makeShared<DecorationManager>();
+  SharedPtr<Document> document = makeShared<LineArrayDocument>(makeLines(80, "abcdefghij"));
   TextLayout layout(measurer, decorations);
   layout.loadDocument(document);
 
@@ -69,9 +69,9 @@ TEST_CASE("EditorInteraction track tap jumps vertical scrollbar position") {
 }
 
 TEST_CASE("EditorInteraction thumb drag updates vertical scroll offset") {
-  Ptr<TextMeasurer> measurer = makePtr<FixedWidthTextMeasurer>(10.0f);
-  Ptr<DecorationManager> decorations = makePtr<DecorationManager>();
-  Ptr<Document> document = makePtr<LineArrayDocument>(makeLines(120, "abcdefghijklmnop"));
+  SharedPtr<TextMeasurer> measurer = makeShared<FixedWidthTextMeasurer>(10.0f);
+  SharedPtr<DecorationManager> decorations = makeShared<DecorationManager>();
+  SharedPtr<Document> document = makeShared<LineArrayDocument>(makeLines(120, "abcdefghijklmnop"));
   TextLayout layout(measurer, decorations);
   layout.loadDocument(document);
 

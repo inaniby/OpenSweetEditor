@@ -1,12 +1,8 @@
-//
-// Created by Codex on 2026/4/2.
-//
 #ifndef SWEETEDITOR_EDITOR_TYPES_H
 #define SWEETEDITOR_EDITOR_TYPES_H
 
-#include <foundation.h>
-#include <gesture.h>
-#include <nlohmann/json.hpp>
+#include "foundation.h"
+#include "gesture.h"
 
 namespace NS_SWEETEDITOR {
   /// Bracket pair definition (open/close character pair)
@@ -187,9 +183,6 @@ namespace NS_SWEETEDITOR {
     float height {0};  ///< Line height (same as cursor height)
   };
 
-  NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(TextChange, range, old_text, new_text)
-  NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(TextEditResult, changed, changes, cursor_before, cursor_after)
-  NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(KeyEventResult, handled, content_changed, cursor_changed, selection_changed, edit_result, command)
 }
 
 #endif //SWEETEDITOR_EDITOR_TYPES_H

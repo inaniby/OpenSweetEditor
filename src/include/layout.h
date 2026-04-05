@@ -5,10 +5,10 @@
 #ifndef SWEETEDITOR_LAYOUT_H
 #define SWEETEDITOR_LAYOUT_H
 
-#include <document.h>
-#include <decoration.h>
-#include <visual.h>
-#include <gesture.h>
+#include "document.h"
+#include "decoration.h"
+#include "visual.h"
+#include "gesture.h"
 
 namespace NS_SWEETEDITOR {
 
@@ -67,9 +67,9 @@ namespace NS_SWEETEDITOR {
   /// Text layout engine
   class TextLayout {
   public:
-    TextLayout(const Ptr<TextMeasurer>& measurer, const Ptr<DecorationManager>& decoration_manager);
+    TextLayout(const SharedPtr<TextMeasurer>& measurer, const SharedPtr<DecorationManager>& decoration_manager);
 
-    void loadDocument(const Ptr<Document>& document);
+    void loadDocument(const SharedPtr<Document>& document);
 
     void setViewport(const Viewport& viewport);
 
@@ -159,9 +159,9 @@ namespace NS_SWEETEDITOR {
     /// @param from_line Prefix index becomes dirty starting from this line, default 0 = rebuild all
     void invalidateContentMetrics(size_t from_line = 0);
   private:
-    Ptr<TextMeasurer> m_measurer_;
-    Ptr<Document> m_document_;
-    Ptr<DecorationManager> m_decoration_manager_;
+    SharedPtr<TextMeasurer> m_measurer_;
+    SharedPtr<Document> m_document_;
+    SharedPtr<DecorationManager> m_decoration_manager_;
     Viewport m_viewport_;
     ViewState m_view_state_;
     WrapMode m_wrap_mode_ {WrapMode::NONE};
@@ -222,7 +222,7 @@ namespace NS_SWEETEDITOR {
     /// Auto-wrap: split one line's runs into multiple VisualLines by available width
     void wrapLineRuns(size_t line_index, float start_y, float line_height,
                       Vector<VisualRun>& runs, Vector<VisualLine>& out_lines);
-    /// Append fold placeholder and tail-line runs to collapsed first line (first line + … + tail content)
+    /// Append fold placeholder and tail-line runs to collapsed first line (first line + placeholder + tail content)
     void appendFoldTailRuns(size_t index, const U16String& line_text, LogicalLine& logical_line);
     float computeLineNumberWidth() const;
     static bool isWordBreakChar(U16Char ch);

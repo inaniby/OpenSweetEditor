@@ -6,9 +6,9 @@ using namespace NS_SWEETEDITOR;
 
 TEST_CASE("EditorCore buildRenderModel exposes normalized selection handles") {
   EditorOptions options;
-  EditorCore editor(makePtr<FixedWidthTextMeasurer>(10.0f), options);
+  EditorCore editor(makeShared<FixedWidthTextMeasurer>(10.0f), options);
 
-  editor.loadDocument(makePtr<LineArrayDocument>("abcdef"));
+  editor.loadDocument(makeShared<LineArrayDocument>("abcdef"));
   editor.setViewport({320, 120});
   editor.setSelection({{0, 5}, {0, 2}});
 
@@ -24,9 +24,9 @@ TEST_CASE("EditorCore buildRenderModel exposes normalized selection handles") {
 
 TEST_CASE("EditorCore buildRenderModel exposes active composition decoration") {
   EditorOptions options;
-  EditorCore editor(makePtr<FixedWidthTextMeasurer>(10.0f), options);
+  EditorCore editor(makeShared<FixedWidthTextMeasurer>(10.0f), options);
 
-  editor.loadDocument(makePtr<LineArrayDocument>("ab"));
+  editor.loadDocument(makeShared<LineArrayDocument>("ab"));
   editor.setViewport({320, 120});
   editor.setCompositionEnabled(true);
   editor.setCursorPosition({0, 1});
@@ -44,9 +44,9 @@ TEST_CASE("EditorCore buildRenderModel exposes active composition decoration") {
 
 TEST_CASE("EditorCore buildRenderModel emits linked editing rectangles for snippet tab stops") {
   EditorOptions options;
-  EditorCore editor(makePtr<FixedWidthTextMeasurer>(10.0f), options);
+  EditorCore editor(makeShared<FixedWidthTextMeasurer>(10.0f), options);
 
-  editor.loadDocument(makePtr<LineArrayDocument>(""));
+  editor.loadDocument(makeShared<LineArrayDocument>(""));
   editor.setViewport({320, 120});
   REQUIRE(editor.insertSnippet("${1:foo}-${2:bar}-$0").changed);
 
@@ -68,9 +68,9 @@ TEST_CASE("EditorCore buildRenderModel emits linked editing rectangles for snipp
 
 TEST_CASE("EditorCore buildRenderModel uses external bracket match positions when provided") {
   EditorOptions options;
-  EditorCore editor(makePtr<FixedWidthTextMeasurer>(10.0f), options);
+  EditorCore editor(makeShared<FixedWidthTextMeasurer>(10.0f), options);
 
-  editor.loadDocument(makePtr<LineArrayDocument>("a(b)c"));
+  editor.loadDocument(makeShared<LineArrayDocument>("a(b)c"));
   editor.setViewport({320, 120});
   editor.setMatchedBrackets({0, 1}, {0, 3});
 

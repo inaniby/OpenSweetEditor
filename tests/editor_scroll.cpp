@@ -17,9 +17,9 @@ namespace {
 
 TEST_CASE("EditorCore setScroll is clamped by computed scroll bounds") {
   EditorOptions options;
-  EditorCore editor(makePtr<FixedWidthTextMeasurer>(10.0f), options);
+  EditorCore editor(makeShared<FixedWidthTextMeasurer>(10.0f), options);
 
-  Ptr<Document> document = makePtr<LineArrayDocument>(makeLines(30, "0123456789abcdefghij"));
+  SharedPtr<Document> document = makeShared<LineArrayDocument>(makeLines(30, "0123456789abcdefghij"));
   editor.loadDocument(document);
   editor.setViewport({120, 80});
   EditorRenderModel model;
@@ -36,9 +36,9 @@ TEST_CASE("EditorCore setScroll is clamped by computed scroll bounds") {
 
 TEST_CASE("EditorCore wrap mode disables horizontal scrolling and zeroes scroll_x") {
   EditorOptions options;
-  EditorCore editor(makePtr<FixedWidthTextMeasurer>(10.0f), options);
+  EditorCore editor(makeShared<FixedWidthTextMeasurer>(10.0f), options);
 
-  Ptr<Document> document = makePtr<LineArrayDocument>("abcdefghijklmnopqrstuvwxyz");
+  SharedPtr<Document> document = makeShared<LineArrayDocument>("abcdefghijklmnopqrstuvwxyz");
   editor.loadDocument(document);
   editor.setViewport({120, 80});
 
@@ -58,9 +58,9 @@ TEST_CASE("EditorCore wrap mode disables horizontal scrolling and zeroes scroll_
 
 TEST_CASE("EditorCore viewport change re-clamps existing scroll offset") {
   EditorOptions options;
-  EditorCore editor(makePtr<FixedWidthTextMeasurer>(10.0f), options);
+  EditorCore editor(makeShared<FixedWidthTextMeasurer>(10.0f), options);
 
-  Ptr<Document> document = makePtr<LineArrayDocument>(makeLines(60, "abcdefghij"));
+  SharedPtr<Document> document = makeShared<LineArrayDocument>(makeLines(60, "abcdefghij"));
   editor.loadDocument(document);
   editor.setViewport({140, 100});
 

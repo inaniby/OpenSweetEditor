@@ -5,7 +5,7 @@
 #define SWEETEDITOR_LINKED_EDITING_H
 
 #include <cstdint>
-#include <foundation.h>
+#include "foundation.h"
 
 namespace NS_SWEETEDITOR {
 

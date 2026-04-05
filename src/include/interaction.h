@@ -1,10 +1,10 @@
 #ifndef SWEETEDITOR_INTERACTION_H
 #define SWEETEDITOR_INTERACTION_H
 
-#include <macro.h>
-#include <editor_types.h>
-#include <visual.h>
-#include <gesture.h>
+#include "macro.h"
+#include "editor_types.h"
+#include "visual.h"
+#include "gesture.h"
 
 namespace NS_SWEETEDITOR {
   class TextLayout;
@@ -77,8 +77,8 @@ namespace NS_SWEETEDITOR {
     void updateEdgeScrollState(const PointF& screen_point, bool is_handle_drag, bool is_mouse);
 
     InteractionContext m_context_;
-    UPtr<GestureHandler> m_gesture_handler_;
-    UPtr<FlingAnimator> m_fling_;
+    UniquePtr<GestureHandler> m_gesture_handler_;
+    UniquePtr<FlingAnimator> m_fling_;
 
     int64_t m_scrollbar_last_interaction_ms_ {0};
     int64_t m_scrollbar_cycle_start_ms_ {0};

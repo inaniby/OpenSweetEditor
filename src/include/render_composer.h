@@ -1,9 +1,9 @@
 #ifndef SWEETEDITOR_RENDER_COMPOSER_H
 #define SWEETEDITOR_RENDER_COMPOSER_H
 
-#include <editor_types.h>
-#include <layout.h>
-#include <visual.h>
+#include "editor_types.h"
+#include "layout.h"
+#include "visual.h"
 
 namespace NS_SWEETEDITOR {
   class Document;
