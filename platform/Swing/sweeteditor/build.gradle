@@ -11,7 +11,7 @@ java {
     }
 }
 
-def repoRoot = projectDir.toPath().resolve('../..').normalize().toFile()
+def repoRoot = rootProject.projectDir.toPath().resolve('../../').normalize().toFile()
 def generatedNativeResourcesDir = layout.buildDirectory.dir('generated/resources/main')
 
 sourceSets {
