@@ -39,8 +39,9 @@ application {
     } else {
         throw new GradleException("Unsupported OS for Swing demo nativeLibDir: ${System.getProperty('os.name')}")
     }
-    def nativeLibDir = rootProject.projectDir.toPath().resolve(nativeLibSubDir).toAbsolutePath().normalize().toString()
-    def demoResDir = rootProject.projectDir.toPath().resolve('../_res').toAbsolutePath().normalize().toString()
+
+    def nativeLibDir = projectDir.toPath().resolve(nativeLibSubDir).toAbsolutePath().normalize().toString()
+    def demoResDir = projectDir.toPath().resolve('../_res').toAbsolutePath().normalize().toString()
 
     def expectedLibName
     if (osName.contains('windows')) {
