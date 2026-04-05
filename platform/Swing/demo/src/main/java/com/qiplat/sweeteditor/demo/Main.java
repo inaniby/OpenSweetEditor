@@ -54,6 +54,8 @@ public class Main extends JFrame {
 
         editor = new SweetEditor(EditorTheme.dark());
         editor.getSettings().setEditorTextSize(26);
+        editor.getSettings().setCursorAnimationEnabled(true);
+
         statusLabel = new JLabel("Ready");
         statusLabel.setBorder(BorderFactory.createEmptyBorder(4, 8, 4, 4));
 

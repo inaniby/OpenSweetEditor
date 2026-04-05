@@ -33,6 +33,7 @@ public class EditorSettings {
     private int mMaxGutterIcons = 0;
     private int mDecorationScrollRefreshMinIntervalMs = 16;
     private float mDecorationOverscanViewportMultiplier = 1.5f;
+    private boolean mCursorAnimationEnabled = true;
 
     EditorSettings(SweetEditor editor) {
         mEditor = editor;
@@ -218,4 +219,14 @@ public class EditorSettings {
     public float getDecorationOverscanViewportMultiplier() {
         return mDecorationOverscanViewportMultiplier;
     }
+
+    public void setCursorAnimationEnabled(boolean enabled) {
+        mCursorAnimationEnabled = enabled;
+        mEditor.requestCursorAnimationRefresh();
+    }
+
+    public boolean isCursorAnimationEnabled() {
+        return mCursorAnimationEnabled;
+    }
+
 }

@@ -9,7 +9,6 @@ import com.qiplat.sweeteditor.completion.CompletionResult;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.stream.Collectors;
 
 /**
  * Demo CompletionProvider — demonstrates both synchronous and asynchronous completion modes.
@@ -146,21 +145,42 @@ public class DemoCompletionProvider implements CompletionProvider {
                     }}
             );
 
-            Set<CompletionItem> acceptedItems = new HashSet<>();
-            StringBuilder stringBuilder = new StringBuilder();
+            List<CompletionItem> acceptedItems = new ArrayList<>();
 
-            for (CompletionItem item : items) {
-                for (int index = 0; index < item.label.length(); index++) {
-                    stringBuilder.append(item.label.charAt(index));
-                    if (context.lineText.endsWith(stringBuilder.toString())) {
-                        acceptedItems.add(item);
-                    }
+            int column = context.cursorPosition.column;
+            String lineText = context.lineText;
+            StringBuilder words = new StringBuilder();
+
+            while (column > 0) {
+                column--;
+                char ch  = lineText.charAt(column);
+
+                if (!Character.isUnicodeIdentifierPart(ch) && !Character.isUnicodeIdentifierStart(ch) && ch != ':') {
+                    //直接退出循环
+                    break;
                 }
-                stringBuilder.delete(0, stringBuilder.length());
+
+                if (words.isEmpty()) {
+                    words.append(ch);
+                    continue;
+                }
+
+                words.insert(0, ch);
             }
 
+            String pattern = words.toString();
+            for (CompletionItem item : items) {
+                if (pattern.isEmpty()) {
+                    break;
+                }
 
-            receiver.accept(new CompletionResult(acceptedItems.stream().toList(), false));
+                if (item.label.startsWith(pattern) || item.insertText.startsWith(pattern)) {
+                    item.insertText = item.insertText.substring(pattern.length());
+                    acceptedItems.add(item);
+                }
+            }
+
+            receiver.accept(new CompletionResult(Collections.unmodifiableList(acceptedItems), false));
             System.out.println("[DemoCompletionProvider] 异步推送: " + acceptedItems.size() + " 个关键字/标识符候选（延迟 200ms）");
         });
     }

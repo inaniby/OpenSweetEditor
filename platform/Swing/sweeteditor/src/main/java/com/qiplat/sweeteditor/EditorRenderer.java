@@ -185,7 +185,7 @@ final class EditorRenderer implements EditorCore.TextMeasureCallback {
     }
 
     public void render(Graphics2D g2, EditorRenderModel model,
-                       int viewWidth, int viewHeight, boolean cursorVisible, float cursorTranslationX, float cursorTranslationY) {
+                       int viewWidth, int viewHeight, boolean cursorVisible, float cursorAnimatedX, float cursorAnimatedY) {
         PerfStepRecorder drawPerf = perfOverlay.isEnabled() ? PerfStepRecorder.start() : null;
         g2.setColor(theme.backgroundColor);
         g2.fillRect(0, 0, viewWidth, viewHeight);
@@ -218,7 +218,7 @@ final class EditorRenderer implements EditorCore.TextMeasureCallback {
         if (drawPerf != null) drawPerf.mark(PerfStepRecorder.STEP_LINKED);
         drawBracketHighlightRects(g2, model);
         if (drawPerf != null) drawPerf.mark(PerfStepRecorder.STEP_BRACKET);
-        drawCursor(g2, model, cursorVisible, cursorTranslationX, cursorTranslationY);
+        drawCursor(g2, model, cursorVisible, cursorAnimatedX, cursorAnimatedY);
         if (drawPerf != null) drawPerf.mark(PerfStepRecorder.STEP_CURSOR);
         drawGutterOverlay(g2, model, viewWidth, viewHeight);
         if (drawPerf != null) drawPerf.mark(PerfStepRecorder.STEP_GUTTER);
@@ -579,14 +579,14 @@ final class EditorRenderer implements EditorCore.TextMeasureCallback {
         }
     }
 
-    private void drawCursor(Graphics2D g, EditorRenderModel model, boolean cursorVisible, float cursorTranslationX, float cursorTranslationY) {
+    private void drawCursor(Graphics2D g, EditorRenderModel model, boolean cursorVisible, float cursorAnimatedX, float cursorAnimatedY) {
         if (model.cursor == null || !model.cursor.visible || !cursorVisible) return;
         g.setColor(theme.cursorColor);
-        if (cursorTranslationX == -1 || cursorTranslationY == -1) {
+        if ((cursorAnimatedX == -1 || cursorAnimatedY == -1)) {
             g.fillRect((int) model.cursor.position.x, (int) model.cursor.position.y,
                     2, (int) model.cursor.height);
         } else {
-            g.fillRect((int) cursorTranslationX, (int) cursorTranslationY,
+            g.fillRect((int) cursorAnimatedX, (int) cursorAnimatedY,
                     2, (int) model.cursor.height);
         }
     }

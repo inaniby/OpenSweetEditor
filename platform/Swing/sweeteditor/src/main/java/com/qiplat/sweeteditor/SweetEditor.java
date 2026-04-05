@@ -14,6 +14,7 @@ import com.qiplat.sweeteditor.core.keymap.KeyBinding;
 import com.qiplat.sweeteditor.core.keymap.KeyCode;
 import com.qiplat.sweeteditor.core.visual.*;
 import com.qiplat.sweeteditor.core.snippet.*;
+import com.qiplat.sweeteditor.core.visual.Cursor;
 import com.qiplat.sweeteditor.decoration.DecorationProvider;
 import com.qiplat.sweeteditor.decoration.DecorationProviderManager;
 import com.qiplat.sweeteditor.newline.NewLineAction;
@@ -24,7 +25,6 @@ import com.qiplat.sweeteditor.event.*;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.Cursor;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.*;
@@ -64,10 +64,10 @@ public class SweetEditor extends JPanel {
     private EditorRenderer renderer;
 
     private Timer cursorBlinkTimer;
-    private Timer cursorTranslationTimer;
+    private Timer cursorAnimationTimer;
     private boolean cursorVisible = true;
-    private float cursorTranslationX = -1f;
-    private float cursorTranslationY = -1f;
+    private float cursorAnimatedX = -1f;
+    private float cursorAnimatedY = -1f;
 
     // Unified animation timer: drives edge-scroll, fling, etc. at ~16ms
     private static final int ANIMATION_INTERVAL_MS = 16;
@@ -93,7 +93,7 @@ public class SweetEditor extends JPanel {
         this.currentTheme = theme;
         setFocusable(true);
         setFocusTraversalKeysEnabled(false);
-        setCursor(Cursor.getPredefinedCursor(Cursor.TEXT_CURSOR));
+        setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.TEXT_CURSOR));
         setDoubleBuffered(true);
 
         renderer = new EditorRenderer(theme);
@@ -780,7 +780,7 @@ public class SweetEditor extends JPanel {
         renderer.prepareGraphicsForRender(g2);
         ensureRenderModelUpToDate();
 
-        renderer.render(g2, renderModel, getWidth(), getHeight(), cursorVisible, cursorTranslationX, cursorTranslationY);
+        renderer.render(g2, renderModel, getWidth(), getHeight(), cursorVisible, cursorAnimatedX, cursorAnimatedY);
         updateCompletionPopupCursorAnchor();
         updateInlineSuggestionPosition();
     }
@@ -1129,6 +1129,11 @@ public class SweetEditor extends JPanel {
                 if (completionPopupController != null && completionPopupController.isShowing()) {
                     completionProviderManager.dismiss();
                 }
+                if (settings.isCursorAnimationEnabled()) {
+                    ensureRenderModelUpToDate();
+                    cursorAnimatedX = renderModel.cursor.position.x;
+                    cursorAnimatedY = renderModel.cursor.position.y;
+                }
                 break;
             case SCALE:
                 eventBus.publish(new ScaleChangedEvent(result.viewScale));
@@ -1161,10 +1166,6 @@ public class SweetEditor extends JPanel {
             }
         }
 
-        // First delete the range to replace (already typed prefix), then insert new text
-        if (replaceRange != null) {
-            deleteText(replaceRange);
-        }
         if (isSnippet) {
             insertSnippet(text);
         } else {
@@ -1264,7 +1265,7 @@ public class SweetEditor extends JPanel {
     private void setupCursorBlink() {
         cursorBlinkTimer = new Timer(530, e -> {
             cursorVisible = !cursorVisible;
-            repaint();
+            flush();
         });
         cursorBlinkTimer.start();
     }
@@ -1277,31 +1278,42 @@ public class SweetEditor extends JPanel {
     }
 
     private void setupCursorTranslation() {
-        cursorTranslationTimer = new Timer(ANIMATION_INTERVAL_MS, e -> {
-            float targetX = renderModel.cursor.position.x;
-            float targetY = renderModel.cursor.position.y;
+        cursorAnimationTimer = new Timer(ANIMATION_INTERVAL_MS, e -> {
+            Cursor cursor = renderModel.cursor;
+            PointF position = cursor.position;
+            float targetX = position.x;
+            float targetY = position.y;
 
-            if (cursorTranslationX == -1 || cursorTranslationY == -1) {
-                cursorTranslationX = targetX;
-                cursorTranslationY = targetY;
+            if (cursorAnimatedX == -1 || cursorAnimatedY == -1) {
+                cursorAnimatedX = targetX;
+                cursorAnimatedY = targetY;
             }
 
-            if (targetX < cursorTranslationX) {
-                cursorTranslationX = Math.max(cursorTranslationX - 20f, targetX);
-            } else {
-                cursorTranslationX = Math.min(cursorTranslationX + 20f, targetX);
+            cursorAnimatedX += (targetX - cursorAnimatedX) * 0.35f;
+            cursorAnimatedY += (targetY - cursorAnimatedY) * 0.35f;
+
+            if (Math.abs(targetX - cursorAnimatedX) < 0.01f) {
+                cursorAnimatedX = targetX;
             }
 
-            if (targetY < cursorTranslationY) {
-                cursorTranslationY = Math.max(cursorTranslationY - 20f, targetY);
-            } else {
-                cursorTranslationY = Math.min(cursorTranslationY + 20f, targetY);
+            if (Math.abs(targetY - cursorAnimatedY) < 0.01f) {
+                cursorAnimatedY = targetY;
             }
 
-            repaint();
+            flush();
         });
-        cursorTranslationTimer.setInitialDelay(530);
-        cursorTranslationTimer.start();
+        cursorAnimationTimer.setInitialDelay(530);
+        cursorAnimationTimer.start();
+    }
+
+    public void requestCursorAnimationRefresh() {
+        if (settings.isCursorAnimationEnabled()) {
+            cursorAnimationTimer.start();
+        } else {
+            cursorAnimationTimer.stop();
+            cursorAnimatedX = -1;
+            cursorAnimatedY = -1;
+        }
     }
 
     private void setupAnimationTimer() {
