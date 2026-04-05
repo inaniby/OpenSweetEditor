@@ -1,4 +1,4 @@
-﻿# @qiplat/sweeteditor
+# @qiplat/sweeteditor
 
 SweetEditor 是一个面向 HarmonyOS 的代码编辑器组件，构建在共享的 SweetEditor C++ 核心之上。它将 Android 版本已经验证过的编辑模型和渲染管线带到 OHOS，同时让 OHOS 层专注于 ArkTS UI、Canvas 渲染、输入法、剪贴板、手势转发、补全面板、选择菜单和其他平台集成能力。
 
