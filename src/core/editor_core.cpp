@@ -771,7 +771,8 @@ namespace NS_SWEETEDITOR {
 #pragma region [Editing & Cursor/IME]
 
   TextEditResult EditorCore::insertText(const U8String& text) {
-    if (m_document_ == nullptr || text.empty() || m_settings_.read_only) return {};
+    if (m_document_ == nullptr || m_settings_.read_only) return {};
+    if (text.empty() && !hasSelection()) return {};
 
     // If composition is active, end it first (commit current composing text before new input)
     if (m_composition_.is_composing) {
@@ -796,7 +797,7 @@ namespace NS_SWEETEDITOR {
       }
     }
 
-    if (!m_auto_closing_pairs_.empty() && text != "\n" && !isInLinkedEditing()) {
+    if (!m_auto_closing_pairs_.empty() && !text.empty() && text != "\n" && !isInLinkedEditing()) {
       auto it = text.begin();
       char32_t input_char = utf8::peek_next(it, text.end());
       auto next_it = it;

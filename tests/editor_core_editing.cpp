@@ -24,6 +24,42 @@ TEST_CASE("EditorCore normalizes selection before insert replacement") {
   CHECK(result.changes[0].new_text == "X");
 }
 
+TEST_CASE("EditorCore insertText with empty string deletes selection") {
+  EditorOptions options;
+  EditorCore editor(makeShared<FixedWidthTextMeasurer>(), options);
+
+  SharedPtr<Document> document = makeShared<LineArrayDocument>("hello world");
+  editor.loadDocument(document);
+  editor.setViewport({800, 600});
+
+  editor.setSelection({{0, 6}, {0, 11}});
+  TextEditResult result = editor.insertText("");
+
+  REQUIRE(result.changed);
+  CHECK(document->getU8Text() == "hello ");
+  CHECK(editor.getCursorPosition() == (TextPosition{0, 6}));
+  CHECK_FALSE(editor.hasSelection());
+  REQUIRE(result.changes.size() == 1);
+  CHECK(result.changes[0].old_text == "world");
+  CHECK(result.changes[0].new_text == "");
+}
+
+TEST_CASE("EditorCore insertText with empty string and no selection is no-op") {
+  EditorOptions options;
+  EditorCore editor(makeShared<FixedWidthTextMeasurer>(), options);
+
+  SharedPtr<Document> document = makeShared<LineArrayDocument>("hello");
+  editor.loadDocument(document);
+  editor.setViewport({800, 600});
+
+  editor.setCursorPosition({0, 3});
+  TextEditResult result = editor.insertText("");
+
+  CHECK_FALSE(result.changed);
+  CHECK(document->getU8Text() == "hello");
+  CHECK(editor.getCursorPosition() == (TextPosition{0, 3}));
+}
+
 TEST_CASE("EditorCore Enter keeps current line indent by default") {
   EditorOptions options;
   EditorCore editor(makeShared<FixedWidthTextMeasurer>(), options);
