@@ -2,6 +2,8 @@ plugins {
     alias(libs.plugins.android.application)
 }
 
+evaluationDependsOn(':sweeteditor')
+
 android {
     namespace 'com.qiplat.sweeteditor.demo'
     compileSdk 34
@@ -37,6 +39,12 @@ android {
     lintOptions {
         checkReleaseBuilds false
         abortOnError false
+    }
+
+    applicationVariants.all { variant ->
+        variant.outputs.all {
+            outputFileName = "SweetEditor for Android-${rootProject.project(':sweeteditor').version}.APK"
+        }
     }
 
     sourceSets {
