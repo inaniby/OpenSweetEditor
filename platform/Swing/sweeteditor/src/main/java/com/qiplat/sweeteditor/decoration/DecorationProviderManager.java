@@ -270,8 +270,8 @@ public final class DecorationProviderManager {
 
         applySpanMode(SpanLayer.SYNTAX, syntaxMode);
         applySpanMode(SpanLayer.SEMANTIC, semanticMode);
-        editor.setBatchLineSpans(SpanLayer.SYNTAX.value, syntaxSpans);
-        editor.setBatchLineSpans(SpanLayer.SEMANTIC.value, semanticSpans);
+        editor.setBatchLineSpans(SpanLayer.SYNTAX, syntaxSpans);
+        editor.setBatchLineSpans(SpanLayer.SEMANTIC, semanticSpans);
 
         applyInlayMode(inlayMode);
         editor.setBatchLineInlayHints(inlayHints);
@@ -383,7 +383,7 @@ public final class DecorationProviderManager {
     private void clearSpanRange(SpanLayer layer, int startLine, int endLine) {
         Map<Integer, List<StyleSpan>> empty = buildEmptyRangeMap(startLine, endLine);
         if (empty.isEmpty()) return;
-        editor.setBatchLineSpans(layer.value, empty);
+        editor.setBatchLineSpans(layer, empty);
     }
 
     private void clearInlayRange(int startLine, int endLine) {

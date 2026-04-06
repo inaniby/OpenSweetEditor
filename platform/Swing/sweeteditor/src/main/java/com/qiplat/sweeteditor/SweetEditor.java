@@ -421,12 +421,12 @@ public class SweetEditor extends JPanel {
         editorCore.registerBatchTextStyles(textStyles);
     }
 
-    public void setLineSpans(int line, int layer, List<? extends StyleSpan> spans) {
-        editorCore.setLineSpans(line, layer, spans);
+    public void setLineSpans(int line, SpanLayer layer, List<? extends StyleSpan> spans) {
+        editorCore.setLineSpans(line, layer.value, spans);
     }
 
-    public void setBatchLineSpans(int layer, Map<Integer, ? extends List<? extends StyleSpan>> spansByLine) {
-        editorCore.setBatchLineSpans(layer, spansByLine);
+    public void setBatchLineSpans(SpanLayer layer, Map<Integer, ? extends List<? extends StyleSpan>> spansByLine) {
+        editorCore.setBatchLineSpans(layer.value, spansByLine);
     }
 
     public void setLineInlayHints(int line, List<? extends InlayHint> hints) {
