@@ -545,8 +545,8 @@ class EditorInteractionController {
     }
 
     final primaryChange = result.changes.first;
-    if (primaryChange.text.length == 1) {
-      final ch = primaryChange.text;
+    if (primaryChange.newText.length == 1) {
+      final ch = primaryChange.newText;
       if (_session.completionProviderManager.isTriggerCharacter(ch)) {
         _session.completionProviderManager.triggerCompletion(
           CompletionTriggerKind.character,

@@ -134,7 +134,7 @@ class DemoDecorationProvider implements DecorationProvider {
       for (final change in context.textChanges) {
         _cacheHighlight = _documentAnalyzer?.analyzeIncremental(
           _convertRange(change.range),
-          change.text,
+          change.newText,
         );
       }
     }

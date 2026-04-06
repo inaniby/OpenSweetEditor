@@ -131,10 +131,10 @@ enum KeyCode {
 
 /// A single text change from an edit operation.
 class TextChange {
-  const TextChange(this.range, this.text);
+  const TextChange(this.range, this.newText);
 
   final TextRange range;
-  final String text;
+  final String newText;
 }
 
 /// Result of a text edit operation.
