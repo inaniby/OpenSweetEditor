@@ -306,7 +306,6 @@ public class CompletionPopupController implements CompletionProviderManager.Comp
         int width = dpToPx(context, POPUP_WIDTH_DP);
         popupWindow = new PopupWindow(recyclerView, width, ViewGroup.LayoutParams.WRAP_CONTENT);
         popupWindow.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-        popupWindow.setOutsideTouchable(true);
         popupWindow.setFocusable(false);
         popupWindow.setElevation(dpToPx(context, 8));
     }
