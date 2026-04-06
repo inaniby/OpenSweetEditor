@@ -9,6 +9,7 @@
 - [Apple 平台 API](./api-platform-apple.md)
 - [WinForms 平台 API](./api-platform-winforms.md)
 - [OHOS 平台 API](./api-platform-ohos.md)
+- [Avalonia 平台 API](./api-platform-avalonia.md)
 - [C++ 核心 / C API](./api-editor-core.md)
 - [平台实现标准](./platform-implementation-standard.md)
 
@@ -21,6 +22,7 @@
 | WinForms | P/Invoke -> C API | ✅ 已接入 | 消费 binary payload |
 | Apple | Swift Package + 手工 C bridge | ✅ 已接入 | 主要消费 binary payload；bridge header 与 `c_api.h` 仍需显式对照 |
 | OHOS | ArkTS NAPI 直连共享 C++（`libsweeteditor.so`） | ✅ 已接入 | `EditorCore.ets` + `EditorProtocol.ets` 在 ArkTS 侧解码 binary payload |
+| Avalonia | C# P/Invoke -> C API | ✅ 已接入 | 消费 binary payload；包含性能优化组件（LRU缓存、帧率监控、GlyphRun缓存） |
 | Web (Emscripten) | 非官方 fork（`LangLang03/OpenSweetEditor-Web`） | 🧪 测试中 | Web 平台为实验性开发，维护于 fork 仓库：<https://github.com/LangLang03/OpenSweetEditor-Web/tree/main/platform/Emscripten> |
 
 ## 当前平台层约定

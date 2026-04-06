@@ -1,0 +1,79 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0-android</TargetFramework>
+    <SupportedOSPlatformVersion>21</SupportedOSPlatformVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseMaui>false</UseMaui>
+    <ApplicationId>com.qiplat.sweeteditor.avalonia.demo.android</ApplicationId>
+    <ApplicationVersion>1</ApplicationVersion>
+    <ApplicationDisplayVersion>1.0.0</ApplicationDisplayVersion>
+    <AssemblyName>SweetEditor.Avalonia.Demo.Android</AssemblyName>
+    <RootNamespace>SweetEditor.Avalonia.Demo.Android</RootNamespace>
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
+    <AndroidPackageFormat>apk</AndroidPackageFormat>
+    <RuntimeIdentifier>android-arm64</RuntimeIdentifier>
+    <Optimize>true</Optimize>
+    <DebuggerSupport>false</DebuggerSupport>
+    <MetadataUpdaterSupport>false</MetadataUpdaterSupport>
+    <AndroidEnableProfiler>false</AndroidEnableProfiler>
+    <AndroidUseSharedRuntime>false</AndroidUseSharedRuntime>
+    <EmbedAssembliesIntoApk>true</EmbedAssembliesIntoApk>
+    <RunAOTCompilation>false</RunAOTCompilation>
+    <PublishAot>false</PublishAot>
+    <AndroidEnableProfiledAot>false</AndroidEnableProfiledAot>
+    <AndroidEnableLLVM>false</AndroidEnableLLVM>
+    <UseInterpreter>false</UseInterpreter>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <AndroidPackageFormat>aab</AndroidPackageFormat>
+    <RuntimeIdentifier>android-arm64</RuntimeIdentifier>
+    <DebuggerSupport>false</DebuggerSupport>
+    <MetadataUpdaterSupport>false</MetadataUpdaterSupport>
+    <AndroidEnableProfiler>false</AndroidEnableProfiler>
+    <AndroidUseSharedRuntime>false</AndroidUseSharedRuntime>
+    <EmbedAssembliesIntoApk>true</EmbedAssembliesIntoApk>
+    <RunAOTCompilation>false</RunAOTCompilation>
+    <PublishAot>false</PublishAot>
+    <AndroidEnableProfiledAot>false</AndroidEnableProfiledAot>
+    <AndroidEnableLLVM>false</AndroidEnableLLVM>
+    <UseInterpreter>false</UseInterpreter>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="11.3.12" />
+    <PackageReference Include="Avalonia.Android" Version="11.3.12" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.12" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Demo.Shared\Demo.Shared.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <AndroidNativeLibrary Include="..\..\..\prebuilt\android\arm64-v8a\libsweeteditor.so"
+                          Condition="Exists('..\..\..\prebuilt\android\arm64-v8a\libsweeteditor.so')">
+      <Link>lib\arm64-v8a\libsweeteditor.so</Link>
+    </AndroidNativeLibrary>
+
+    <AndroidNativeLibrary Include="..\..\..\prebuilt\android\x86_64\libsweeteditor.so"
+                          Condition="Exists('..\..\..\prebuilt\android\x86_64\libsweeteditor.so')">
+      <Link>lib\x86_64\libsweeteditor.so</Link>
+    </AndroidNativeLibrary>
+
+    <AndroidNativeLibrary Include="..\..\..\prebuilt\android\arm64-v8a\libsweetline.so"
+                          Condition="Exists('..\..\..\prebuilt\android\arm64-v8a\libsweetline.so')">
+      <Link>lib\arm64-v8a\libsweetline.so</Link>
+    </AndroidNativeLibrary>
+
+    <AndroidNativeLibrary Include="..\..\..\prebuilt\android\x86_64\libsweetline.so"
+                          Condition="Exists('..\..\..\prebuilt\android\x86_64\libsweetline.so')">
+      <Link>lib\x86_64\libsweetline.so</Link>
+    </AndroidNativeLibrary>
+  </ItemGroup>
+</Project>
