@@ -9,6 +9,8 @@ namespace SweetEditor {
 
 		private readonly SweetEditorControl editor;
 
+		private float editorTextSize = 11f;
+		private string fontFamily = "Consolas";
 		private float scale = 1.0f;
 		private FoldArrowMode foldArrowMode = FoldArrowMode.ALWAYS;
 		private WrapMode wrapMode = WrapMode.NONE;
@@ -31,11 +33,33 @@ namespace SweetEditor {
 			this.editor = editor;
 		}
 
+		/// <summary>Sets editor text size (points).</summary>
+		public void SetEditorTextSize(float size) {
+			editorTextSize = System.Math.Max(1f, size);
+			editor.RendererInternal.baseTextFontSize = editorTextSize;
+			editor.RebuildFontsInternal(scale);
+			editor.Flush();
+		}
+
+		/// <summary>Gets editor text size (points).</summary>
+		public float GetEditorTextSize() => editorTextSize;
+
+		/// <summary>Sets editor font family.</summary>
+		public void SetFontFamily(string family) {
+			fontFamily = family ?? "Consolas";
+			editor.RendererInternal.baseTextFontFamily = fontFamily;
+			editor.RebuildFontsInternal(scale);
+			editor.Flush();
+		}
+
+		/// <summary>Gets editor font family.</summary>
+		public string GetFontFamily() => fontFamily;
+
 		/// <summary>Sets editor scale.</summary>
 		public void SetScale(float scale) {
 			this.scale = scale;
 			editor.EditorCoreInternal.SetScale(scale);
-			editor.SyncPlatformScaleInternal(scale);
+			editor.RebuildFontsInternal(scale);
 			editor.Flush();
 		}
 

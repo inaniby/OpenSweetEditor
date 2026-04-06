@@ -15,10 +15,13 @@ namespace SweetEditor {
 	/// </summary>
 	public class EditorRenderer : IDisposable {
 
-		private const float BaseTextFontSize = 11f;
+		private const float DefaultTextFontSize = 11f;
 		private const float BaseInlayHintFontSize = 9.5f;
-		private const string BaseTextFontFamily = "Consolas";
+		private const string DefaultTextFontFamily = "Consolas";
 		private const string BaseInlayHintFontFamily = "Segoe UI";
+
+		internal float baseTextFontSize = DefaultTextFontSize;
+		internal string baseTextFontFamily = DefaultTextFontFamily;
 
 		private EditorTheme currentTheme;
 		private Font regularFont;
@@ -47,10 +50,10 @@ namespace SweetEditor {
 
 		public EditorRenderer(EditorTheme theme) {
 			currentTheme = theme;
-			regularFont = new Font(BaseTextFontFamily, BaseTextFontSize, FontStyle.Regular);
-			boldFont = new Font(BaseTextFontFamily, BaseTextFontSize, FontStyle.Bold);
-			italicFont = new Font(BaseTextFontFamily, BaseTextFontSize, FontStyle.Italic);
-			boldItalicFont = new Font(BaseTextFontFamily, BaseTextFontSize, FontStyle.Bold | FontStyle.Italic);
+			regularFont = new Font(baseTextFontFamily, baseTextFontSize, FontStyle.Regular);
+			boldFont = new Font(baseTextFontFamily, baseTextFontSize, FontStyle.Bold);
+			italicFont = new Font(baseTextFontFamily, baseTextFontSize, FontStyle.Italic);
+			boldItalicFont = new Font(baseTextFontFamily, baseTextFontSize, FontStyle.Bold | FontStyle.Italic);
 			inlayHintFont = new Font(BaseInlayHintFontFamily, BaseInlayHintFontSize, FontStyle.Regular);
 			inlayHintBoldFont = new Font(BaseInlayHintFontFamily, BaseInlayHintFontSize, FontStyle.Bold);
 			inlayHintItalicFont = new Font(BaseInlayHintFontFamily, BaseInlayHintFontSize, FontStyle.Italic);
@@ -103,9 +106,9 @@ namespace SweetEditor {
 			EnsureFontMetricsCache(textGraphics);
 		}
 
-		public void SyncPlatformScale(float scale) {
+		public void RebuildFonts(float scale) {
 			if (scale <= 0f) return;
-			float textSize = Math.Max(1f, BaseTextFontSize * scale);
+			float textSize = Math.Max(1f, baseTextFontSize * scale);
 			float inlaySize = Math.Max(1f, BaseInlayHintFontSize * scale);
 
 			regularFont.Dispose();
@@ -117,10 +120,10 @@ namespace SweetEditor {
 			inlayHintItalicFont.Dispose();
 			inlayHintBoldItalicFont.Dispose();
 
-			regularFont = new Font(BaseTextFontFamily, textSize, FontStyle.Regular);
-			boldFont = new Font(BaseTextFontFamily, textSize, FontStyle.Bold);
-			italicFont = new Font(BaseTextFontFamily, textSize, FontStyle.Italic);
-			boldItalicFont = new Font(BaseTextFontFamily, textSize, FontStyle.Bold | FontStyle.Italic);
+			regularFont = new Font(baseTextFontFamily, textSize, FontStyle.Regular);
+			boldFont = new Font(baseTextFontFamily, textSize, FontStyle.Bold);
+			italicFont = new Font(baseTextFontFamily, textSize, FontStyle.Italic);
+			boldItalicFont = new Font(baseTextFontFamily, textSize, FontStyle.Bold | FontStyle.Italic);
 			inlayHintFont = new Font(BaseInlayHintFontFamily, inlaySize, FontStyle.Regular);
 			inlayHintBoldFont = new Font(BaseInlayHintFontFamily, inlaySize, FontStyle.Bold);
 			inlayHintItalicFont = new Font(BaseInlayHintFontFamily, inlaySize, FontStyle.Italic);
