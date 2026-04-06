@@ -29,6 +29,7 @@ import androidx.annotation.Nullable;
 
 import java.util.Map;
 
+import com.qiplat.sweeteditor.animation.AnimationHolder;
 import com.qiplat.sweeteditor.core.Document;
 import com.qiplat.sweeteditor.core.EditorOptions;
 import com.qiplat.sweeteditor.core.EditorCore;
@@ -111,6 +112,7 @@ public class SweetEditor extends View {
     private static final float DEFAULT_CONTENT_START_PADDING_DP = 3.0f;
 
     private EditorRenderer mRenderer;
+    private AnimationHolder animationHolder;
     private int mPerfLogFrameCount = 0;
 
     @Nullable
@@ -157,6 +159,53 @@ public class SweetEditor extends View {
             // onDraw reuses cached EditorRenderModel, skips buildRenderModel
             postInvalidate();
             mHandler.postDelayed(this, 500);
+        }
+    };
+    private final Runnable mCursorAnimation = new Runnable() {
+        @Override
+        public void run() {
+            Cursor cursor = mCachedModel.cursor;
+            com.qiplat.sweeteditor.core.visual.PointF position = cursor.position;
+            float targetX = position.x;
+            float targetY = position.y;
+
+            if (animationHolder.cursorAnimatedX == -1f || animationHolder.cursorAnimatedY == -1f) {
+                animationHolder.cursorAnimatedX = targetX;
+                animationHolder.cursorAnimatedY = targetY;
+            }
+
+            animationHolder.cursorAnimatedX += (targetX - animationHolder.cursorAnimatedX) * 0.35f;
+            animationHolder.cursorAnimatedY += (targetY - animationHolder.cursorAnimatedY) * 0.35f;
+
+            if (Math.abs(targetX - animationHolder.cursorAnimatedX) < 0.01f) {
+                animationHolder.cursorAnimatedX = targetX;
+            }
+
+            if (Math.abs(targetY - animationHolder.cursorAnimatedY) < 0.01f) {
+                animationHolder.cursorAnimatedY = targetY;
+            }
+
+            flush();
+            mHandler.postDelayed(this, 16);
+        }
+    };
+    private final Runnable mGutterAnimation = new Runnable() {
+        @Override
+        public void run() {
+            float targetX = mCachedModel.splitX;
+
+            if (animationHolder.splitAnimatedX == -1f) {
+                animationHolder.splitAnimatedX = targetX;
+            }
+
+            animationHolder.splitAnimatedX += (targetX - animationHolder.splitAnimatedX) * 0.25f;
+
+            if (Math.abs(targetX - animationHolder.splitAnimatedX) < 0.01f) {
+                animationHolder.splitAnimatedX = targetX;
+            }
+
+            flush();
+            mHandler.postDelayed(this, 16);
         }
     };
     private final Runnable mTransientScrollbarRefresh = new Runnable() {
@@ -289,7 +338,7 @@ public class SweetEditor extends View {
         }
 
         boolean needsTransientRefresh = mRenderer.render(canvas, model, getWidth(), getHeight(),
-                mCursorVisible, buildMs);
+                mCursorVisible, animationHolder, buildMs);
 
         if (mCompletionPopupController != null && model.cursor != null && model.cursor.position != null) {
             mCompletionPopupController.updateCursorPosition(
@@ -331,6 +380,8 @@ public class SweetEditor extends View {
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
         mHandler.postDelayed(mCursorBlink, 500);
+        mHandler.postDelayed(mCursorAnimation, 500);
+        mHandler.postDelayed(mGutterAnimation, 500);
         requestApplyInsets();
         post(() -> refreshViewportForVisibleBounds(false));
     }
@@ -339,6 +390,8 @@ public class SweetEditor extends View {
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
         mHandler.removeCallbacks(mCursorBlink);
+        mHandler.removeCallbacks(mCursorAnimation);
+        mHandler.removeCallbacks(mGutterAnimation);
         mHandler.removeCallbacks(mTransientScrollbarRefresh);
         Choreographer.getInstance().removeFrameCallback(mAnimationFrameCallback);
         mAnimationActive = false;
@@ -354,6 +407,8 @@ public class SweetEditor extends View {
             resetCursorBlink();
         } else {
             mHandler.removeCallbacks(mCursorBlink);
+            mHandler.removeCallbacks(mCursorAnimation);
+            mHandler.removeCallbacks(mGutterAnimation);
             mHandler.removeCallbacks(mTransientScrollbarRefresh);
             Choreographer.getInstance().removeFrameCallback(mAnimationFrameCallback);
             mAnimationActive = false;
@@ -1592,22 +1647,10 @@ public class SweetEditor extends View {
         boolean isSnippet = item.insertTextFormat == CompletionItem.INSERT_TEXT_FORMAT_SNIPPET;
         String text = item.insertText != null ? item.insertText : item.label;
 
-        // Determine the range to replace: textEdit takes priority, otherwise fallback to wordRange
-        TextRange replaceRange = null;
         if (textEdit != null) {
-            replaceRange = textEdit.range;
             text = textEdit.newText;
-        } else {
-            TextRange wr = getWordRangeAtCursor();
-            if (wr.start.line != wr.end.line || wr.start.column != wr.end.column) {
-                replaceRange = wr;
-            }
         }
 
-        // Delete the replacement range first (typed prefix), then insert new text
-        if (replaceRange != null) {
-            deleteText(replaceRange);
-        }
         if (isSnippet) {
             insertSnippet(text);
         } else {
@@ -1693,6 +1736,11 @@ public class SweetEditor extends View {
                 if (mCompletionPopupController != null && mCompletionPopupController.isShowing()) {
                     mCompletionProviderManager.dismiss();
                 }
+                if (mSettings.isCursorAnimationEnabled()) {
+                    mEditorCore.buildRenderModel();
+                    animationHolder.cursorAnimatedX = mCachedModel.cursor.position.x;
+                    animationHolder.cursorAnimatedY = mCachedModel.cursor.position.y;
+                }
                 break;
             case SCALE:
                 mEventBus.publish(new ScaleChangedEvent(result.viewScale));
@@ -1776,6 +1824,9 @@ public class SweetEditor extends View {
                     return;
                 }
             }
+            if (nativeKeyCode == KeyCode.BACKSPACE) {
+                mCompletionProviderManager.triggerCompletion(CompletionContext.TriggerKind.RETRIGGER, null);
+            }
             int modifiers = KeyModifier.NONE;
             if (event.isShiftPressed()) modifiers |= KeyModifier.SHIFT;
             if (event.isCtrlPressed()) modifiers |= KeyModifier.CTRL;
@@ -1822,6 +1873,7 @@ public class SweetEditor extends View {
     private void initView(Context context) {
         float density = getResources().getDisplayMetrics().density;
         mRenderer = new EditorRenderer(mTheme, density);
+        animationHolder = new AnimationHolder();
 
         mRenderer.setHandleConfig(EditorRenderer.computeHandleHitConfig(density));
 
@@ -1928,6 +1980,25 @@ public class SweetEditor extends View {
         mCursorVisible = true;
         mHandler.removeCallbacks(mCursorBlink);
         mHandler.postDelayed(mCursorBlink, 500);
+    }
+
+    public void requestCursorAnimationRefresh() {
+        if (mSettings.isCursorAnimationEnabled()) {
+            mHandler.post(mCursorAnimation);
+        } else {
+            mHandler.removeCallbacks(mCursorAnimation);
+            animationHolder.cursorAnimatedX = -1;
+            animationHolder.cursorAnimatedY = -1;
+        }
+    }
+
+    public void requestGutterAnimationRefresh() {
+        if (mSettings.isGutterAnimationEnabled()) {
+            mHandler.post(mGutterAnimation);
+        } else {
+            mHandler.removeCallbacks(mGutterAnimation);
+            animationHolder.splitAnimatedX = -1f;
+        }
     }
 
     private void showSoftKeyboard() {

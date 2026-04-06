@@ -35,7 +35,7 @@ application {
             nativeLibSubDir = '../../../prebuilt/osx/x86_64'
         }
     } else if (osName.contains('linux')) {
-        nativeLibSubDir = '../../../prebuilt/linux/x86_64'
+        nativeLibSubDir = '../../prebuilt/linux/x86_64'
     } else {
         throw new GradleException("Unsupported OS for Swing demo nativeLibDir: ${System.getProperty('os.name')}")
     }

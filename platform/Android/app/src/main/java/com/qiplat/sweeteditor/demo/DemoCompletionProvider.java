@@ -66,15 +66,96 @@ public class DemoCompletionProvider implements CompletionProvider {
             }
 
             List<CompletionItem> items = Arrays.asList(
-                    new CompletionItem() {{ label = "std::string"; detail = "class"; kind = CompletionItem.KIND_CLASS; insertText = "std::string"; sortKey = "a_string"; }},
-                    new CompletionItem() {{ label = "std::vector"; detail = "template class"; kind = CompletionItem.KIND_CLASS; insertText = "std::vector<>"; sortKey = "b_vector"; }},
-                    new CompletionItem() {{ label = "std::cout"; detail = "ostream"; kind = CompletionItem.KIND_VARIABLE; insertText = "std::cout"; sortKey = "c_cout"; }},
-                    new CompletionItem() {{ label = "if"; detail = "snippet"; kind = CompletionItem.KIND_SNIPPET; insertText = "if (${1:condition}) {\n\t$0\n}"; insertTextFormat = CompletionItem.INSERT_TEXT_FORMAT_SNIPPET; sortKey = "d_if"; }},
-                    new CompletionItem() {{ label = "for"; detail = "snippet"; kind = CompletionItem.KIND_SNIPPET; insertText = "for (int ${1:i} = 0; ${1:i} < ${2:n}; ++${1:i}) {\n\t$0\n}"; insertTextFormat = CompletionItem.INSERT_TEXT_FORMAT_SNIPPET; sortKey = "e_for"; }},
-                    new CompletionItem() {{ label = "class"; detail = "snippet — class definition"; kind = CompletionItem.KIND_SNIPPET; insertText = "class ${1:ClassName} {\npublic:\n\t${1:ClassName}() {$2}\n\t~${1:ClassName}() {$3}\n$0\n};"; insertTextFormat = CompletionItem.INSERT_TEXT_FORMAT_SNIPPET; sortKey = "f_class"; }},
-                    new CompletionItem() {{ label = "return"; detail = "keyword"; kind = CompletionItem.KIND_KEYWORD; insertText = "return "; sortKey = "g_return"; }}
+                    new CompletionItem() {{
+                        label = "std::string";
+                        detail = "class";
+                        kind = CompletionItem.KIND_CLASS;
+                        insertText = "std::string";
+                        sortKey = "a_string";
+                    }},
+                    new CompletionItem() {{
+                        label = "std::vector";
+                        detail = "template class";
+                        kind = CompletionItem.KIND_CLASS;
+                        insertText = "std::vector<>";
+                        sortKey = "b_vector";
+                    }},
+                    new CompletionItem() {{
+                        label = "std::cout";
+                        detail = "ostream";
+                        kind = CompletionItem.KIND_VARIABLE;
+                        insertText = "std::cout";
+                        sortKey = "c_cout";
+                    }},
+                    new CompletionItem() {{
+                        label = "if";
+                        detail = "snippet";
+                        kind = CompletionItem.KIND_SNIPPET;
+                        insertText = "if (${1:condition}) {\n\t$0\n}";
+                        insertTextFormat = CompletionItem.INSERT_TEXT_FORMAT_SNIPPET;
+                        sortKey = "d_if";
+                    }},
+                    new CompletionItem() {{
+                        label = "for";
+                        detail = "snippet";
+                        kind = CompletionItem.KIND_SNIPPET;
+                        insertText = "for (int ${1:i} = 0; ${1:i} < ${2:n}; ++${1:i}) {\n\t$0\n}";
+                        insertTextFormat = CompletionItem.INSERT_TEXT_FORMAT_SNIPPET;
+                        sortKey = "e_for";
+                    }},
+                    new CompletionItem() {{
+                        label = "class";
+                        detail = "snippet — class definition";
+                        kind = CompletionItem.KIND_SNIPPET;
+                        insertText = "class ${1:ClassName} {\npublic:\n\t${1:ClassName}() {$2}\n\t~${1:ClassName}() {$3}\n$0\n};";
+                        insertTextFormat = CompletionItem.INSERT_TEXT_FORMAT_SNIPPET;
+                        sortKey = "f_class";
+                    }},
+                    new CompletionItem() {{
+                        label = "return";
+                        detail = "keyword";
+                        kind = CompletionItem.KIND_KEYWORD;
+                        insertText = "return ";
+                        sortKey = "g_return";
+                    }}
             );
-            receiver.accept(new CompletionResult(items, false));
+
+            List<CompletionItem> acceptedItems = new ArrayList<>();
+
+            int column = context.cursorPosition.column;
+            String lineText = context.lineText;
+            StringBuilder words = new StringBuilder();
+
+            while (column > 0) {
+                column--;
+                char ch  = lineText.charAt(column);
+
+                if (!Character.isUnicodeIdentifierPart(ch) && !Character.isUnicodeIdentifierStart(ch) && ch != ':') {
+                    //直接退出循环
+                    break;
+                }
+
+                if (words.length() == 0) {
+                    words.append(ch);
+                    continue;
+                }
+
+                words.insert(0, ch);
+            }
+
+            String pattern = words.toString();
+            for (CompletionItem item : items) {
+                if (pattern.isEmpty()) {
+                    break;
+                }
+
+                if (item.label.startsWith(pattern) || item.insertText.startsWith(pattern)) {
+                    item.insertText = item.insertText.substring(pattern.length());
+                    acceptedItems.add(item);
+                }
+            }
+
+            receiver.accept(new CompletionResult(Collections.unmodifiableList(acceptedItems), false));
             Log.d(TAG, "Asynchronous push: " + items.size() + " keyword/identifier candidates (200ms delay)");
         });
     }
