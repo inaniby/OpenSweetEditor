@@ -5,8 +5,12 @@
 #ifndef SWEETEDITOR_LOGGING_H
 #define SWEETEDITOR_LOGGING_H
 
+#include <cstring>
+
 #if defined(_MSC_VER) && !defined(__FILE_NAME__)
 #define __FILE_NAME__ (strrchr("\\" __FILE__, '\\') + 1)
+#elif defined(__GNUC__) && !defined(__FILE_NAME__)
+#define __FILE_NAME__ (strrchr("/" __FILE__, '/') + 1)
 #endif
 
 #ifdef ENABLE_LOG
