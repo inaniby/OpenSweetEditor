@@ -152,6 +152,39 @@ function copy_apple_dylib() {
   return 1
 }
 
+function copy_apple_static_lib() {
+  local build_dir="$1"
+  local dest_dir="$2"
+  local static_lib_path=""
+  local candidates=(
+    "$build_dir/lib/libsweeteditor_static.a"
+    "$build_dir/lib/Release/libsweeteditor_static.a"
+    "$build_dir/lib/Release-iphoneos/libsweeteditor_static.a"
+    "$build_dir/lib/Release-iphonesimulator/libsweeteditor_static.a"
+    "$build_dir/Release/libsweeteditor_static.a"
+    "$build_dir/Release-iphoneos/libsweeteditor_static.a"
+    "$build_dir/Release-iphonesimulator/libsweeteditor_static.a"
+  )
+
+  mkdir -p "$dest_dir"
+
+  for static_lib_path in "${candidates[@]}"; do
+    if [ -f "$static_lib_path" ]; then
+      cp -f "$static_lib_path" "$dest_dir/"
+      return 0
+    fi
+  done
+
+  static_lib_path="$(find "$build_dir" -type f -name "libsweeteditor_static.a" | head -n 1 || true)"
+  if [ -n "$static_lib_path" ]; then
+    cp -f "$static_lib_path" "$dest_dir/"
+    return 0
+  fi
+
+  echo "Apple static library not found under $build_dir" >&2
+  return 1
+}
+
 function copy_xcframework() {
   local platform="$1"
   local apple_binaries_dir="$2"
@@ -222,7 +255,10 @@ function build_apple() {
   local apple_target_name="$5"
   local apple_generator="$6"
   local apple_system_name="$7"
-  shift 7
+  local build_shared_lib="$8"
+  local build_static_lib="$9"
+  local copy_mode="${10}"
+  shift 10
 
   local cmake_args=(
     "$PROJECT_DIR"
@@ -230,8 +266,8 @@ function build_apple() {
     -G "$apple_generator"
     -DCMAKE_CXX_FLAGS=-std=c++17
     -DCMAKE_BUILD_TYPE=Release
-    -DBUILD_SHARED_LIB=ON
-    -DBUILD_STATIC_LIB=OFF
+    -DBUILD_SHARED_LIB="$build_shared_lib"
+    -DBUILD_STATIC_LIB="$build_static_lib"
     -DBUILD_TESTING=OFF
     -DCMAKE_OSX_SYSROOT="$apple_sysroot"
     -DCMAKE_OSX_ARCHITECTURES="$apple_arch"
@@ -248,7 +284,19 @@ function build_apple() {
   cmake "${cmake_args[@]}"
 
   cmake --build "$apple_build_dir" --target "$apple_target_name" -j 12
-  copy_apple_dylib "$apple_build_dir" "$apple_prebuilt_dir"
+
+  case "$copy_mode" in
+    dylib)
+      copy_apple_dylib "$apple_build_dir" "$apple_prebuilt_dir"
+      ;;
+    static)
+      copy_apple_static_lib "$apple_build_dir" "$apple_prebuilt_dir"
+      ;;
+    *)
+      echo "Unknown Apple copy mode: $copy_mode" >&2
+      return 1
+      ;;
+  esac
 }
 
 function build_ios() {
@@ -268,6 +316,34 @@ function build_ios() {
   echo "============================= iOS $IOS_VARIANT $IOS_ARCH ============================="
   IOS_BUILD_DIR="$BUILD_DIR/ios-xcode/$IOS_TARGET"
   build_apple "$IOS_BUILD_DIR" "$IOS_PREBUILT_DIR" "$IOS_SDK" "$IOS_ARCH" "$TARGET_NAME" "Xcode" "iOS" \
+    ON \
+    OFF \
+    dylib \
+    -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED=NO \
+    -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_REQUIRED=NO \
+    -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY= \
+    -DCMAKE_XCODE_ATTRIBUTE_DEVELOPMENT_TEAM=
+}
+
+function build_ios_static() {
+  IOS_TARGET=$1
+  if [[ "$IOS_TARGET" == simulator-* ]]; then
+    IOS_VARIANT="simulator"
+    IOS_ARCH="${IOS_TARGET#simulator-}"
+    IOS_SDK="iphonesimulator"
+    IOS_PREBUILT_DIR="$OUTPUT_DIR/ios/$IOS_TARGET"
+  else
+    IOS_VARIANT="ios"
+    IOS_ARCH="$IOS_TARGET"
+    IOS_SDK="iphoneos"
+    IOS_PREBUILT_DIR="$OUTPUT_DIR/ios/$IOS_ARCH"
+  fi
+  echo "============================= iOS $IOS_VARIANT $IOS_ARCH static ============================="
+  IOS_BUILD_DIR="$BUILD_DIR/ios-xcode-static/$IOS_TARGET"
+  build_apple "$IOS_BUILD_DIR" "$IOS_PREBUILT_DIR" "$IOS_SDK" "$IOS_ARCH" "${TARGET_NAME}_static" "Xcode" "iOS" \
+    OFF \
+    ON \
+    static \
     -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED=NO \
     -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_REQUIRED=NO \
     -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY= \
@@ -396,7 +472,9 @@ if [ $PLATFORM = "all" ]; then
   build_osx arm64
   build_osx x86_64
   build_ios arm64
+  build_ios_static arm64
   build_ios simulator-arm64
+  build_ios_static simulator-arm64
   build_ios_xcframework
   build_osx_xcframework
   build_linux x86_64
@@ -414,7 +492,9 @@ elif [ $PLATFORM = "osx" ]; then
   build_osx_xcframework
 elif [ $PLATFORM = "ios" ]; then
   build_ios arm64
+  build_ios_static arm64
   build_ios simulator-arm64
+  build_ios_static simulator-arm64
   build_ios_xcframework
 elif [ $PLATFORM = "osx" ]; then
   build_osx arm64
