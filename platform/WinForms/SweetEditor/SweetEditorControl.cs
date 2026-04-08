@@ -722,6 +722,8 @@ namespace SweetEditor {
 
 		/// <summary>Internal accessor for EditorCore, used by <see cref="EditorSettings"/>.</summary>
 		internal EditorCore EditorCoreInternal => editorCore;
+		/// <summary>Internal accessor for EditorRenderer, used by <see cref="EditorSettings"/>.</summary>
+		internal EditorRenderer RendererInternal => renderer;
 
 		// ==================== LanguageConfiguration API ====================
 
@@ -1708,7 +1710,7 @@ namespace SweetEditor {
 					break;
 				case GestureType.SCALE:
 					// C++ core already applied scale during gesture handling; only sync platform fonts/measurer.
-					SyncPlatformScale(result.ViewScale);
+					RebuildFontsInternal(result.ViewScale);
 					ScaleChanged?.Invoke(this, new ScaleChangedEventArgs(result.ViewScale));
 					break;
 				case GestureType.DRAG_SELECT:
@@ -1772,9 +1774,7 @@ namespace SweetEditor {
 			if (IsReleased) return;
 			if (result.ContentChanged) {
 				if (result.EditResult?.Changes != null && result.EditResult.Changes.Count > 0) {
-					foreach (var change in result.EditResult.Changes) {
-						TextChanged?.Invoke(this, new TextChangedEventArgs(action, change.Range, change.NewText));
-					}
+					TextChanged?.Invoke(this, new TextChangedEventArgs(action, result.EditResult.Changes));
 					decorationProviderManager?.OnTextChanged(result.EditResult.Changes);
 				} else {
 					TextChanged?.Invoke(this, new TextChangedEventArgs(action));
@@ -1793,9 +1793,7 @@ namespace SweetEditor {
 		private void FireTextChanged(TextChangeAction action, TextEditResult? editResult = null) {
 			if (IsReleased) return;
 			if (editResult?.Changes != null && editResult.Changes.Count > 0) {
-				foreach (var change in editResult.Changes) {
-					TextChanged?.Invoke(this, new TextChangedEventArgs(action, change.Range, change.NewText));
-				}
+				TextChanged?.Invoke(this, new TextChangedEventArgs(action, editResult.Changes));
 				decorationProviderManager?.OnTextChanged(editResult.Changes);
 			} else {
 				TextChanged?.Invoke(this, new TextChangedEventArgs(action));
@@ -1883,12 +1881,10 @@ namespace SweetEditor {
 			cachedVisibleEndLine = end;
 		}
 
-		/// <summary>Internal accessor for SyncPlatformScale, used by <see cref="EditorSettings"/>.</summary>
-		internal void SyncPlatformScaleInternal(float scale) => SyncPlatformScale(scale);
-
-		private void SyncPlatformScale(float scale) {
+		/// <summary>Internal: rebuild fonts and notify core after font-related settings change.</summary>
+		internal void RebuildFontsInternal(float scale) {
 			if (IsReleased) return;
-			renderer.SyncPlatformScale(scale);
+			renderer.RebuildFonts(scale);
 			Font = renderer.RegularFont;
 			if (editorCore != null) {
 				editorCore.OnFontMetricsChanged();

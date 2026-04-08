@@ -531,7 +531,7 @@ namespace NS_SWEETEDITOR {
       vertical.track.height = vertical_track_height;
 
       const float viewport = std::max(1.0f, viewport_height);
-      const float content_span = std::max(viewport, bounds.max_scroll_y + viewport);
+      const float content_span = std::max(viewport, bounds.content_height);
       float thumb_height = std::max(scrollbar_min_thumb, vertical_track_height * viewport / content_span);
       thumb_height = std::min(thumb_height, vertical_track_height);
       const float travel = std::max(0.0f, vertical_track_height - thumb_height);
@@ -556,7 +556,7 @@ namespace NS_SWEETEDITOR {
       horizontal.track.height = scrollbar_thickness;
 
       const float viewport = std::max(1.0f, bounds.text_area_width);
-      const float content_span = std::max(viewport, bounds.max_scroll_x + viewport);
+      const float content_span = std::max(viewport, bounds.content_width);
       float thumb_width = std::max(scrollbar_min_thumb, horizontal_track_width * viewport / content_span);
       thumb_width = std::min(thumb_width, horizontal_track_width);
       const float travel = std::max(0.0f, horizontal_track_width - thumb_width);

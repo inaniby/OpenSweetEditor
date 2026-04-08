@@ -9,16 +9,16 @@ public final class TextChange {
     @NonNull
     public final TextRange range;
     @NonNull
-    public final String text;
+    public final String newText;
 
-    public TextChange(@NonNull TextRange range, @NonNull String text) {
+    public TextChange(@NonNull TextRange range, @NonNull String newText) {
         this.range = range;
-        this.text = text;
+        this.newText = newText;
     }
 
     @NonNull
     @Override
     public String toString() {
-        return "TextChange{range=" + range + ", text=" + text + '}';
+        return "TextChange{range=" + range + ", newText=" + newText + '}';
     }
 }

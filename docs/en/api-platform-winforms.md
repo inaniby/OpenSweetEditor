@@ -40,18 +40,18 @@ dotnet run --project .\Demo\Demo.csproj -c Release
 Recommended: install from NuGet directly:
 
 ```powershell
-dotnet add package SweetEditor --version 1.0.3
+dotnet add package SweetEditor --version 1.0.4
 ```
 
 Or add this in your project file:
 
 ```xml
 <ItemGroup>
-  <PackageReference Include="SweetEditor" Version="1.0.3" />
+  <PackageReference Include="SweetEditor" Version="1.0.4" />
 </ItemGroup>
 ```
 
-> Use the latest published version when integrating; `1.0.3` is the current example in this document.
+> Use the latest published version when integrating; `1.0.4` is the current example in this document.
 
 ### Minimal Integration Example
 

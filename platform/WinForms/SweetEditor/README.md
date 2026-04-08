@@ -1,107 +1,193 @@
 # SweetEditor for WinForms
 
-`SweetEditor` is a WinForms editor control backed by the SweetEditor C++ core.
-The core handles text layout, cursor/selection logic, folding, decoration data, and interaction math; WinForms handles native rendering and input dispatch.
+[![NuGet](https://img.shields.io/nuget/v/SweetEditor.svg)](https://www.nuget.org/packages/SweetEditor)
+[![.NET 8](https://img.shields.io/badge/.NET-8.0-blue.svg)](https://dotnet.microsoft.com/)
+[![License](https://img.shields.io/badge/License-LGPL--2.1%2B-yellow.svg)](https://github.com/FinalScave/OpenSweetEditor/blob/main/LICENSE)
 
-GitHub:
-- Main repository: [https://github.com/FinalScave/OpenSweetEditor](https://github.com/FinalScave/OpenSweetEditor)
-- WinForms package source: `platform/WinForms/SweetEditor`
+A high-performance WinForms code editor control powered by the [SweetEditor](https://github.com/FinalScave/OpenSweetEditor) C++ core.
+
+The C++ core handles text layout, cursor/selection logic, folding, decoration data, and interaction math; the WinForms layer provides native GDI+ rendering and input dispatch.
 
 ## Features
 
-- Syntax/semantic style spans
+- Syntax and semantic highlighting via style spans
 - Inlay hints and ghost text
 - Diagnostics and custom decorations
 - Gutter icons and fold markers
-- Code folding and wrap mode switching
-- Current-line rendering modes
-- Completion and newline extension providers
+- Code folding and word-wrap modes
+- Current-line rendering modes (background / border)
+- Indent guides, bracket guides, flow guides
+- Linked editing (multi-cursor rename)
+- Undo / Redo
+- IME composition support
+- Completion, decoration, and newline action provider extensions
 - Monospace and proportional font support
+- Pinch-to-zoom scaling
 
 ## Requirements
 
-- .NET 8 (`net8.0-windows`)
+- .NET 8+ (`net8.0-windows`)
 - Windows x64
-- Native runtime: `sweeteditor.dll` (included in NuGet package under `runtimes/win-x64/native/`)
+- Native runtime `sweeteditor.dll` is bundled in the NuGet package (`runtimes/win-x64/native/`)
 
 ## Install
 
-```powershell
+```
 dotnet add package SweetEditor
 ```
 
 ## Quick Start
 
 ```csharp
-using System.IO;
-using System.Windows.Forms;
 using SweetEditor;
 
-public sealed class MainForm : Form
-{
-    private readonly SweetEditorControl editor = new SweetEditorControl { Dock = DockStyle.Fill };
+public sealed class MainForm : Form {
+    private readonly SweetEditorControl editor = new() { Dock = DockStyle.Fill };
 
-    public MainForm()
-    {
+    public MainForm() {
         Controls.Add(editor);
 
+        // Theme
         editor.ApplyTheme(EditorTheme.Dark());
+
+        // Settings
+        editor.Settings.SetEditorTextSize(14f);
+        editor.Settings.SetFontFamily("Cascadia Code");
         editor.Settings.SetWrapMode(WrapMode.WORD_BREAK);
         editor.Settings.SetCurrentLineRenderMode(CurrentLineRenderMode.BORDER);
 
-        var code = "int main() {\n    return 0;\n}\n";
-        editor.LoadDocument(new Document(code));
-
-        // Load another file later:
-        // editor.LoadDocument(new Document(File.ReadAllText(\"sample.cpp\")));
+        // Load content
+        editor.LoadDocument(new Document("int main() {\n    return 0;\n}\n"));
     }
 }
 ```
 
-## Common API
+## Settings
+
+All settings are available via `editor.Settings` and take effect immediately.
+
+| Method | Description |
+|--------|-------------|
+| `SetEditorTextSize(float)` | Base text size in points |
+| `SetFontFamily(string)` | Font family name |
+| `SetScale(float)` | Editor scale factor |
+| `SetWrapMode(WrapMode)` | `NONE` / `WORD_BREAK` |
+| `SetLineSpacing(float add, float mult)` | Line spacing |
+| `SetFoldArrowMode(FoldArrowMode)` | Fold arrow visibility |
+| `SetGutterVisible(bool)` | Show/hide gutter |
+| `SetGutterSticky(bool)` | Gutter sticks during horizontal scroll |
+| `SetShowSplitLine(bool)` | Gutter split line |
+| `SetContentStartPadding(float)` | Extra padding after gutter |
+| `SetCurrentLineRenderMode(...)` | `NONE` / `BACKGROUND` / `BORDER` |
+| `SetAutoIndentMode(AutoIndentMode)` | `NONE` / `BASIC` / `ADVANCED` |
+| `SetBackspaceUnindent(bool)` | Smart backspace unindent |
+| `SetReadOnly(bool)` | Read-only mode |
+| `SetCompositionEnabled(bool)` | IME composition |
+| `SetMaxGutterIcons(int)` | Max gutter icon columns |
+
+## Theme and Styles
+
+```csharp
+var theme = EditorTheme.Dark()
+    .DefineTextStyle(EditorTheme.STYLE_KEYWORD,
+        new TextStyle(unchecked((int)0xFF7AA2F7), SweetEditorControl.FONT_STYLE_BOLD));
+
+editor.ApplyTheme(theme);
+```
+
+## Events
+
+```csharp
+editor.TextChanged      += (s, e) => { /* e.Action, e.Changes */ };
+editor.CursorChanged    += (s, e) => { /* e.Position */ };
+editor.SelectionChanged += (s, e) => { /* selection info */ };
+editor.ScrollChanged    += (s, e) => { /* scroll info */ };
+editor.ScaleChanged     += (s, e) => { /* new scale */ };
+editor.DocumentLoaded   += (s, e) => { /* document ready */ };
+editor.FoldToggle       += (s, e) => { /* fold state changed */ };
+editor.ContextMenu      += (s, e) => { /* show context menu */ };
+```
+
+## Text Editing
 
 ```csharp
 editor.InsertText("Hello");
 editor.ReplaceText(new TextRange(new TextPosition(0, 0), new TextPosition(0, 5)), "Hi");
+editor.DeleteText(range);
 editor.SelectAll();
-editor.SetSelection(0, 0, 0, 2);
-editor.ScrollToLine(100);
-editor.ToggleFold(42);
-editor.TriggerCompletion();
+editor.SetSelection(0, 0, 0, 5);
+editor.Undo();
+editor.Redo();
 ```
 
-## Theme and Style Registration
+## Decorations
 
 ```csharp
-var theme = EditorTheme.Dark()
-    .DefineTextStyle(EditorTheme.STYLE_KEYWORD, new TextStyle(unchecked((int)0xFF7AA2F7), SweetEditorControl.FONT_STYLE_BOLD));
-editor.ApplyTheme(theme);
+// Syntax spans
+editor.SetLineSpans(line, SpanLayer.SYNTAX, spans);
+editor.SetBatchLineSpans(SpanLayer.SYNTAX, spansByLine);
+
+// Diagnostics
+editor.SetLineDiagnostics(line, diagnostics);
+editor.SetBatchLineDiagnostics(diagsByLine);
+
+// Inlay hints, ghost text, gutter icons
+editor.SetLineInlayHints(line, hints);
+editor.SetLinePhantomTexts(line, phantoms);
+editor.SetLineGutterIcons(line, icons);
+
+// Guides
+editor.SetIndentGuides(guides);
+editor.SetBracketGuides(guides);
+editor.SetFoldRegions(regions);
 ```
 
 ## Extension Points
 
-- Decoration providers: `IDecorationProvider`
-- Completion providers: `ICompletionProvider`
-- Newline action providers: `INewLineActionProvider`
-- Icon rendering: `EditorIconProvider`
+| Interface | Purpose |
+|-----------|---------|
+| `IDecorationProvider` | Provide decorations (spans, diagnostics, hints, etc.) for visible ranges |
+| `ICompletionProvider` | Provide code completion items |
+| `INewLineActionProvider` | Custom actions on Enter key (e.g., auto-close brackets) |
+| `ICompletionItemRenderer` | Custom rendering for completion popup items |
+| `EditorIconProvider` | Custom icon rendering in gutter |
 
-## Build and Pack
-
-From repository root:
-
-```powershell
-.\scripts\build-shared.ps1 -Platform windows
-dotnet build .\platform\WinForms\SweetEditor\SweetEditor.csproj -c Release
-dotnet pack .\platform\WinForms\SweetEditor\SweetEditor.csproj -c Release
+```csharp
+editor.AddDecorationProvider(myProvider);
+editor.AddCompletionProvider(myCompletionProvider);
+editor.AddNewLineActionProvider(myNewLineProvider);
 ```
 
-Output package:
-- `platform/WinForms/SweetEditor/bin/Release/SweetEditor.<version>.nupkg`
+## Linked Editing
 
-## Publish to NuGet
+```csharp
+editor.StartLinkedEditing(model);
+editor.LinkedEditingNext();
+editor.LinkedEditingPrev();
+editor.CancelLinkedEditing();
+```
+
+## Build from Source
+
+```powershell
+# 1. Build the native C++ shared library
+.\scripts\build-shared.ps1 -Platform windows
+
+# 2. Build and pack
+dotnet build  .\platform\WinForms\SweetEditor\SweetEditor.csproj -c Release
+dotnet pack   .\platform\WinForms\SweetEditor\SweetEditor.csproj -c Release
+```
+
+Output: `platform/WinForms/SweetEditor/bin/Release/SweetEditor.<version>.nupkg`
+
+## Publish
 
 ```powershell
 dotnet nuget push .\platform\WinForms\SweetEditor\bin\Release\SweetEditor.<version>.nupkg `
-  --api-key <NUGET_API_KEY> `
-  --source https://api.nuget.org/v3/index.json
+    --api-key <NUGET_API_KEY> `
+    --source https://api.nuget.org/v3/index.json
 ```
+
+## License
+
+[LGPL-2.1+](https://github.com/FinalScave/OpenSweetEditor/blob/main/LICENSE)

@@ -48,10 +48,10 @@ repositories {
 }
 
 dependencies {
-    implementation("com.qiplat:sweeteditor:1.0.3")
+    implementation("com.qiplat:sweeteditor:1.0.6")
 }
 ```
-> 依赖版本以最新版为准，当前为1.0.3
+> 依赖版本以最新版为准，当前为1.0.6
   
 如果使用仓库源码模块（本地联调场景）：
 
@@ -241,7 +241,7 @@ public boolean isPerfOverlayEnabled()
 
 `setPerfOverlayEnabled(true)` 后，会在编辑区**左上角**显示实时性能面板（默认关闭，仅建议调试使用）。
 
-> 实现细节说明（v1.0.3 当前实现）：以下字段名、阈值和步骤名用于调试展示，不属于稳定 API 契约；版本升级后请以代码与发布说明为准。
+> 实现细节说明（v1.0.6 当前实现）：以下字段名、阈值和步骤名用于调试展示，不属于稳定 API 契约；版本升级后请以代码与发布说明为准。
 
 面板字段（当前实现）：
 

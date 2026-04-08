@@ -151,7 +151,7 @@ public class DemoDecorationProvider implements DecorationProvider {
             for (TextChange change : context.textChanges) {
                 cacheHighlight = documentAnalyzer.analyzeIncremental(
                         convertAsSLTextRange(change.range),
-                        change.text
+                        change.newText
                 );
             }
         }

@@ -105,7 +105,7 @@ class _EditorDemoPageState extends State<EditorDemoPage> {
           (change) =>
               '${change.range.start.line}:${change.range.start.column}'
               '-${change.range.end.line}:${change.range.end.column}'
-              ' ${change.text}',
+              ' ${change.newText}',
         )
         .join(', ');
     _updateStatus('${e.action?.name ?? 'unknown'} [$changeSummary]');

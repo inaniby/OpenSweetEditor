@@ -1049,14 +1049,11 @@ namespace SweetEditor {
 	public class TextChangedEventArgs : EventArgs {
 		/// <summary>Operation type</summary>
 		public TextChangeAction Action { get; }
-		/// <summary>Replaced/deleted text range (pre-operation coordinates); null means unavailable.</summary>
-		public TextRange? ChangeRange { get; }
-		/// <summary>New text after change (inserted/replaced content); null means unavailable, and empty string means pure deletion.</summary>
-		public string? Text { get; }
-		public TextChangedEventArgs(TextChangeAction action, TextRange? changeRange = null, string? text = null) {
+		/// <summary>Incremental text changes for the current edit cycle.</summary>
+		public IReadOnlyList<TextChange> Changes { get; }
+		public TextChangedEventArgs(TextChangeAction action, IReadOnlyList<TextChange>? changes = null) {
 			Action = action;
-			ChangeRange = changeRange;
-			Text = text;
+			Changes = changes ?? Array.Empty<TextChange>();
 		}
 	}
 

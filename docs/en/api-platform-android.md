@@ -48,10 +48,10 @@ repositories {
 }
 
 dependencies {
-    implementation("com.qiplat:sweeteditor:1.0.3")
+    implementation("com.qiplat:sweeteditor:1.0.6")
 }
 ```
-> The dependency version should follow the latest release, which is currently 1.0.3.
+> The dependency version should follow the latest release, which is currently 1.0.6.
   
 If you need local source-module integration (for local debugging):
 
@@ -242,7 +242,7 @@ public boolean isPerfOverlayEnabled()
 
 When `setPerfOverlayEnabled(true)` is enabled, a real-time performance panel appears at the **top-left** of the editor area (off by default; debug use only).
 
-> Implementation detail note (current v1.0.3): field names, thresholds, and step labels below are for debugging display and are not a stable API contract. For upgrades, follow source code and release notes.
+> Implementation detail note (current v1.0.6): field names, thresholds, and step labels below are for debugging display and are not a stable API contract. For upgrades, follow source code and release notes.
 
 Panel fields (current implementation):
 

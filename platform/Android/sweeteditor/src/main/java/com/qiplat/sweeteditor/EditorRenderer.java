@@ -13,6 +13,7 @@ import androidx.annotation.Nullable;
 
 import java.util.List;
 
+import com.qiplat.sweeteditor.animation.AnimationHolder;
 import com.qiplat.sweeteditor.core.HandleConfig;
 import com.qiplat.sweeteditor.core.ScrollbarConfig;
 import com.qiplat.sweeteditor.core.TextMeasurer;
@@ -341,7 +342,7 @@ final class EditorRenderer {
      */
     public boolean render(@NonNull Canvas canvas, @NonNull EditorRenderModel model,
                           int viewWidth, int viewHeight,
-                          boolean cursorVisible, float buildMs) {
+                          boolean cursorVisible, AnimationHolder animationHolder, float buildMs) {
         PerfStepRecorder drawPerf = mPerfOverlay.isEnabled() ? PerfStepRecorder.start() : null;
 
         if (drawPerf != null) drawPerf.mark(PerfStepRecorder.STEP_BUILD);
@@ -373,14 +374,25 @@ final class EditorRenderer {
         drawBracketHighlightRects(canvas, model.bracketHighlightRects);
         if (drawPerf != null) drawPerf.mark(PerfStepRecorder.STEP_BRACKET);
 
-        drawCursor(canvas, model.cursor, cursorVisible);
+        drawCursor(canvas, model.cursor, cursorVisible, animationHolder);
         if (drawPerf != null) drawPerf.mark(PerfStepRecorder.STEP_CURSOR);
 
         if (model.splitX > 0) {
-            canvas.drawRect(0, 0, model.splitX, viewHeight, mBackgroundPaint);
-            drawCurrentLineDecoration(canvas, model, 0f, model.splitX);
+            float splitAnimatedX = animationHolder.splitAnimatedX;
+            if (splitAnimatedX <= 0) {
+                canvas.drawRect(0, 0, model.splitX, viewHeight, mBackgroundPaint);
+                drawCurrentLineDecoration(canvas, model, 0f, model.splitX);
+            } else {
+                canvas.drawRect(0, 0, splitAnimatedX, viewHeight, mBackgroundPaint);
+                drawCurrentLineDecoration(canvas, model, 0f, animationHolder.splitAnimatedX);
+            }
+
             if (model.splitLineVisible) {
-                canvas.drawLine(model.splitX, 0, model.splitX, viewHeight, mSplitLinePaint);
+                if (splitAnimatedX <= 0) {
+                    canvas.drawLine(model.splitX, 0, model.splitX, viewHeight, mSplitLinePaint);
+                } else {
+                    canvas.drawLine(splitAnimatedX, 0, splitAnimatedX, viewHeight, mSplitLinePaint);
+                }
             }
         }
 
@@ -741,16 +753,29 @@ final class EditorRenderer {
         return mScrollbarConfig != null && mScrollbarConfig.mode == ScrollbarConfig.ScrollbarMode.TRANSIENT;
     }
 
-    private void drawCursor(Canvas canvas, @Nullable Cursor cursor, boolean cursorVisible) {
+    private void drawCursor(Canvas canvas, @Nullable Cursor cursor, boolean cursorVisible, AnimationHolder animationHolder) {
         if (cursor == null || !cursor.visible || !cursorVisible) return;
         float cursorWidth = HANDLE_LINE_WIDTH * mDensity;
-        canvas.drawRect(
-                cursor.position.x,
-                cursor.position.y,
-                cursor.position.x + cursorWidth,
-                cursor.position.y + cursor.height,
-                mCursorPaint
-        );
+        float cursorAnimatedX = animationHolder.cursorAnimatedX;
+        float cursorAnimatedY = animationHolder.cursorAnimatedY;
+
+        if (cursorAnimatedX < 0 || cursorAnimatedY < 0) {
+            canvas.drawRect(
+                    cursor.position.x,
+                    cursor.position.y,
+                    cursor.position.x + cursorWidth,
+                    cursor.position.y + cursor.height,
+                    mCursorPaint
+            );
+        } else {
+            canvas.drawRect(
+                    cursorAnimatedX,
+                    cursorAnimatedY,
+                    cursorAnimatedX + cursorWidth,
+                    cursorAnimatedY + cursor.height,
+                    mCursorPaint
+            );
+        }
     }
 
     private void drawSelectionRects(Canvas canvas, @Nullable List<SelectionRect> rects) {

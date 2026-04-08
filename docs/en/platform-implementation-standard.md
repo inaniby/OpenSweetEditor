@@ -1291,7 +1291,7 @@ The Core layer defines numerous decoration data types. All platforms MUST implem
 | Field | Type | MUST/MAY | Description |
 |---|---|---|---|
 | `range` | TextRange | **MUST** | Changed range in document coordinates |
-| `text` | String | **MUST** | Replacement text; empty string means pure deletion |
+| `newText` | String | **MUST** | Replacement text; empty string means pure deletion |
 
 ### 17.3 Adornment Data Types
 

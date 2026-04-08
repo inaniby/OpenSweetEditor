@@ -1294,7 +1294,7 @@ Core 层定义了大量装饰数据类型，各平台 MUST 实现完全一致的
 | 字段 | 类型 | MUST/MAY | 说明 |
 |---|---|---|---|
 | `range` | TextRange | **MUST** | 文档坐标中的变更范围 |
-| `text` | String | **MUST** | 替换后的文本；空字符串表示纯删除 |
+| `newText` | String | **MUST** | 替换后的文本；空字符串表示纯删除 |
 
 ### 17.3 Adornment 数据类型
 

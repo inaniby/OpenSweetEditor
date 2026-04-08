@@ -125,7 +125,9 @@ public class SweetEditorInputConnection extends BaseInputConnection {
         Log.d(TAG, "commitText: text=" + text + ", isComposing=" + mEditor.isComposing());
         String textStr = text != null ? text.toString() : "";
         if (!mEditor.isCompositionEnabled() || !mEditor.isComposing()) {
-            if (!textStr.isEmpty()) {
+            if (textStr.equals("\n")) {
+                mEditor.handleKeyEventFromIME(new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_ENTER));
+            } else if (!textStr.isEmpty()) {
                 mEditor.insertText(textStr);
             }
         } else {

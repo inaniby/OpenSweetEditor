@@ -40,18 +40,18 @@ dotnet run --project .\Demo\Demo.csproj -c Release
 推荐直接使用 NuGet 包：
 
 ```powershell
-dotnet add package SweetEditor --version 1.0.3
+dotnet add package SweetEditor --version 1.0.4
 ```
 
 或在项目文件中添加：
 
 ```xml
 <ItemGroup>
-  <PackageReference Include="SweetEditor" Version="1.0.3" />
+  <PackageReference Include="SweetEditor" Version="1.0.4" />
 </ItemGroup>
 ```
 
-> 版本请以最新发布为准，当前文档示例为 `1.0.3`。
+> 版本请以最新发布为准，当前文档示例为 `1.0.4`。
 
 ### 最小集成示例
 

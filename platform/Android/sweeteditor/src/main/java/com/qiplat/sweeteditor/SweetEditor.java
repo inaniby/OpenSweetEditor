@@ -29,6 +29,7 @@ import androidx.annotation.Nullable;
 
 import java.util.Map;
 
+import com.qiplat.sweeteditor.animation.AnimationHolder;
 import com.qiplat.sweeteditor.core.Document;
 import com.qiplat.sweeteditor.core.EditorOptions;
 import com.qiplat.sweeteditor.core.EditorCore;
@@ -111,6 +112,7 @@ public class SweetEditor extends View {
     private static final float DEFAULT_CONTENT_START_PADDING_DP = 3.0f;
 
     private EditorRenderer mRenderer;
+    private AnimationHolder animationHolder;
     private int mPerfLogFrameCount = 0;
 
     @Nullable
@@ -159,6 +161,75 @@ public class SweetEditor extends View {
             mHandler.postDelayed(this, 500);
         }
     };
+    // Unified visual-transition callback: cursor smooth move + gutter width transition.
+    // Aligned to vsync via Choreographer, single invalidate per frame.
+    private boolean mVisualTransitionActive = false;
+    private final Choreographer.FrameCallback mVisualTransitionCallback = new Choreographer.FrameCallback() {
+        @Override
+        public void doFrame(long frameTimeNanos) {
+            if (!mVisualTransitionActive) return;
+
+            // Model not yet rebuilt — keep running so we can animate toward the new target
+            // once onDraw rebuilds mCachedModel.
+            if (mModelDirty) {
+                postInvalidate();
+                Choreographer.getInstance().postFrameCallback(this);
+                return;
+            }
+
+            boolean needsNextFrame = false;
+
+            if (mSettings.isCursorAnimationEnabled()
+                    && mCachedModel != null && mCachedModel.cursor != null && mCachedModel.cursor.position != null) {
+                float targetX = mCachedModel.cursor.position.x;
+                float targetY = mCachedModel.cursor.position.y;
+
+                if (animationHolder.cursorAnimatedX < 0 || animationHolder.cursorAnimatedY < 0) {
+                    animationHolder.cursorAnimatedX = targetX;
+                    animationHolder.cursorAnimatedY = targetY;
+                }
+
+                animationHolder.cursorAnimatedX += (targetX - animationHolder.cursorAnimatedX) * 0.35f;
+                animationHolder.cursorAnimatedY += (targetY - animationHolder.cursorAnimatedY) * 0.35f;
+
+                if (Math.abs(targetX - animationHolder.cursorAnimatedX) < 0.01f) {
+                    animationHolder.cursorAnimatedX = targetX;
+                } else {
+                    needsNextFrame = true;
+                }
+
+                if (Math.abs(targetY - animationHolder.cursorAnimatedY) < 0.01f) {
+                    animationHolder.cursorAnimatedY = targetY;
+                } else {
+                    needsNextFrame = true;
+                }
+            }
+
+            if (mSettings.isGutterAnimationEnabled() && mCachedModel != null) {
+                float targetX = mCachedModel.splitX;
+
+                if (animationHolder.splitAnimatedX < 0) {
+                    animationHolder.splitAnimatedX = targetX;
+                }
+
+                animationHolder.splitAnimatedX += (targetX - animationHolder.splitAnimatedX) * 0.25f;
+
+                if (Math.abs(targetX - animationHolder.splitAnimatedX) < 0.01f) {
+                    animationHolder.splitAnimatedX = targetX;
+                } else {
+                    needsNextFrame = true;
+                }
+            }
+
+            postInvalidate();
+            if (needsNextFrame) {
+                Choreographer.getInstance().postFrameCallback(this);
+            } else {
+                mVisualTransitionActive = false;
+            }
+        }
+    };
+
     private final Runnable mTransientScrollbarRefresh = new Runnable() {
         @Override
         public void run() {
@@ -168,18 +239,18 @@ public class SweetEditor extends View {
     };
 
     // Unified animation callback: drives edge-scroll, fling, etc. via Choreographer
-    private boolean mAnimationActive = false;
-    private final Choreographer.FrameCallback mAnimationFrameCallback = new Choreographer.FrameCallback() {
+    private boolean mScrollAnimationActive = false;
+    private final Choreographer.FrameCallback mScrollAnimationCallback = new Choreographer.FrameCallback() {
         @Override
         public void doFrame(long frameTimeNanos) {
-            if (!mAnimationActive) return;
+            if (!mScrollAnimationActive) return;
             EditorCore.GestureResult result = mEditorCore.tickAnimations();
             fireGestureEvents(result, null, -1);
             flush();
             if (result.needsAnimation) {
                 Choreographer.getInstance().postFrameCallback(this);
             } else {
-                mAnimationActive = false;
+                mScrollAnimationActive = false;
             }
         }
     };
@@ -232,12 +303,12 @@ public class SweetEditor extends View {
             syncPlatformScale(result.viewScale);
         }
         flush();
-        if (result.needsAnimation && !mAnimationActive) {
-            mAnimationActive = true;
-            Choreographer.getInstance().postFrameCallback(mAnimationFrameCallback);
-        } else if (!result.needsAnimation && mAnimationActive) {
-            mAnimationActive = false;
-            Choreographer.getInstance().removeFrameCallback(mAnimationFrameCallback);
+        if (result.needsAnimation && !mScrollAnimationActive) {
+            mScrollAnimationActive = true;
+            Choreographer.getInstance().postFrameCallback(mScrollAnimationCallback);
+        } else if (!result.needsAnimation && mScrollAnimationActive) {
+            mScrollAnimationActive = false;
+            Choreographer.getInstance().removeFrameCallback(mScrollAnimationCallback);
         }
         if (ENABLE_PERF_LOG) {
             float ms = (System.nanoTime() - t0) / 1_000_000f;
@@ -289,7 +360,7 @@ public class SweetEditor extends View {
         }
 
         boolean needsTransientRefresh = mRenderer.render(canvas, model, getWidth(), getHeight(),
-                mCursorVisible, buildMs);
+                mCursorVisible, animationHolder, buildMs);
 
         if (mCompletionPopupController != null && model.cursor != null && model.cursor.position != null) {
             mCompletionPopupController.updateCursorPosition(
@@ -331,6 +402,7 @@ public class SweetEditor extends View {
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
         mHandler.postDelayed(mCursorBlink, 500);
+        startVisualTransition();
         requestApplyInsets();
         post(() -> refreshViewportForVisibleBounds(false));
     }
@@ -339,9 +411,10 @@ public class SweetEditor extends View {
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
         mHandler.removeCallbacks(mCursorBlink);
+        stopVisualTransition();
         mHandler.removeCallbacks(mTransientScrollbarRefresh);
-        Choreographer.getInstance().removeFrameCallback(mAnimationFrameCallback);
-        mAnimationActive = false;
+        Choreographer.getInstance().removeFrameCallback(mScrollAnimationCallback);
+        mScrollAnimationActive = false;
         if (mSelectionMenuController != null) {
             mSelectionMenuController.dismiss();
         }
@@ -352,11 +425,13 @@ public class SweetEditor extends View {
         super.onWindowFocusChanged(hasWindowFocus);
         if (hasWindowFocus) {
             resetCursorBlink();
+            startVisualTransition();
         } else {
             mHandler.removeCallbacks(mCursorBlink);
+            stopVisualTransition();
             mHandler.removeCallbacks(mTransientScrollbarRefresh);
-            Choreographer.getInstance().removeFrameCallback(mAnimationFrameCallback);
-            mAnimationActive = false;
+            Choreographer.getInstance().removeFrameCallback(mScrollAnimationCallback);
+            mScrollAnimationActive = false;
         }
     }
 
@@ -370,6 +445,10 @@ public class SweetEditor extends View {
     public void loadDocument(Document document) {
         mDocument = document;
         mEditorCore.loadDocument(document);
+        mCachedModel = null;
+        animationHolder.cursorAnimatedX = -1f;
+        animationHolder.cursorAnimatedY = -1f;
+        animationHolder.splitAnimatedX = -1f;
         if (mDecorationProviderManager != null) {
             mDecorationProviderManager.onDocumentLoaded();
         }
@@ -1275,6 +1354,7 @@ public class SweetEditor extends View {
      */
     public void flush() {
         mModelDirty = true;
+        startVisualTransition();
         postInvalidate();
     }
 
@@ -1561,8 +1641,8 @@ public class SweetEditor extends View {
             if (!mEditorCore.isInLinkedEditing()) {
                 // Completion trigger: based on first change (primary change)
                 TextChange primaryChange = editResult.changes.get(0);
-                if (mCompletionProviderManager != null && primaryChange.text.length() == 1) {
-                    String ch = primaryChange.text;
+                if (mCompletionProviderManager != null && primaryChange.newText.length() == 1) {
+                    String ch = primaryChange.newText;
                     if (mCompletionProviderManager.isTriggerCharacter(ch)) {
                         mCompletionProviderManager.triggerCompletion(
                                 CompletionContext.TriggerKind.CHARACTER, ch);
@@ -1592,22 +1672,10 @@ public class SweetEditor extends View {
         boolean isSnippet = item.insertTextFormat == CompletionItem.INSERT_TEXT_FORMAT_SNIPPET;
         String text = item.insertText != null ? item.insertText : item.label;
 
-        // Determine the range to replace: textEdit takes priority, otherwise fallback to wordRange
-        TextRange replaceRange = null;
         if (textEdit != null) {
-            replaceRange = textEdit.range;
             text = textEdit.newText;
-        } else {
-            TextRange wr = getWordRangeAtCursor();
-            if (wr.start.line != wr.end.line || wr.start.column != wr.end.column) {
-                replaceRange = wr;
-            }
         }
 
-        // Delete the replacement range first (typed prefix), then insert new text
-        if (replaceRange != null) {
-            deleteText(replaceRange);
-        }
         if (isSnippet) {
             insertSnippet(text);
         } else {
@@ -1693,6 +1761,10 @@ public class SweetEditor extends View {
                 if (mCompletionPopupController != null && mCompletionPopupController.isShowing()) {
                     mCompletionProviderManager.dismiss();
                 }
+                if (mSettings.isCursorAnimationEnabled()) {
+                    animationHolder.cursorAnimatedX = -1f;
+                    animationHolder.cursorAnimatedY = -1f;
+                }
                 break;
             case SCALE:
                 mEventBus.publish(new ScaleChangedEvent(result.viewScale));
@@ -1776,6 +1848,9 @@ public class SweetEditor extends View {
                     return;
                 }
             }
+            if (nativeKeyCode == KeyCode.BACKSPACE) {
+                mCompletionProviderManager.triggerCompletion(CompletionContext.TriggerKind.RETRIGGER, null);
+            }
             int modifiers = KeyModifier.NONE;
             if (event.isShiftPressed()) modifiers |= KeyModifier.SHIFT;
             if (event.isCtrlPressed()) modifiers |= KeyModifier.CTRL;
@@ -1822,10 +1897,11 @@ public class SweetEditor extends View {
     private void initView(Context context) {
         float density = getResources().getDisplayMetrics().density;
         mRenderer = new EditorRenderer(mTheme, density);
+        animationHolder = new AnimationHolder();
 
         mRenderer.setHandleConfig(EditorRenderer.computeHandleHitConfig(density));
 
-        float scrollbarThicknessPx = 8.0f * density;
+        float scrollbarThicknessPx = 5.0f * density;
         float scrollbarMinThumbPx = 40.0f * density;
         float scrollbarThumbHitPaddingPx = 20.0f * density;
         mRenderer.setScrollbarConfig(new ScrollbarConfig(
@@ -1928,6 +2004,38 @@ public class SweetEditor extends View {
         mCursorVisible = true;
         mHandler.removeCallbacks(mCursorBlink);
         mHandler.postDelayed(mCursorBlink, 500);
+    }
+
+    public void requestCursorAnimationRefresh() {
+        if (mSettings.isCursorAnimationEnabled()) {
+            startVisualTransition();
+        } else {
+            animationHolder.cursorAnimatedX = -1;
+            animationHolder.cursorAnimatedY = -1;
+            postInvalidate();
+        }
+    }
+
+    public void requestGutterAnimationRefresh() {
+        if (mSettings.isGutterAnimationEnabled()) {
+            startVisualTransition();
+        } else {
+            animationHolder.splitAnimatedX = -1f;
+            postInvalidate();
+        }
+    }
+
+    private void startVisualTransition() {
+        if (!mVisualTransitionActive
+                && (mSettings.isCursorAnimationEnabled() || mSettings.isGutterAnimationEnabled())) {
+            mVisualTransitionActive = true;
+            Choreographer.getInstance().postFrameCallback(mVisualTransitionCallback);
+        }
+    }
+
+    private void stopVisualTransition() {
+        mVisualTransitionActive = false;
+        Choreographer.getInstance().removeFrameCallback(mVisualTransitionCallback);
     }
 
     private void showSoftKeyboard() {
